@@ -10,7 +10,7 @@ env:
   TARGET_BRANCH: interpretor-release
   CURRENT_BRANCH: Interpretor
   COMMIT_MSG: ${{ github.event.head_commit.message }}
-  STACK_FOLDER: glados-interpretor
+  STACK_FOLDER: glados-lisp-interpretor
 
 defaults:
   run:
