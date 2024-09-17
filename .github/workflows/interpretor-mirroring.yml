@@ -60,4 +60,4 @@ jobs:
             echo ${{ env.COMMIT_MSG }} | tr -d '"' 
             git commit --amend --reuse-message=HEAD
             git remote add origin-destination ${{ env.MIRROR_URL }}
-            git push origin-destination ${{ env.TARGET_BRANCH }} --force
+            git push origin-destination -u ${{ env.TARGET_BRANCH }} --force
