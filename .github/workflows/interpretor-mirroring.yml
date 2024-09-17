@@ -7,7 +7,7 @@ on:
 env:
   ACTION_FILE: .github/workflows/interpretor-mirroring.yml
   MIRROR_URL: git@github.com:EpitechPromo2027/B-FUN-500-NCY-5-1-glados-julian.bottiglione.git
-  TARGET_BRANCH: interpretor-release
+  TARGET_BRANCH: Interpretor-release
   CURRENT_BRANCH: Interpretor
   COMMIT_MSG: ${{ github.event.head_commit.message }}
   STACK_FOLDER: glados-lisp-interpretor
@@ -54,7 +54,7 @@ jobs:
 
             git remote add origin-destination ${{ env.MIRROR_URL }}
             git remote add origin-source ${{ github.repositoryUrl }}
-            git checkout ${{ env.TARGET_BRANCH }}
+            git checkout -b ${{ env.TARGET_BRANCH }}
             
             git rm ${{ env.ACTION_FILE }}
             git config --global user.name "${{ github.actor }}"
