@@ -58,5 +58,6 @@ jobs:
 
             git rm ${{ env.ACTION_FILE }}
             git config --global user.name "${{ github.actor }}"
-            git commit --amend -m ${{ env.COMMIT_MSG }}
+            echo ${{ env.COMMIT_MSG }} | tr -d '"' 
+            git commit --amend --reuse-message=HEAD
             git push --force --set-upstream origin-destination ${{ env.TARGET_BRANCH }}
