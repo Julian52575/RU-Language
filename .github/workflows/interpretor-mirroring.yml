@@ -18,7 +18,7 @@ defaults:
 
 jobs:
   run_tests:
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     container:
       image:  haskell:slim-bullseye
       options: --user="root"
