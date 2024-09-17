@@ -28,6 +28,7 @@ jobs:
           fetch-depth: 0
         timeout-minutes: 5
       - run: |
+          chown -R $(id -un):$(id -gn) ~ #https://github.com/commercialhaskell/stack/issues/2187
           cd ${{ env.STACK_FOLDER }}
           stack build
           stack test
