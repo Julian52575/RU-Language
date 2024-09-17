@@ -1,14 +1,15 @@
 name: GladOS actions
+
 on:
   push: 
     branches:
-      - ${{ env.CURRENT_BRANCH }}
-
+      - Interpretor
 env:
   ACTION_FILE: .github/workflows/interpretor-mirroring.yml
   MIRROR_URL: git@github.com:EpitechPromo2027/B-FUN-500-NCY-5-1-glados-julian.bottiglione.git
   TARGET_BRANCH: interpretor-release
   CURRENT_BRANCH: Interpretor
+  COMMIT_MSG: ${{ github.event.head_commit.message }}
 
 defaults:
   run:
@@ -50,9 +51,9 @@ jobs:
 
             git remote add origin-destination ${{ env.MIRROR_URL }}
             git remote add origin-source ${{ github.repositoryUrl }}
-            git checkout 
+            git checkout ${{ env.CURRENT_BRANCH }}
 
             git rm ${{ env.ACTION_FILE }}
             git config --global user.name "${{ github.actor }}"
-            git commit --amend -m "${{ github.event.head_commit.message }}"
+            git commit --amend -m "${{ env.COMMIT_MSG }}"
             git push --force --set-upstream origin-destination ${{ env.TARGET_BRANCH }}
