@@ -18,7 +18,7 @@ defaults:
 
 jobs:
   run_tests:
-    runs-on: haskell:slim-bullseye
+    runs-on: linux
     container:
       image:  haskell:slim-bullseye
       options: --user="root"
