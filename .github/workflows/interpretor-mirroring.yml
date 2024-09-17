@@ -18,9 +18,9 @@ defaults:
 
 jobs:
   run_tests:
-    runs-on: ubuntu-latest
+    runs-on: haskell:slim-bullseye
     container:
-      image:  epitechcontent/epitest-docker
+      image:  haskell:slim-bullseye
       options: --user="root"
     steps:
       - uses: actions/checkout@v4
