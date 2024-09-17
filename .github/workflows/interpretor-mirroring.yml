@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image:  epitechcontent/epitest-docker
+      options: --user="root"
     steps:
       - uses: actions/checkout@v4
         with:
