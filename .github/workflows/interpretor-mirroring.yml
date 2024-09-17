@@ -54,7 +54,7 @@ jobs:
 
             git remote add origin-destination ${{ env.MIRROR_URL }}
             git remote add origin-source ${{ github.repositoryUrl }}
-            git checkout release
+            git checkout ${{ env.TARGET_BRANCH }}
             
             git rm ${{ env.ACTION_FILE }}
             git config --global user.name "${{ github.actor }}"
