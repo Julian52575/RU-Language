@@ -1,26 +1,24 @@
 module Evaluator (evalAST, getInt, emptyEnv, extendEnv, lookupEnv, evalDefine, Env) where
 
 import AST (Ast(..))
+import qualified Data.Map as Map
 
--- Type pour l'environnement : une liste d'associations (variable, valeur)
-type Env = [(String, Ast)]
+-- Type for the environment: a Map of variable to value
+type Env = Map.Map String Ast
 
--- Environnement vide
+-- Empty environment
 emptyEnv :: Env
-emptyEnv = []
+emptyEnv = Map.empty
 
--- Ajouter une nouvelle variable dans l'environnement
+-- Extend the environment using Map
 extendEnv :: String -> Ast -> Env -> Env
-extendEnv var val env = (var, val) : env
+extendEnv = Map.insert
 
--- Rechercher une variable dans l'environnement
+-- Look up a variable in the environment using Map
 lookupEnv :: String -> Env -> Maybe Ast
-lookupEnv _ [] = Nothing
-lookupEnv var ((v, val):rest)
-    | var == v  = Just val
-    | otherwise = lookupEnv var rest
+lookupEnv = Map.lookup
 
--- Évaluation de l'AST avec environnement
+-- Evaluation of the AST with the environment
 evalAST :: Env -> Ast -> Maybe Ast
 -- Evaluating an integer literal
 evalAST _ (AstInt n) = Just (AstInt n)
@@ -41,7 +39,7 @@ evalAST env (Call func args) = do
         "+" -> return $ AstInt (sum intArgs)
         "*" -> return $ AstInt (product intArgs)
         "-" -> return $ AstInt (foldl1 (-) intArgs)
-        "/" -> if elem 0 (tail intArgs)    -- Check for division by zero
+        "/" -> if elem 0 (tail intArgs)  -- Check for division by zero
                 then Nothing
                 else return $ AstInt (foldl1 div intArgs)
         _   -> Nothing
@@ -61,14 +59,14 @@ evalAST _ lambda@(Lambda _ _) = Just lambda  -- Placeholder for now
 -- Default case: if the AST does not match any of the above
 evalAST _ _ = Nothing
 
--- Fonction pour obtenir un entier à partir de l'AST
+-- Function to get an integer from the AST
 getInt :: Ast -> Maybe Int
 getInt (AstInt n) = Just n
 getInt _ = Nothing
 
--- Gère les définitions et ajoute la variable dans l'environnement
+-- Handles definitions and adds the variable to the environment
 evalDefine :: Ast -> Env -> Env
 evalDefine (Define var expr) env =
-    -- On stocke l'expression non évaluée dans l'environnement
+    -- We store the unevaluated expression in the environment
     extendEnv var expr env
 evalDefine _ env = env

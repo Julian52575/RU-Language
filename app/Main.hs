@@ -1,4 +1,4 @@
-module Main where
+module Main (main) where
 
 import System.Environment (getArgs)
 import Parser (parseSExprs)
@@ -19,20 +19,27 @@ repl = do
            repl
 
 
-evalMultiple :: [Ast] -> Env -> IO()
-evalMultiple [] _ = return ()
+printResult :: Ast -> IO ()
+printResult (AstInt n) = print n        -- Print the integer value
+printResult (AstBool True) = putStrLn "T"   -- Common Lisp true
+printResult (AstBool False) = putStrLn "NIL"  -- Common Lisp false
+printResult _ = return ()               -- Ignore unsupported or non-evaluating results
+
+
+-- Optimized evalMultiple function
+evalMultiple :: [Ast] -> Env -> IO ()
+evalMultiple [] _ = return ()  -- If no more expressions, return
 evalMultiple (expr:rest) env = do
-    let newEnv = evalDefine expr env  -- Si c'est une définition, on la stocke dans l'environnement
     case expr of
-        Define _ _ -> do
-            -- Si l'expression est une définition, on ne l'évalue pas
-            evalMultiple rest newEnv  -- Continue avec le nouvel environnement
+        Define var defExpr -> do  -- If it's a definition, store it in the environment
+            let newEnv = evalDefine (Define var defExpr) env
+            evalMultiple rest newEnv  -- Continue with the updated environment
         _ -> do
-            -- Si ce n'est pas une définition, on l'évalue
-            case evalAST newEnv expr of
+            -- Otherwise, evaluate the expression
+            case evalAST env expr of
                 Nothing -> putStrLn "Error evaluating expression"
-                Just result -> print result
-            evalMultiple rest newEnv  -- Continue avec le nouvel environnement
+                Just result -> printResult result  -- Only print the result of expressions
+            evalMultiple rest env  -- Continue with the same environment
 
 
 main :: IO ()
@@ -43,15 +50,15 @@ main = do
         [] -> do
             input <- getContents
             let parsedExprs = parse parseSExprs "" input
-            print parsedExprs
             case parsedExprs of
                 Left err -> putStrLn $ errorBundlePretty err
                 Right exprs -> do
                     let asts = map sexprToAST exprs
-                    let validAsts = sequence asts -- Vérifie que tout a été parsé correctement
+                    let validAsts = sequence asts -- Check if all S-expressions were successfully converted to ASTs
                     case validAsts of
                         Nothing -> putStrLn "Error converting to AST"
-                        Just astTrees -> evalMultiple astTrees emptyEnv -- Passe tous les ASTs
+                        Just astTrees -> evalMultiple astTrees emptyEnv -- Pass all valid ASTs for evaluation
+
         ["--repl"] -> repl
 
         [filename] -> do
