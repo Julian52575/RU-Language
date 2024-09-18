@@ -13,17 +13,48 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      # Get the latest tag
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          latest_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "Latest tag: $latest_tag"
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v0.0.0"
+          fi
+          echo "::set-output name=tag::$latest_tag"
+
+      # Bump the version
+      - name: Bump version
+        id: bump_version
+        run: |
+          tag=${{ steps.get_tag.outputs.tag }}
+          echo "Current tag: $tag"
+
+          # Strip the 'v' from the tag and increment the patch version
+          tag_without_v="${tag#v}"
+          IFS='.' read -r -a version_parts <<< "$tag_without_v"
+
+          major="${version_parts[0]}"
+          minor="${version_parts[1]}"
+          patch="${version_parts[2]}"
+
+          new_patch=$((patch + 1))
+          new_tag="v$major.$minor.$new_patch"
+
+          echo "New tag: $new_tag"
+          echo "::set-output name=new_tag::$new_tag"
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1.1.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag_name: interpretor
-          release_name: Release ${{ github.sha }}
+          tag_name: ${{ steps.bump_version.outputs.new_tag }}
+          release_name: Release ${{ steps.bump_version.outputs.new_tag }}
           body: |
-            Changes in this Release
-            - First Change
-            - Second Change
+            Automatically created release for ${{ steps.bump_version.outputs.new_tag }}.
           draft: false
           prerelease: false
