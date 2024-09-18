@@ -19,7 +19,7 @@ jobs:
         id: get_tag
         run: |
           date_abr=$(date +"%g%m%d-%H%M")
-          echo "::set-output name=date_abr::$date_abr"
+          echo "date_abr=${date_abr}" >> $GITHUB_OUTPUT
 
       # Bump the version
 
@@ -27,10 +27,11 @@ jobs:
         id: create_release
         uses: actions/create-release@v1.1.4
         env:
+          VERSION: ${{ needs.get_date.outputs.date_abr }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag_name: ${{ steps.bump_version.outputs.date_abr }}
-          release_name: Release ${{ steps.bump_version.outputs.date_abr }}
+          tag_name: ${{ env.VERSION }}
+          release_name: Release ${{ env.VERSION }}
           body: |
             Automatically created release for Interpretor.
           draft: false
