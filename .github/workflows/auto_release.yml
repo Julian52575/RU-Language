@@ -19,6 +19,7 @@ jobs:
         run: |
           date_abr=$(date +"%g%m%d-%H%M")
           echo "date_abr=${date_abr}" >> $GITHUB_OUTPUT
+          touch will_this_appear_in_the_release.txt
 
   create_release:
     runs-on: ubuntu-latest
