@@ -29,6 +29,7 @@ parseSymbol = do
     s <- some (letterChar <|> oneOf "+-*/")
     return $ SSymbol s
 
+
 -- Parser for list expressions (Lisp-style lists)
 parseList :: Parser SExpr
 parseList = do
@@ -36,37 +37,15 @@ parseList = do
     exprs <- sepBy parseSExpr space1
     _ <- char ')'
     return $ SList exprs
-
--- Parser for "if" expressions
-parseIf :: Parser SExpr
-parseIf = do
-    _ <- string "if"
-    _ <- space1
-    cond <- parseSExpr
-    _ <- space1
-    thenExpr <- parseSExpr
-    _ <- space1
-    elseExpr <- parseSExpr
-    return $ SList [SSymbol "if", cond, thenExpr, elseExpr]
-
--- Parser for "lambda" expressions
-parseLambda :: Parser SExpr
-parseLambda = do
-    _ <- string "lambda"
-    _ <- space1
-    params <- parseList  -- Parse parameter list
-    _ <- space1
-    body <- parseSExpr   -- Parse lambda body
-    return $ SList [SSymbol "lambda", params, body]
+    
 
 -- Main parser for S-expressions
 parseSExpr :: Parser SExpr
 parseSExpr = try parseBool
-         <|> try parseIf
-         <|> try parseLambda
          <|> try parseInt
          <|> try parseSymbol
          <|> parseList
+
 
 -- Parser for multiple S-expressions
 parseSExprs :: Parser [SExpr]

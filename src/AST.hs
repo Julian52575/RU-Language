@@ -26,10 +26,9 @@ sexprToAST :: SExpr -> Maybe Ast
 sexprToAST (SInt n) = Just (AstInt n)
 
 -- Boolean literals
-sexprToAST (SSymbol "true") = Just (AstBool True)
-sexprToAST (SSymbol "false") = Just (AstBool False)
+sexprToAST (SBool b) = Just (AstBool b)
 
--- Symbols (variable names)
+-- Symbols (e.g., variables and function names)
 sexprToAST (SSymbol s) = Just (AstSym s)
 
 -- Define statement: (define var expr)
@@ -44,11 +43,14 @@ sexprToAST (SList [SSymbol "if", cond, thenExpr, elseExpr]) = do
     elseAst <- sexprToAST elseExpr
     Just (If condAst thenAst elseAst)
 
--- Lambda expression: (lambda (param1 param2 ...) body)
+-- Lambda expression: (lambda (params) body)
 sexprToAST (SList [SSymbol "lambda", SList params, body]) = do
-    paramNames <- mapM symbolToString params  -- Convert parameters to strings
+    paramNames <- mapM symbolToString params  -- Ensure parameters are symbols
     bodyAst <- sexprToAST body
     Just (Lambda paramNames bodyAst)
+  where
+    symbolToString (SSymbol s) = Just s
+    symbolToString _ = Nothing  -- Invalid if params aren't symbols
 
 -- Function call: (func arg1 arg2 ...)
 sexprToAST (SList (SSymbol func : args)) = do
@@ -57,9 +59,3 @@ sexprToAST (SList (SSymbol func : args)) = do
 
 -- Default case: any other S-expression that doesn't match known patterns
 sexprToAST _ = Nothing
-
--- Helper function to convert a symbol to a string (only allows valid symbols)
-symbolToString :: SExpr -> Maybe String
-symbolToString (SSymbol s) = Just s
-symbolToString _           = Nothing
-

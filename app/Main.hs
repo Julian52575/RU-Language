@@ -50,6 +50,7 @@ main = do
         [] -> do
             input <- getContents
             let parsedExprs = parse parseSExprs "" input
+            print parsedExprs
             case parsedExprs of
                 Left err -> putStrLn $ errorBundlePretty err
                 Right exprs -> do
