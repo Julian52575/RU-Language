@@ -1,4 +1,4 @@
-name: "release"
+name: "Create Release"
 on:
   push:
 
@@ -7,11 +7,16 @@ env:
   
 
 jobs:
-  pre-release:
+  release:
     name: "Release"
     runs-on: "ubuntu-latest"
 
     steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensure full history is fetched
+    
       - name: "Create build"
         run: |
           cd ${{ env.PROJECT_FOLDER }}
@@ -21,7 +26,7 @@ jobs:
           BIN_PATH=$DIR"/bin/"
           cp -r $BIN_PATH ..
           cd ..
-   
+  
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.MY_TOKEN }}"
