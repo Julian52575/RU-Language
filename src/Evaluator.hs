@@ -27,9 +27,7 @@ evalAST _ (AstInt n) = Just (AstInt n)
 evalAST _ (AstBool b) = Just (AstBool b)
 
 -- Looking up a symbol in the environment and evaluating it
-evalAST env (AstSym s) = do
-    val <- lookupEnv s env  -- Retrieve the associated expression from the environment
-    evalAST env val         -- Evaluate it when the symbol is used
+evalAST env (AstSym s) = lookupEnv s env
 
 -- Handling function calls with arguments
 evalAST env (Call func args) = do
@@ -42,19 +40,20 @@ evalAST env (Call func args) = do
         "/" -> if elem 0 (tail intArgs)  -- Check for division by zero
                 then Nothing
                 else return $ AstInt (foldl1 div intArgs)
-        _   -> Nothing
+        "<" -> return $ AstBool (intArgs !! 0 < intArgs !! 1)  -- Handle <
+        ">" -> return $ AstBool (intArgs !! 0 > intArgs !! 1)  -- Handle >
+        "<=" -> return $ AstBool (intArgs !! 0 <= intArgs !! 1) -- Handle <=
+        ">=" -> return $ AstBool (intArgs !! 0 >= intArgs !! 1) -- Handle >=
+        "=" -> return $ AstBool (intArgs !! 0 == intArgs !! 1)  -- Handle equality
+        _   -> Nothing  -- Unsupported function/operator
 
--- Evaluating a conditional expression (If)
+-- Handling conditional expressions (if condExpr thenExpr elseExpr)
 evalAST env (If condExpr thenExpr elseExpr) = do
     evalCond <- evalAST env condExpr        -- Evaluate the condition
     case evalCond of
-        AstBool True  -> evalAST env thenExpr  -- Evaluate the 'then' branch if true
-        AstBool False -> evalAST env elseExpr  -- Evaluate the 'else' branch if false
-        _             -> Nothing  -- Error if condition does not evaluate to a boolean
-
--- Evaluating a lambda function (you'll need to define how to handle this)
--- Here, we just return the Lambda as is, but in a real interpreter, you'd handle function calls
-evalAST _ lambda@(Lambda _ _) = Just lambda  -- Placeholder for now
+        AstBool True  -> evalAST env thenExpr  -- If true, evaluate the then branch
+        AstBool False -> evalAST env elseExpr  -- If false, evaluate the else branch
+        _             -> Nothing  -- Error if condition doesn't evaluate to a boolean
 
 -- Default case: if the AST does not match any of the above
 evalAST _ _ = Nothing
@@ -63,6 +62,7 @@ evalAST _ _ = Nothing
 getInt :: Ast -> Maybe Int
 getInt (AstInt n) = Just n
 getInt _ = Nothing
+
 
 -- Handles definitions and adds the variable to the environment
 evalDefine :: Ast -> Env -> Env
