@@ -1,0 +1,33 @@
+name: "release"
+on:
+  push:
+
+env:
+  PROJECT_FOLDER: test
+  
+
+jobs:
+  pre-release:
+    name: "Release"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - name: "Create build"
+        run: |
+          cd ${{ env.PROJECT_FOLDER }}
+          stack build
+
+          DIR=$(eval stack path --local-install-root)
+          BIN_PATH=$DIR"/bin/"
+          cp -r $BIN_PATH ..
+          cd ..
+   
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.MY_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            ${{ env.PROJECT_FOLDER }}
+            bin
