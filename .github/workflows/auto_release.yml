@@ -19,7 +19,7 @@ jobs:
         id: get_tag
         run: |
           date_abr=$(date +"%g%m%d-%H%M")
-          echo "::set-output date::$date_abr"
+          echo "::set-output name=date_abr::$date_abr"
 
       # Bump the version
 
