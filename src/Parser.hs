@@ -7,11 +7,14 @@ import AST (SExpr(..))
 
 type Parser = Parsec Void String
 
--- Parser for integers
+-- Parser for integers, including negative integers
 parseInt :: Parser SExpr
 parseInt = do
-    n <- some digitChar
-    return $ SInt (read n)
+    sign <- optional (char '-')  -- Optionally match a negative sign
+    digits <- some digitChar     -- Match one or more digits
+    let number = read digits     -- Convert the matched digits to a number
+    return $ SInt (if sign == Just '-' then -number else number)  -- Apply the negative sign if present
+
 
 -- Parser for boolean values (#t and #f)
 parseBool :: Parser SExpr

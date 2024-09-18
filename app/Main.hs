@@ -56,6 +56,7 @@ main = do
                 Right exprs -> do
                     let asts = map sexprToAST exprs
                     let validAsts = sequence asts -- Check if all S-expressions were successfully converted to ASTs
+                    print validAsts
                     case validAsts of
                         Nothing -> putStrLn "Error converting to AST"
                         Just astTrees -> evalMultiple astTrees emptyEnv -- Pass all valid ASTs for evaluation

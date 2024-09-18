@@ -2,6 +2,7 @@ module Evaluator (evalAST, getInt, emptyEnv, extendEnv, lookupEnv, evalDefine, E
 
 import AST (Ast(..))
 import qualified Data.Map as Map
+import Debug.Trace
 
 -- Type for the environment: a Map of variable to value
 type Env = Map.Map String Ast
@@ -21,52 +22,78 @@ lookupEnv = Map.lookup
 -- Evaluation of the AST with the environment
 evalAST :: Env -> Ast -> Maybe Ast
 -- Evaluating an integer literal
-evalAST _ (AstInt n) = Just (AstInt n)
+evalAST _ (AstInt n) = trace ("Evaluating integer: " ++ show n) $ Just (AstInt n)
 
 -- Evaluating a boolean literal
-evalAST _ (AstBool b) = Just (AstBool b)
+evalAST _ (AstBool b) = trace ("Evaluating boolean: " ++ show b) $ Just (AstBool b)
 
--- Looking up a symbol in the environment and evaluating it
-evalAST env (AstSym s) = lookupEnv s env
+-- Looking up a symbol in the local environment and evaluating it
+evalAST env (AstSym s) = 
+    trace ("Looking up symbol: " ++ s) $ 
+    case lookupEnv s env of
+        Just val -> trace ("Found symbol: " ++ s ++ " with value " ++ show val) $ Just val
+        Nothing  -> trace ("Symbol not found: " ++ s) Nothing
 
--- Handling function calls with arguments
+-- Appels de fonctions avec arguments
 evalAST env (Call func args) = do
-    evalArgs <- mapM (evalAST env) args  -- Evaluate all arguments
-    intArgs <- mapM getInt evalArgs      -- Convert them to integers if applicable
-    case func of
-        "+" -> return $ AstInt (sum intArgs)
-        "*" -> return $ AstInt (product intArgs)
-        "-" -> return $ AstInt (foldl1 (-) intArgs)
-        "/" -> if elem 0 (tail intArgs)  -- Check for division by zero
-                then Nothing
-                else return $ AstInt (foldl1 div intArgs)
-        "<" -> return $ AstBool (intArgs !! 0 < intArgs !! 1)  -- Handle <
-        ">" -> return $ AstBool (intArgs !! 0 > intArgs !! 1)  -- Handle >
-        "<=" -> return $ AstBool (intArgs !! 0 <= intArgs !! 1) -- Handle <=
-        ">=" -> return $ AstBool (intArgs !! 0 >= intArgs !! 1) -- Handle >=
-        "=" -> return $ AstBool (intArgs !! 0 == intArgs !! 1)  -- Handle equality
-        _   -> Nothing  -- Unsupported function/operator
+    -- Évaluer tous les arguments avant d'appeler la fonction
+    evalArgs <- mapM (evalAST env) args
+    -- Vérifier si la fonction est un opérateur builtin ou une fonction définie par l'utilisateur
+    case lookupEnv func env of
+        Just (Lambda params body) -> do
+            -- Vérifier la correspondance entre les paramètres et les arguments
+            if length params /= length evalArgs
+               then Nothing  -- Erreur si le nombre d'arguments ne correspond pas
+               else do
+                   -- Étendre l'environnement local avec les arguments évalués
+                   let localEnv = foldr (uncurry extendEnv) env (zip params evalArgs)
+                   evalAST localEnv body  -- Évaluer le corps de la fonction dans le nouvel environnement
+        _ -> evalBuiltinFunction func evalArgs  -- Sinon, tenter un appel de fonction builtin
 
--- Handling conditional expressions (if condExpr thenExpr elseExpr)
+
+-- Expressions conditionnelles (if CONDITION THEN ELSE)
 evalAST env (If condExpr thenExpr elseExpr) = do
-    evalCond <- evalAST env condExpr        -- Evaluate the condition
+    evalCond <- evalAST env condExpr  -- Évaluer la condition
     case evalCond of
-        AstBool True  -> evalAST env thenExpr  -- If true, evaluate the then branch
-        AstBool False -> evalAST env elseExpr  -- If false, evaluate the else branch
-        _             -> Nothing  -- Error if condition doesn't evaluate to a boolean
+        AstBool True  -> evalAST env thenExpr  -- Si vrai, évaluer la branche 'then'
+        AstBool False -> evalAST env elseExpr  -- Si faux, évaluer la branche 'else'
+        _             -> Nothing  -- Erreur si la condition n'évalue pas à un booléen
 
 -- Default case: if the AST does not match any of the above
 evalAST _ _ = Nothing
+
+-- Fonction pour évaluer les fonctions builtin (+, -, *, /)
+evalBuiltinFunction :: String -> [Ast] -> Maybe Ast
+evalBuiltinFunction func args = do
+    -- Convertir les arguments en entiers si applicable
+    intArgs <- mapM getInt args
+    case func of
+        "+"  -> return $ AstInt (sum intArgs)
+        "*"  -> return $ AstInt (product intArgs)
+        "-"  -> return $ AstInt (foldl1 (-) intArgs)
+        "/"  -> if elem 0 (tail intArgs)  -- Vérifier la division par zéro
+                then Nothing
+                else return $ AstInt (foldl1 div intArgs)
+        "<"  -> return $ AstBool (intArgs !! 0 < intArgs !! 1)
+        ">"  -> return $ AstBool (intArgs !! 0 > intArgs !! 1)
+        "<=" -> return $ AstBool (intArgs !! 0 <= intArgs !! 1)
+        ">=" -> return $ AstBool (intArgs !! 0 >= intArgs !! 1)
+        "="  -> return $ AstBool (intArgs !! 0 == intArgs !! 1)
+        _    -> Nothing  -- Fonction ou opérateur non supporté
 
 -- Function to get an integer from the AST
 getInt :: Ast -> Maybe Int
 getInt (AstInt n) = Just n
 getInt _ = Nothing
 
-
 -- Handles definitions and adds the variable to the environment
 evalDefine :: Ast -> Env -> Env
 evalDefine (Define var expr) env =
-    -- We store the unevaluated expression in the environment
-    extendEnv var expr env
+    trace ("Defining variable: " ++ var ++ " with expression: " ++ show expr ++ " in environment: " ++ show env) $
+    -- We store the evaluated expression (or Lambda) in the environment
+    case expr of
+        Lambda _ _ -> trace ("Storing Lambda for " ++ var) $ extendEnv var expr env  -- Store the lambda directly
+        _          -> case evalAST env expr of
+                        Just val -> trace ("Storing evaluated result for " ++ var ++ ": " ++ show val ++ " in environment: " ++ show env) $ extendEnv var val env  -- Store the evaluated result
+                        Nothing  -> trace ("Error evaluating definition for " ++ var) env
 evalDefine _ env = env
