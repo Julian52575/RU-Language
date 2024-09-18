@@ -7,28 +7,27 @@ env:
   RELEASE_NAME: interpretor
 
 jobs:
-  build:
-    name: Create Release
+  get_date:
     runs-on: ubuntu-latest
+    outputs:
+      date_abr: ${{ steps.getdate.outputs.date_abr }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-
-      # Get the latest tag
-      - name: Get date
-        id: get_tag
+        uses: actions/checkout@v4
+      - name: Get Date
+        id: getdate
         run: |
           date_abr=$(date +"%g%m%d-%H%M")
           echo "date_abr=${date_abr}" >> $GITHUB_OUTPUT
 
-      # Bump the version
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1.1.4
+  create_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: create-release
         env:
           VERSION: ${{ needs.get_date.outputs.date_abr }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        uses: actions/create-release@v1.1.4
         with:
           tag_name: ${{ env.VERSION }}
           release_name: Release ${{ env.VERSION }}
