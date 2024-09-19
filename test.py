@@ -54,8 +54,8 @@ def main():
     file_length = len(files)
 
     for i, file in enumerate(files):
-        file_path = dir_path + file
-        print(file_path)
+        file_path = dir_path + "/" + file
+        file_path = os.path.realpath(file_path)
         start = time.time()
         lisp_output = run_interpreter(f"./{lisp_interpreter}", file_path)
         end = time.time()
