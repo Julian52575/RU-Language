@@ -8,69 +8,57 @@ data SExpr
     deriving Show
 
 data Ast
-    = AstInt Int              -- Integer constant
-    | AstBool Bool            -- Boolean constant (e.g., #t or #f)
-    | AstSym String           -- Symbol
-    | AstList [Ast]           -- List of expressions (can represent Lisp lists)
-    | Define String Ast       -- Variable (or function) definition
-    | Call String [Ast]       -- Function call, with the function name and arguments
-    | Lambda [String] Ast     -- Lambda function, with a list of parameters and a body
-    | If Ast Ast Ast          -- Conditional structure (if CONDITION THEN ELSE)
-    | AstBuiltin String       -- Builtin functions like +, -, <, etc.
-    | CallLambda Ast [Ast]    -- Appel d'une lambda directement
+    = AstInt Int
+    | AstBool Bool
+    | AstSym String
+    | AstList [Ast]
+    | Define String Ast
+    | Call String [Ast]
+    | Lambda [String] Ast
+    | If Ast Ast Ast
+    | AstBuiltin String
+    | CallLambda Ast [Ast]
     deriving Show
 
+-- Function to convert SExpr to AST with error handling
 sexprToAST :: SExpr -> Maybe Ast
-
 sexprToAST (SInt n) = Just (AstInt n)
-
--- Boolean literals
 sexprToAST (SBool b) = Just (AstBool b)
-
--- Symbols (e.g., variables and function names)
 sexprToAST (SSymbol s) = Just (AstSym s)
 
--- Define statement: (define var expr) or (define (funcname param1 param2 ...) body)
 sexprToAST (SList [SSymbol "define", SSymbol var, expr]) = do
     astExpr <- sexprToAST expr
     Just (Define var astExpr)
 
--- Define a function: (define (funcname param1 param2 ...) body)
 sexprToAST (SList [SSymbol "define", SList (SSymbol funcname : params), body]) = do
-    paramNames <- mapM symbolToString params  -- Ensure parameters are symbols
+    paramNames <- mapM symbolToString params
     bodyAst <- sexprToAST body
     Just (Define funcname (Lambda paramNames bodyAst))
 
--- Conditional expression: (if cond thenExpr elseExpr)
 sexprToAST (SList [SSymbol "if", cond, thenExpr, elseExpr]) = do
     condAst <- sexprToAST cond
     thenAst <- sexprToAST thenExpr
     elseAst <- sexprToAST elseExpr
     Just (If condAst thenAst elseAst)
 
--- Lambda expression: (lambda (params) body)
 sexprToAST (SList [SSymbol "lambda", SList params, body]) = do
     paramNames <- mapM symbolToString params
     bodyAst <- sexprToAST body
     Just (Lambda paramNames bodyAst)
 
--- Function call: (func arg1 arg2 ...)
 sexprToAST (SList (SSymbol func : args)) = do
     astArgs <- mapM sexprToAST args
     Just (Call func astArgs)
 
--- Lambda call: ((lambda (params) body) arg1 arg2 ...)
 sexprToAST (SList (lambdaExpr : args)) = do
     funcAst <- sexprToAST lambdaExpr
     argAsts <- mapM sexprToAST args
     Just (CallLambda funcAst argAsts)
 
--- Handle general lists as AST lists
 sexprToAST (SList exprs) = do
-    astExprs <- mapM sexprToAST exprs  -- Convert all elements in the list
+    astExprs <- mapM sexprToAST exprs
     Just (AstList astExprs)
 
--- Helper function to convert S-expressions to strings (used in Lambda and Define)
 symbolToString :: SExpr -> Maybe String
 symbolToString (SSymbol s) = Just s
-symbolToString _ = Nothing  -- Invalid if params aren't symbols
+symbolToString _ = Nothing
