@@ -21,10 +21,10 @@ repl = do
 
 printResult :: Ast -> IO ()
 printResult (AstInt n) = print n        -- Print the integer value
-printResult (AstBool True) = putStrLn "T"   -- Common Lisp true
+printResult (AstBool True) = putStrLn "#t"   -- Common Lisp true
 printResult (AstBool False) = putStrLn "NIL"  -- Common Lisp false
 printResult (Lambda _ _) = putStrLn "#<procedure>" -- Print a lambda function
-printResult _ = return ()               -- Ignore unsupported or non-evaluating results
+printResult _ = putStrLn "Unsupported expression"  -- Handle unsupported cases
 
 
 -- Optimized evalMultiple function
@@ -51,13 +51,11 @@ main = do
         [] -> do
             input <- getContents
             let parsedExprs = parse parseSExprs "" input
-            print parsedExprs
             case parsedExprs of
                 Left err -> putStrLn $ errorBundlePretty err
                 Right exprs -> do
                     let asts = map sexprToAST exprs
                     let validAsts = sequence asts -- Check if all S-expressions were successfully converted to ASTs
-                    print validAsts
                     case validAsts of
                         Nothing -> putStrLn "Error converting to AST"
                         Just astTrees -> evalMultiple astTrees initEnv -- Pass all valid ASTs for evaluation

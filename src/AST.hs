@@ -1,13 +1,11 @@
 module AST (SExpr(..), Ast(..), sexprToAST) where
 
-
 data SExpr
     = SInt Int
     | SSymbol String
     | SList [SExpr]
     | SBool Bool
     deriving Show
-
 
 data Ast
     = AstInt Int              -- Integer constant
@@ -19,11 +17,11 @@ data Ast
     | Lambda [String] Ast     -- Lambda function, with a list of parameters and a body
     | If Ast Ast Ast          -- Conditional structure (if CONDITION THEN ELSE)
     | AstBuiltin String       -- Builtin functions like +, -, <, etc.
+    | CallLambda Ast [Ast]    -- Appel d'une lambda directement
     deriving Show
 
-
 sexprToAST :: SExpr -> Maybe Ast
--- Integer literals
+
 sexprToAST (SInt n) = Just (AstInt n)
 
 -- Boolean literals
@@ -52,7 +50,7 @@ sexprToAST (SList [SSymbol "if", cond, thenExpr, elseExpr]) = do
 
 -- Lambda expression: (lambda (params) body)
 sexprToAST (SList [SSymbol "lambda", SList params, body]) = do
-    paramNames <- mapM symbolToString params  -- Ensure parameters are symbols
+    paramNames <- mapM symbolToString params
     bodyAst <- sexprToAST body
     Just (Lambda paramNames bodyAst)
 
@@ -61,11 +59,18 @@ sexprToAST (SList (SSymbol func : args)) = do
     astArgs <- mapM sexprToAST args
     Just (Call func astArgs)
 
--- Default case: any other S-expression that doesn't match known patterns
-sexprToAST _ = Nothing
+-- Lambda call: ((lambda (params) body) arg1 arg2 ...)
+sexprToAST (SList (lambdaExpr : args)) = do
+    funcAst <- sexprToAST lambdaExpr
+    argAsts <- mapM sexprToAST args
+    Just (CallLambda funcAst argAsts)
+
+-- Handle general lists as AST lists
+sexprToAST (SList exprs) = do
+    astExprs <- mapM sexprToAST exprs  -- Convert all elements in the list
+    Just (AstList astExprs)
 
 -- Helper function to convert S-expressions to strings (used in Lambda and Define)
 symbolToString :: SExpr -> Maybe String
 symbolToString (SSymbol s) = Just s
 symbolToString _ = Nothing  -- Invalid if params aren't symbols
-    

@@ -7,6 +7,10 @@ import AST (SExpr(..))
 
 type Parser = Parsec Void String
 
+-- Helper to consume any leading spaces
+sc :: Parser ()
+sc = skipMany (char ' ' <|> char '\t' <|> char '\n')  -- Ignore spaces, tabs, and newlines
+
 -- Parser for integers, including negative integers
 parseInt :: Parser SExpr
 parseInt = do
@@ -14,7 +18,6 @@ parseInt = do
     digits <- some digitChar     -- Match one or more digits
     let number = read digits     -- Convert the matched digits to a number
     return $ SInt (if sign == Just '-' then -number else number)  -- Apply the negative sign if present
-
 
 -- Parser for boolean values (#t and #f)
 parseBool :: Parser SExpr
@@ -33,18 +36,20 @@ parseSymbol = do
 -- Parser for list expressions (Lisp-style lists)
 parseList :: Parser SExpr
 parseList = do
-    _ <- char '('              -- Match opening parenthesis
-    exprs <- sepBy parseSExpr space1  -- Parse multiple sub-expressions
-    _ <- char ')'              -- Match closing parenthesis
-    return $ SList exprs       -- Return a list of parsed expressions
+    _ <- char '('  -- Match opening parenthesis
+    sc  -- Consume any spaces after the opening parenthesis
+    exprs <- sepBy parseSExpr sc  -- Parse multiple sub-expressions, separated by spaces
+    sc  -- Consume any spaces before the closing parenthesis
+    _ <- char ')'  -- Match closing parenthesis
+    return $ SList exprs  -- Return a list of parsed expressions
 
 -- Main parser for S-expressions
 parseSExpr :: Parser SExpr
-parseSExpr = try parseBool
-         <|> try parseInt
-         <|> try parseSymbol
-         <|> parseList  -- Handle all expressions inside parentheses
+parseSExpr = sc *> (try parseBool
+                 <|> try parseInt
+                 <|> try parseSymbol
+                 <|> parseList) <* sc  -- Handle all expressions inside parentheses and spaces
 
 -- Parser for multiple S-expressions
 parseSExprs :: Parser [SExpr]
-parseSExprs = sepEndBy parseSExpr space1
+parseSExprs = sepEndBy parseSExpr sc  -- Handle multiple S-expressions, ignoring spaces
