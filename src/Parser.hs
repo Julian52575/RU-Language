@@ -27,7 +27,7 @@ parseBool = do
 -- Parser for symbols (e.g., variables, operators, and function names)
 parseSymbol :: Parser SExpr
 parseSymbol = do
-    s <- some (letterChar <|> oneOf "+-*/<=>")  -- Allow symbols and comparison operators
+    s <- some (letterChar <|> oneOf "+-*<=>?")  -- Allow symbols and comparison operators
     return $ SSymbol s
 
 -- Parser for list expressions (Lisp-style lists)

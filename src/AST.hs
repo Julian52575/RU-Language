@@ -18,6 +18,7 @@ data Ast
     | Call String [Ast]       -- Function call, with the function name and arguments
     | Lambda [String] Ast     -- Lambda function, with a list of parameters and a body
     | If Ast Ast Ast          -- Conditional structure (if CONDITION THEN ELSE)
+    | AstBuiltin String       -- Builtin functions like +, -, <, etc.
     deriving Show
 
 

@@ -3,7 +3,7 @@ module Main (main) where
 import System.Environment (getArgs)
 import Parser (parseSExprs)
 import AST (sexprToAST, Ast(..))
-import Evaluator (evalAST, emptyEnv, evalDefine, Env)
+import Evaluator (evalAST, initEnv, evalDefine, Env)
 import Text.Megaparsec (parse, errorBundlePretty)
 import Prelude
 
@@ -23,6 +23,7 @@ printResult :: Ast -> IO ()
 printResult (AstInt n) = print n        -- Print the integer value
 printResult (AstBool True) = putStrLn "T"   -- Common Lisp true
 printResult (AstBool False) = putStrLn "NIL"  -- Common Lisp false
+printResult (Lambda _ _) = putStrLn "#<procedure>" -- Print a lambda function
 printResult _ = return ()               -- Ignore unsupported or non-evaluating results
 
 
@@ -59,7 +60,7 @@ main = do
                     print validAsts
                     case validAsts of
                         Nothing -> putStrLn "Error converting to AST"
-                        Just astTrees -> evalMultiple astTrees emptyEnv -- Pass all valid ASTs for evaluation
+                        Just astTrees -> evalMultiple astTrees initEnv -- Pass all valid ASTs for evaluation
 
         ["--repl"] -> repl
 
