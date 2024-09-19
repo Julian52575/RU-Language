@@ -7,9 +7,9 @@ import AST (SExpr(..))
 
 type Parser = Parsec Void String
 
--- Helper to consume any leading spaces
+-- Use `space` from Megaparsec to handle spaces, tabs, and newlines
 sc :: Parser ()
-sc = skipMany (char ' ' <|> char '\t' <|> char '\n')  -- Ignore spaces, tabs, and newlines
+sc = space
 
 -- Parser for integers, including negative integers
 parseInt :: Parser SExpr
@@ -22,33 +22,31 @@ parseInt = do
 -- Parser for boolean values (#t and #f)
 parseBool :: Parser SExpr
 parseBool = do
-    b <- choice [string "#t", string "#f"]
-    return $ if b == "#t"
+    b <- choice [string "#t", string "#f"]  -- Match either "#t" or "#f"
+    return $ if b == "#t"                   -- Return SBool based on matched string
              then SBool True
              else SBool False
 
 -- Parser for symbols (e.g., variables, operators, and function names)
 parseSymbol :: Parser SExpr
-parseSymbol = do
-    s <- some (letterChar <|> oneOf "+-*<=>?")  -- Allow symbols and comparison operators
-    return $ SSymbol s
+parseSymbol = SSymbol <$> some (letterChar <|> oneOf "+-*<=>?")  -- Match symbols and operators
 
 -- Parser for list expressions (Lisp-style lists)
 parseList :: Parser SExpr
 parseList = do
-    _ <- char '('  -- Match opening parenthesis
-    sc  -- Consume any spaces after the opening parenthesis
+    _ <- char '('          -- Match opening parenthesis
+    sc                     -- Consume any spaces after the opening parenthesis
     exprs <- sepBy parseSExpr sc  -- Parse multiple sub-expressions, separated by spaces
-    sc  -- Consume any spaces before the closing parenthesis
-    _ <- char ')'  -- Match closing parenthesis
-    return $ SList exprs  -- Return a list of parsed expressions
+    sc                     -- Consume any spaces before the closing parenthesis
+    _ <- char ')'          -- Match closing parenthesis
+    return $ SList exprs    -- Return a list of parsed expressions
 
 -- Main parser for S-expressions
 parseSExpr :: Parser SExpr
-parseSExpr = sc *> (try parseBool
-                 <|> try parseInt
-                 <|> try parseSymbol
-                 <|> parseList) <* sc  -- Handle all expressions inside parentheses and spaces
+parseSExpr = sc *> (parseSymbol  -- Order parsers with simpler/frequent cases first
+                 <|> parseInt
+                 <|> parseBool
+                 <|> parseList) <* sc  -- Handle all expressions with proper whitespace management
 
 -- Parser for multiple S-expressions
 parseSExprs :: Parser [SExpr]
