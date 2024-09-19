@@ -13,8 +13,8 @@ class style():
 def run_interpreter(command, filename):
     """Runs an interpreter command and returns the output."""
     try:
-        result = subprocess.run([command, filename], capture_output=True, text=True)
-        return result.stdout.strip()
+        result = subprocess.run(f"{command} < {filename}", shell=True, capture_output=True, text=True)
+        return result.stdout.strip()[-1]
     except Exception as e:
         print(f"Error running {command}: {e}")
         sys.exit(1)
@@ -23,7 +23,7 @@ def run_chez_scheme(filename):
     """Runs Chez Scheme interpreter and returns the output."""
     try:
         chez_output = subprocess.run(
-            ["chez-scheme", "--quiet"],
+            ["scheme", "--quiet"],
             input=open(filename).read(),
             capture_output=True,
             text=True
@@ -34,35 +34,44 @@ def run_chez_scheme(filename):
         sys.exit(1)
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python compare.py <lisp-interpreter> <file-directory")
+    if len(sys.argv) != 2:
+        print("Usage: python compare.py <file-directory>")
         sys.exit(1)
 
-    lisp_interpreter = sys.argv[1]
-    dir_path = sys.argv[2]
+    dir_path = sys.argv[1]
+    exe_path = ".stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/my-lisp-interpreter-exe/my-lisp-interpreter-exe"
+
+    if not os.path.exists(exe_path):
+        print("Please build the project first.")
+        sys.exit(1)
+
+    lisp_interpreter = exe_path
 
     time_lisp = 0
     time_chez = 0
 
-    files = os.listdir(f".{dir_path}")
+    files = os.listdir(f"./{dir_path}")
     file_length = len(files)
 
     for i, file in enumerate(files):
+        file_path = dir_path + file
+        print(file_path)
         start = time.time()
-        lisp_output = run_interpreter(f"./{lisp_interpreter}", file)
+        lisp_output = run_interpreter(f"./{lisp_interpreter}", file_path)
         end = time.time()
         time_lisp += end - start
         start = time.time()
-        chez_output = run_chez_scheme(file)
+        chez_output = run_chez_scheme(file_path)
         end = time.time()
         time_chez += end - start
-        print(f"{i + 1}/{file_length}", end="")
         if lisp_output != chez_output:
-            print(style.RED + f"{file} failed")
+            print(style.RED + f"{i + 1}/{file_length} ", end="")
+            print(f"{file} failed")
         else:
-            print(style.GREEN + f"{file} passed")
+            print(style.GREEN + f"{i + 1}/{file_length} ", end="")
+            print(f"{file} passed")
         print(style.RESET)
-    print(f"Total time for {lisp_interpreter}: {time_lisp}")
+    print(f"Total time for {lisp_interpreter.split('/')[-1]}: {time_lisp}")
     print(f"Total time for Chez Scheme: {time_chez}")
 
 if __name__ == "__main__":
