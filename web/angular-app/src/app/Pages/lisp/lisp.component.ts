@@ -8,5 +8,7 @@ import { Component } from '@angular/core';
   styleUrl: './lisp.component.scss'
 })
 export class LispComponent {
-
+  public run() {
+    console.log('Running Lisp code');
+  }
 }
