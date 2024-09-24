@@ -11,6 +11,8 @@ env:
   CURRENT_BRANCH: Interpretor
   COMMIT_MSG: ${{ github.event.head_commit.message }}
   STACK_FOLDER: glados-lisp-interpretor
+  BENCHMARK_SCRIPT: ./test.py
+  EXAMPLE_FOLDER: test-files
 
 defaults:
   run:
@@ -32,6 +34,7 @@ jobs:
           cd ${{ env.STACK_FOLDER }}
           stack build
           stack test
+          ${{ BENCHMARK_SCRIPT }} ${{ EXAMPLE_FOLDER }}
 
   mirror:
     runs-on: ubuntu-latest
