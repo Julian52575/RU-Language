@@ -1,0 +1,64 @@
+name:                my-lisp-interpreter
+version:             0.1.0.0
+github:              "michelguillaume/my-lisp-interpreter"
+license:             BSD-3-Clause
+author:              "Guillaume Michel"
+maintainer:          "guillaume.michel@epitech.eu"
+copyright:           "2024"
+
+extra-source-files:
+- README.md
+- CHANGELOG.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/michelguillaume/my-lisp-interpreter#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- megaparsec >= 9.0 && < 10
+- containers
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+
+library:
+  source-dirs: src
+
+executables:
+  my-lisp-interpreter-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - my-lisp-interpreter
+
+tests:
+  my-lisp-interpreter-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - my-lisp-interpreter
+    - HUnit
+    - tasty
+    - tasty-hunit
