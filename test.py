@@ -14,7 +14,7 @@ def run_interpreter(command, filename):
     """Runs an interpreter command and returns the output."""
     try:
         result = subprocess.run(f"{command} < {filename}", shell=True, capture_output=True, text=True)
-        return result.stdout.strip()[-1]
+        return result.returncode, result.stdout.split()[-1]
     except Exception as e:
         print(f"Error running {command}: {e}")
         sys.exit(1)
@@ -27,8 +27,8 @@ def run_chez_scheme(filename):
             input=open(filename).read(),
             capture_output=True,
             text=True
-        ).stdout.strip()
-        return chez_output
+        )
+        return chez_output.returncode, chez_output.stdout.strip()
     except Exception as e:
         print(f"Error running Chez Scheme: {e}")
         sys.exit(1)
@@ -57,19 +57,19 @@ def main():
         file_path = dir_path + "/" + file
         file_path = os.path.realpath(file_path)
         start = time.time()
-        lisp_output = run_interpreter(f"./{lisp_interpreter}", file_path)
+        lisp_code, lisp_output = run_interpreter(f"./{lisp_interpreter}", file_path)
         end = time.time()
         time_lisp += end - start
         start = time.time()
-        chez_output = run_chez_scheme(file_path)
+        chez_code, chez_output = run_chez_scheme(file_path)
         end = time.time()
         time_chez += end - start
-        if lisp_output != chez_output:
-            print(style.RED + f"{i + 1}/{file_length} ", end="")
-            print(f"{file} failed")
-        else:
+        if lisp_code == chez_code and lisp_output == chez_output:
             print(style.GREEN + f"{i + 1}/{file_length} ", end="")
             print(f"{file} passed")
+        else:
+            print(style.RED + f"{i + 1}/{file_length} ", end="")
+            print(f"{file} failed")
         print(style.RESET)
     print(f"Total time for {lisp_interpreter.split('/')[-1]}: {time_lisp}")
     print(f"Total time for Chez Scheme: {time_chez}")
