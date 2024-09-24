@@ -13,11 +13,11 @@ class style():
 class Error():
     def __init__(self, filename, list_output, chez_output):
         self.filename = filename
-        self.list_output = list_output
+        self.lisp_output = list_output
         self.chez_output = chez_output
 
     def __str__(self):
-        return f"--------------------\nError in {self.filename}\nList output:\n{self.list_output}\nChez output:\n{self.chez_output}\n--------------------"
+        return f"--------------------\nError in {self.filename}\nLisp output:\n{self.lisp_output}\nChez output:\n{self.chez_output}\n--------------------"
 
 class Test():
     def __init__(self, interpretor, dir_path):
@@ -91,7 +91,10 @@ def execute_dir(test: Test, dir_path):
         else:
             print(style.RED + f"{test.file_index + 1}/{test.total_files} ", end="")
             print(f"{file} failed", end="")
-            test.file_errors.append(Error(file, lisp_res.stderr, chez_res.stdout))
+            if (lisp_code != 84):
+                test.file_errors.append(Error(file, lisp_res.stdout, chez_res.stdout))
+            else:
+                test.file_errors.append(Error(file, lisp_res.stdout, chez_res.stdout))
             test.returncode = 1
         test.file_index += 1
         print(style.RESET)
