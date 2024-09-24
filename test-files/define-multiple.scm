@@ -1,0 +1,6 @@
+(define league_of_legends 0)
+(define league_of_legends 1)
+(define league_of_legends 2)
+(define league_of_legends 3)
+(define league_of_legends 4)
+(define league_of_legends 5)
