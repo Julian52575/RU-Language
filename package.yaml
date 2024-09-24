@@ -59,3 +59,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - my-lisp-interpreter
+    - HUnit
+    - tasty
+    - tasty-hunit

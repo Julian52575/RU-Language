@@ -1,6 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-
-module Parser (parseSExpr, parseSExprs, Parser) where
+module Parser (parseSExpr, parseSExprs, Parser, parseInt, parseBool, parseSymbol, parseList) where
 
 import Text.Megaparsec
 import Text.Megaparsec.Char

@@ -10,7 +10,7 @@ data SExpr
     | SSymbol String
     | SList [SExpr]
     | SBool Bool
-    deriving Show
+    deriving (Eq, Show)
 
 data Ast
     = AstInt Int
