@@ -90,6 +90,22 @@ testSExprToASTDefine :: TestTree
 testSExprToASTDefine = testCase "Define SExpr to AST" $
   sexprToAST (SList [SSymbol "define", SSymbol "x", SInt 42]) @?= Right (Define "x" (AstInt 42))
 
+testSExprToASTDefineFunction :: TestTree
+testSExprToASTDefineFunction = testCase "Define Function SExpr to AST" $
+  sexprToAST (SList [SSymbol "define", SList [SSymbol "f", SSymbol "x"], SInt 42]) @?= Right (Define "f" (Lambda ["x"] (AstInt 42)))
+
+testSExprToASTIf :: TestTree
+testSExprToASTIf = testCase "If SExpr to AST" $
+  sexprToAST (SList [SSymbol "if", SBool True, SInt 42, SInt 0]) @?= Right (If (AstBool True) (AstInt 42) (AstInt 0))
+
+testSExprToASTLambda :: TestTree
+testSExprToASTLambda = testCase "Lambda SExpr to AST" $
+  sexprToAST (SList [SSymbol "lambda", SList [SSymbol "x"], SInt 42]) @?= Right (Lambda ["x"] (AstInt 42))
+
+testSExprToASTLambdaMultipleArgs :: TestTree
+testSExprToASTLambdaMultipleArgs = testCase "Lambda SExpr to AST with multiple args" $
+  sexprToAST (SList [SSymbol "lambda", SList [SSymbol "x", SSymbol "y"], SInt 42]) @?= Right (Lambda ["x", "y"] (AstInt 42))
+
 -- Symbol to String Tests
 testSymbolToString :: TestTree
 testSymbolToString = testCase "Symbol to String" $
@@ -132,6 +148,10 @@ main = defaultMain $ testGroup "S-Expression Tests"
       , testSExprToASTBoolFalse
       , testSExprToASTList
       , testSExprToASTDefine
+      , testSExprToASTDefineFunction
+      , testSExprToASTIf
+      , testSExprToASTLambda
+      , testSExprToASTLambdaMultipleArgs
       ]
   , testGroup "Symbol to String"
       [ testSymbolToString
