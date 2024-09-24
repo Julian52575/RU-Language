@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       AST
+      Builtin
       Evaluator
       Parser
   other-modules:
