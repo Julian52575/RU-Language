@@ -57,7 +57,7 @@ jobs:
           apt-get update -y
           apt-get upgrade -y
           apt-get install -y python3.10
-          python3 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
+          python3.10 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
         
   mirror:
     runs-on: ubuntu-latest
