@@ -36,17 +36,34 @@ jobs:
       - name: unit test
         run:
           stack test --allow-different-user
+
+  run-benchmark:
+    runs-on: ubuntu-latest
+    container:
+      image:  haskell:slim-bullseye
+      options: --user="root"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+        timeout-minutes: 5
+      - run:
+          chown -R $(id -un):$(id -gn) ~ #https://github.com/commercialhaskell/stack/issues/2187
+      - name: build
+        run:
+          stack build --allow-different-user
       - name: benchmark tests
         run: |
           apt-get update -y
           apt-get upgrade -y
           apt-get install -y python3.10
           ./${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
-          
+        
   mirror:
     runs-on: ubuntu-latest
     needs:
       -  run_tests
+      -  run-benchmark
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
