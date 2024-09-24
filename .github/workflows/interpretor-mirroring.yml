@@ -10,8 +10,7 @@ env:
   TARGET_BRANCH: Interpretor-release
   CURRENT_BRANCH: Interpretor
   COMMIT_MSG: ${{ github.event.head_commit.message }}
-  STACK_FOLDER: glados-lisp-interpretor
-  BENCHMARK_SCRIPT: ./test.py
+  BENCHMARK_SCRIPT: test.py
   EXAMPLE_FOLDER: test-files
 
 defaults:
@@ -31,10 +30,9 @@ jobs:
         timeout-minutes: 5
       - run: |
           chown -R $(id -un):$(id -gn) ~ #https://github.com/commercialhaskell/stack/issues/2187
-          cd ${{ env.STACK_FOLDER }}
           stack build
           stack test
-          ${{ BENCHMARK_SCRIPT }} ${{ EXAMPLE_FOLDER }}
+          ./${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
 
   mirror:
     runs-on: ubuntu-latest
