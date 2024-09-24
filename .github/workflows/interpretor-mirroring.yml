@@ -30,8 +30,8 @@ jobs:
         timeout-minutes: 5
       - run: |
           chown -R $(id -un):$(id -gn) ~ #https://github.com/commercialhaskell/stack/issues/2187
-          stack build
-          stack test
+          stack build --allow-different-user
+          stack test --allow-different-user
           ./${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
 
   mirror:
