@@ -38,8 +38,11 @@ jobs:
           stack test --allow-different-user
       - name: benchmark tests
         run:
+          apt-get update -y
+          apt-get upgrade -y
+          apt-get install -y python3.10-minimal
           ./${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
-
+          
   mirror:
     runs-on: ubuntu-latest
     needs:
