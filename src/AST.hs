@@ -1,6 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 
-module AST (SExpr(..), Ast(..), sexprToAST) where
+module AST (SExpr(..), Ast(..), sexprToAST, symbolToString) where
 
 data SExpr
     = SInt Int
@@ -20,7 +20,7 @@ data Ast
     | If Ast Ast Ast
     | AstBuiltin String
     | CallLambda Ast [Ast]
-    deriving Show
+    deriving (Eq, Show)
 
 -- Function to convert SExpr to AST with error handling using Either
 sexprToAST :: SExpr -> Either String Ast
