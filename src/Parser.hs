@@ -42,6 +42,11 @@ parseList = SList <$> (symbol "(" *> sepBy parseSExpr sc <* symbol ")")
 parseSExpr :: Parser SExpr
 parseSExpr = lexeme (parseSymbol <|> parseInt <|> parseBool <|> parseList)
 
+{-
+parseSExpr :: Parser SExpr
+parseSExpr = lexeme (parseSymbol <|> parseInt <|> parseBool <|> parseList) <|> return (SList [])
+-}
+
 -- Parser for multiple S-expressions
 parseSExprs :: Parser [SExpr]
 parseSExprs = sepEndBy parseSExpr sc
