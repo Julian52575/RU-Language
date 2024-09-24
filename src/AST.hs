@@ -1,6 +1,6 @@
 module AST (SExpr(..), Ast(..), sexprToAST) where
 
--- List of reserved keywords
+-- List of reserved keywords (without operators like '+', '-', etc.)
 reservedKeywords :: [String]
 reservedKeywords = ["define", "lambda", "if", "eq?", "#t", "#f"]
 
@@ -38,23 +38,24 @@ sexprToAST (SSymbol s)
 
 -- Handle 'define' expressions
 sexprToAST (SList [SSymbol "define", SSymbol var, expr]) = 
-    Define var <$> sexprToAST expr
+    sexprToAST expr >>= \ast ->
+    Right $ Define var ast
 
 -- Handle function definitions like (define (funcname params) body)
-sexprToAST (SList [SSymbol "define", SList (SSymbol funcname : params), body]) = do
-    paramNames <- mapM symbolToString params
-    bodyAst <- sexprToAST body
-    return $ Define funcname (Lambda paramNames bodyAst)
+sexprToAST (SList [SSymbol "define", SList (SSymbol funcname : params), body]) =
+    mapM symbolToString params >>= \paramNames ->
+    sexprToAST body >>= \bodyAst ->
+    Right $ Define funcname (Lambda paramNames bodyAst)
 
 -- Handle 'if' expressions
 sexprToAST (SList [SSymbol "if", cond, thenExpr, elseExpr]) = 
     If <$> sexprToAST cond <*> sexprToAST thenExpr <*> sexprToAST elseExpr
 
 -- Handle lambda expressions
-sexprToAST (SList [SSymbol "lambda", SList params, body]) = do
-    paramNames <- mapM symbolToString params
-    bodyAst <- sexprToAST body
-    return $ Lambda paramNames bodyAst
+sexprToAST (SList [SSymbol "lambda", SList params, body]) =
+    mapM symbolToString params >>= \paramNames ->
+    sexprToAST body >>= \bodyAst ->
+    Right $ Lambda paramNames bodyAst
 
 -- Handle function calls, including built-in operators
 sexprToAST (SList (SSymbol func : args)) 
@@ -62,10 +63,10 @@ sexprToAST (SList (SSymbol func : args))
     | otherwise = Call func <$> mapM sexprToAST args
 
 -- Handle lambda applications
-sexprToAST (SList (lambdaExpr : args)) = do
-    funcAst <- sexprToAST lambdaExpr
-    argAsts <- mapM sexprToAST args
-    return $ CallLambda funcAst argAsts
+sexprToAST (SList (lambdaExpr : args)) =
+    sexprToAST lambdaExpr >>= \funcAst ->
+    mapM sexprToAST args >>= \argAsts ->
+    Right $ CallLambda funcAst argAsts
 
 -- Handle lists of expressions
 sexprToAST (SList exprs) = 
