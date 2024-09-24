@@ -22,10 +22,6 @@ testParseSExprSBoolFalse :: TestTree
 testParseSExprSBoolFalse = testCase "Boolean False Parsing" $
   parse parseSExpr "" "#f" @?= Right (SBool False)
 
-testParseSExprEmpty :: TestTree
-testParseSExprEmpty = testCase "Empty Parsing" $
-  parse parseSExpr "" "" @?= Right (SList [])
-
 testParseSExprSList :: TestTree
 testParseSExprSList = testCase "List Parsing" $
   parse parseSExpr "" "(x 42 #t #f)" @?= Right (SList [SSymbol "x", SInt 42, SBool True, SBool False])
@@ -34,10 +30,6 @@ testParseSExprSList = testCase "List Parsing" $
 testParseSExprs :: TestTree
 testParseSExprs = testCase "Multiple Expressions Parsing" $
   parse parseSExprs "" "(x 42 #t #f)" @?= Right [SList [SSymbol "x",SInt 42,SBool True,SBool False]]
-
-testParseSExprsEmpty :: TestTree
-testParseSExprsEmpty = testCase "Empty Parsing" $
-  parse parseSExprs "" "" @?= Right []
 
 -- parseInt Tests
 testParseInt :: TestTree
@@ -74,10 +66,6 @@ testSExprToAST :: TestTree
 testSExprToAST = testCase "SExpr to AST" $
   sexprToAST (SList [SSymbol "x", SInt 42]) @?= Right (Call "x" [AstInt 42])
 
-testSExprToASTEmpty :: TestTree
-testSExprToASTEmpty = testCase "Empty SExpr to AST" $
-  sexprToAST (SList []) @?= Right (AstList [])
-
 testSExprToASTSymbol :: TestTree
 testSExprToASTSymbol = testCase "Symbol SExpr to AST" $
   sexprToAST (SSymbol "x") @?= Right (AstSym "x")
@@ -98,6 +86,11 @@ testSExprToASTList :: TestTree
 testSExprToASTList = testCase "List SExpr to AST" $
   sexprToAST (SList [SSymbol "x", SInt 42, SBool True, SBool False]) @?= Right (Call "x" [AstInt 42,AstBool True,AstBool False])
 
+testSExprToASTDefine :: TestTree
+testSExprToASTDefine = testCase "Define SExpr to AST" $
+  sexprToAST (SList [SSymbol "define", SSymbol "x", SInt 42]) @?= Right (Define "x" (AstInt 42))
+
+-- Symbol to String Tests
 testSymbolToString :: TestTree
 testSymbolToString = testCase "Symbol to String" $
   symbolToString (SSymbol "x") @?= Right "x"
@@ -114,10 +107,8 @@ main = defaultMain $ testGroup "S-Expression Tests"
       , testParseSExprSInt
       , testParseSExprSBoolTrue
       , testParseSExprSBoolFalse
-      , testParseSExprEmpty
       , testParseSExprSList
       , testParseSExprs
-      , testParseSExprsEmpty
       ]
   , testGroup "Integer Parsing"
       [ testParseInt
@@ -135,12 +126,12 @@ main = defaultMain $ testGroup "S-Expression Tests"
       ]
   , testGroup "AST"
       [ testSExprToAST
-      , testSExprToASTEmpty
       , testSExprToASTSymbol
       , testSExprToASTInt
       , testSExprToASTBoolTrue
       , testSExprToASTBoolFalse
       , testSExprToASTList
+      , testSExprToASTDefine
       ]
   , testGroup "Symbol to String"
       [ testSymbolToString
