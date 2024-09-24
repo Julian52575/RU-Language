@@ -40,7 +40,7 @@ jobs:
         run: |
           apt-get update -y
           apt-get upgrade -y
-          apt-get install -y python3.10-minimal
+          apt-get install -y python3.10
           ./${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
           
   mirror:
