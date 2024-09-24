@@ -37,7 +37,7 @@ jobs:
         run:
           stack test --allow-different-user
       - name: benchmark tests
-        run:
+        run: |
           apt-get update -y
           apt-get upgrade -y
           apt-get install -y python3.10-minimal
