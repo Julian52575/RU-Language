@@ -2,6 +2,9 @@
 
 module AST (SExpr(..), Ast(..), sexprToAST) where
 
+reservedKeywords :: [String]
+reservedKeywords = ["define", "lambda", "if", "eq?", "+", "-", "*", "div", "mod", "<", ">", "<=", ">=", "#t", "#f"]
+
 data SExpr
     = SInt Int
     | SSymbol String
@@ -26,7 +29,10 @@ data Ast
 sexprToAST :: SExpr -> Either String Ast
 sexprToAST (SInt n) = Right (AstInt n)
 sexprToAST (SBool b) = Right (AstBool b)
-sexprToAST (SSymbol s) = Right (AstSym s)
+sexprToAST (SSymbol s) = 
+    if s `elem` reservedKeywords
+    then Left $ "Error: '" ++ s ++ "' is a reserved keyword and cannot be used as a variable."
+    else Right (AstSym s)
 
 sexprToAST (SList [SSymbol "define", SSymbol var, expr]) = 
     Define var <$> sexprToAST expr
