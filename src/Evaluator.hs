@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 module Evaluator (evalAST, initEnv, evalDefine, Env) where
 
 import AST (Ast(..))
@@ -9,7 +10,7 @@ type Env = Map.Map String Ast
 emptyEnv :: Env
 emptyEnv = Map.empty
 
--- Initialiser l'environnement avec les fonctions builtins
+-- Initialize the environment with built-in functions
 initEnv :: Env
 initEnv = foldr (uncurry extendEnv) emptyEnv builtinFunctions
   where
@@ -26,83 +27,71 @@ initEnv = foldr (uncurry extendEnv) emptyEnv builtinFunctions
         , ("eq?", AstBuiltin "eq?")
         ]
 
--- Étendre l'environnement
+-- Extend the environment by adding a new binding
 extendEnv :: String -> Ast -> Env -> Env
 extendEnv = Map.insert
 
--- Rechercher une variable dans l'environnement
+-- Look up a variable in the environment
 lookupEnv :: String -> Env -> Either String Ast
-lookupEnv sym env = case Map.lookup sym env of
-    Nothing -> Left $ "Error: variable '" ++ sym ++ "' is not bound."
-    Just val -> Right val
+lookupEnv sym = maybe (Left $ "Error: variable '" ++ sym ++ "' is not bound.") Right . Map.lookup sym
 
--- Appliquer une lambda avec gestion d'erreur
+-- Helper function to expect a boolean value
+expectBool :: Ast -> Either String Bool
+expectBool (AstBool b) = Right b
+expectBool _ = Left "Error: condition in 'if' must evaluate to a boolean."
+
+-- Apply a lambda function with error handling
 applyLambda :: Env -> [String] -> Ast -> [Ast] -> Either String Ast
-applyLambda env params body args = 
-    if length params /= length args
-    then Left "Error: incorrect number of arguments."
-    else evalAST (foldr (uncurry extendEnv) env (zip params args)) body
+applyLambda env params body args
+    | length params /= length args = Left "Error: incorrect number of arguments."
+    | otherwise = let !newEnv = Map.union (Map.fromList (zip params args)) env
+                  in evalAST newEnv body
 
--- Fonction d'évaluation
+-- Helper to apply a function (built-in or lambda)
+applyFunction :: Env -> Ast -> [Ast] -> Either String Ast
+applyFunction _ (AstBuiltin op) args = evalBuiltinFunction op args
+applyFunction env (Lambda params body) args = applyLambda env params body args
+applyFunction _ _ _ = Left "Error: trying to call a non-function."
+
+-- Evaluation function
 evalAST :: Env -> Ast -> Either String Ast
 evalAST _ (AstInt n) = Right (AstInt n)
 evalAST _ (AstBool b) = Right (AstBool b)
 evalAST env (AstSym s) = lookupEnv s env
 
--- Évaluer un appel de fonction
-evalAST env (Call func args) = do
-    evalArgs <- mapM (evalAST env) args
-    case lookupEnv func env of
-        Right (AstBuiltin op) -> evalBuiltinFunction op evalArgs
-        Right (Lambda params body) -> applyLambda env params body evalArgs
-        _ -> Left $ "Function not found: " ++ func
+-- Evaluate a function call
+evalAST env (Call func args) = 
+    mapM (evalAST env) args >>= \evalArgs ->
+    lookupEnv func env >>= \funcAst ->
+    applyFunction env funcAst evalArgs
 
--- Évaluer un appel de lambda anonyme
-evalAST env (CallLambda (Lambda params body) args) = do
-    evalArgs <- mapM (evalAST env) args
-    applyLambda env params body evalArgs
+-- Evaluate an anonymous lambda call
+evalAST env (CallLambda (Lambda params body) args) = 
+    mapM (evalAST env) args >>= applyLambda env params body
 
--- Cas où CallLambda ne contient pas de Lambda, retourne une erreur
+-- Error when trying to call a non-lambda expression as a lambda
 evalAST _ (CallLambda _ _) = Left "Error: trying to call a non-lambda expression."
 
--- Évaluer une liste d'expressions (AstList)
-evalAST env (AstList exprs) = do
-    evalResults <- mapM (evalAST env) exprs
-    return $ AstList evalResults
+-- Evaluate a list of expressions (AstList)
+evalAST env (AstList exprs) = AstList <$> mapM (evalAST env) exprs
 
--- Évaluer une fonction lambda
+-- Evaluate a lambda function
 evalAST _ (Lambda params body) = Right (Lambda params body)
 
--- Évaluer une définition (Define)
-evalAST env (Define var expr) = do
-    val <- evalAST env expr
-    return $ Define var val
+-- Evaluate a definition (Define)
+evalAST env (Define var expr) = 
+    evalAST env expr >>= \val -> Right (Define var val)
 
--- Évaluer une condition (If)
-evalAST env (If condExpr thenExpr elseExpr) = do
-    evalCond <- evalAST env condExpr
-    case evalCond of
-        AstBool True  -> evalAST env thenExpr
-        AstBool False -> evalAST env elseExpr
-        _ -> Left "Error: condition in 'if' must evaluate to a boolean."
+-- Evaluate a condition (If)
+evalAST env (If condExpr thenExpr elseExpr) = 
+    evalAST env condExpr >>= expectBool >>= \condResult ->
+    evalAST env (if condResult then thenExpr else elseExpr)
 
--- Gérer le cas des AstBuiltin directement (par sécurité)
+-- Handle the case where an AstBuiltin is evaluated directly (safety check)
 evalAST _ (AstBuiltin _) = Left "Error: built-in function cannot be evaluated directly."
 
-
--- Fonction d'évaluation des définitions
-{- 
+-- Evaluation function for definitions
 evalDefine :: Ast -> Env -> Either String Env
-evalDefine (Define var expr) env = case expr of
-    Lambda _ _ -> Right $ extendEnv var expr env
-    _ -> case evalAST env expr of
-        Right val -> Right $ extendEnv var val env
-        Left err  -> Left err
-evalDefine _ env = Right env
--}
-
-evalDefine :: Ast -> Env -> Either String Env
-evalDefine (Define var expr) env = case evalAST env expr of
-    Right val -> Right $ extendEnv var val env
-    Left err  -> Left err
+evalDefine (Define var expr) env = 
+    evalAST env expr >>= \val -> Right $ extendEnv var val env
 evalDefine _ env = Right env
