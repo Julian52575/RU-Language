@@ -1,6 +1,6 @@
 module AST (SExpr(..), Ast(..), sexprToAST) where
 
--- List of reserved keywords (without operators like '+', '-', etc.)
+-- List of reserved keywords
 reservedKeywords :: [String]
 reservedKeywords = ["define", "lambda", "if", "eq?", "#t", "#f"]
 
