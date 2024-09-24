@@ -3,6 +3,7 @@ module Main (main) where
 import System.Environment (getArgs)
 import System.Exit (exitWith, ExitCode(..))
 import Control.Exception (catch, IOException)
+import System.IO (stderr, hPutStrLn)
 import Parser (parseSExprs)
 import AST (sexprToAST, Ast(..))
 import Evaluator (evalAST, initEnv, evalDefine, Env)
@@ -19,11 +20,11 @@ repl env = do
         else do
             let parsedExpr = parse parseSExprs "" input
             case parsedExpr of
-                Left err -> putStrLn $ "Parsing error: " ++ errorBundlePretty err
+                Left err -> hPutStrLn stderr $ "Parsing error: " ++ errorBundlePretty err
                 Right expr -> do
                     let asts = mapM sexprToAST expr
                     case asts of
-                        Left err -> putStrLn $ "Error converting to AST: " ++ err
+                        Left err -> hPutStrLn stderr $ "Error converting to AST: " ++ err
                         Right astTrees -> mapM_ (evalAndPrint True env) astTrees -- True indicates REPL mode
             repl env
 
@@ -32,7 +33,7 @@ evalAndPrint :: Bool -> Env -> Ast -> IO ()
 evalAndPrint isRepl env expr = 
     case evalAST env expr of
         Left err -> do
-            putStrLn $ "Error: " ++ err
+            hPutStrLn stderr $ "Error: " ++ err
             if not isRepl then exitWith (ExitFailure 84) else return () -- Exit with 84 if not in REPL mode
         Right result -> printResult result
 
@@ -52,13 +53,13 @@ evalMultiple isRepl (expr:rest) env = do
         Define var defExpr -> do
             case evalDefine (Define var defExpr) env of
                 Left err -> do
-                    putStrLn $ "Error: " ++ err
+                    hPutStrLn stderr $ "Error: " ++ err
                     if not isRepl then exitWith (ExitFailure 84) else return ()
                 Right newEnv -> evalMultiple isRepl rest newEnv
         _ -> do
             case evalAST env expr of
                 Left err -> do
-                    putStrLn $ "Error evaluating expression: " ++ err
+                    hPutStrLn stderr $ "Error evaluating expression: " ++ err
                     if not isRepl then exitWith (ExitFailure 84) else return ()
                 Right result -> printResult result
             evalMultiple isRepl rest env
@@ -72,11 +73,11 @@ runMain = do
             input <- getContents
             let parsedExprs = parse parseSExprs "" input
             case parsedExprs of
-                Left err -> putStrLn (errorBundlePretty err) >> exitWith (ExitFailure 84)
+                Left err -> hPutStrLn stderr (errorBundlePretty err) >> exitWith (ExitFailure 84)
                 Right exprs -> do
                     let asts = mapM sexprToAST exprs  -- Evaluate expressions to AST
                     case asts of
-                        Left err -> putStrLn ("Error converting to AST: " ++ err) >> exitWith (ExitFailure 84)
+                        Left err -> hPutStrLn stderr ("Error converting to AST: " ++ err) >> exitWith (ExitFailure 84)
                         Right astTrees -> evalMultiple False astTrees initEnv -- False indicates non-REPL mode
         ["--repl"] -> repl initEnv
         [filename] -> do
@@ -84,17 +85,17 @@ runMain = do
             input <- readFile filename
             let parsedExprs = parse parseSExprs "" input
             case parsedExprs of
-                Left err -> putStrLn (errorBundlePretty err) >> exitWith (ExitFailure 84)
+                Left err -> hPutStrLn stderr (errorBundlePretty err) >> exitWith (ExitFailure 84)
                 Right exprs -> do
                     let asts = mapM sexprToAST exprs  -- Evaluate expressions to AST
                     case asts of
-                        Left err -> putStrLn ("Error converting to AST: " ++ err) >> exitWith (ExitFailure 84)
+                        Left err -> hPutStrLn stderr ("Error converting to AST: " ++ err) >> exitWith (ExitFailure 84)
                         Right astTrees -> evalMultiple False astTrees initEnv -- False indicates non-REPL mode
-        _ -> putStrLn "Usage: <program> [--repl | filename]"
+        _ -> hPutStrLn stderr "Usage: <program> [--repl | filename]"
 
 -- Error handler to catch IO exceptions and exit with code 84
 handler :: IOException -> IO ()
-handler _ = putStrLn "Error: IO Exception occurred." >> exitWith (ExitFailure 84)
+handler _ = hPutStrLn stderr "Error: IO Exception occurred." >> exitWith (ExitFailure 84)
 
 -- Main function with error handling
 main :: IO ()
