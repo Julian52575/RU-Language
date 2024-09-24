@@ -28,10 +28,16 @@ jobs:
         with:
           fetch-depth: 0
         timeout-minutes: 5
-      - run: |
+      - run:
           chown -R $(id -un):$(id -gn) ~ #https://github.com/commercialhaskell/stack/issues/2187
+      - name: build
+        run:
           stack build --allow-different-user
+      - name: unit test
+        run:
           stack test --allow-different-user
+      - name: benchmark tests
+        run:
           ./${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
 
   mirror:
