@@ -1,6 +1,6 @@
 module AST (SExpr(..), Ast(..), sexprToAST) where
 
--- List of reserved keywords (without operators like '+', '-', etc.)
+-- List of reserved keywords
 reservedKeywords :: [String]
 reservedKeywords = ["define", "lambda", "if", "eq?", "#t", "#f"]
 
@@ -28,6 +28,10 @@ data Ast
     | CallLambda Ast [Ast]
     deriving Show
 
+-- General helper for handling lists of SExprs as AST
+mapSExprToAST :: [SExpr] -> Either String [Ast]
+mapSExprToAST = mapM sexprToAST
+
 -- Function to convert SExpr to AST with error handling using Either
 sexprToAST :: SExpr -> Either String Ast
 sexprToAST (SInt n) = Right (AstInt n)
@@ -38,14 +42,12 @@ sexprToAST (SSymbol s)
 
 -- Handle 'define' expressions
 sexprToAST (SList [SSymbol "define", SSymbol var, expr]) = 
-    sexprToAST expr >>= \ast ->
-    Right $ Define var ast
+    Define var <$> sexprToAST expr
 
 -- Handle function definitions like (define (funcname params) body)
 sexprToAST (SList [SSymbol "define", SList (SSymbol funcname : params), body]) =
-    mapM symbolToString params >>= \paramNames ->
-    sexprToAST body >>= \bodyAst ->
-    Right $ Define funcname (Lambda paramNames bodyAst)
+    Lambda <$> mapM symbolToString params <*> sexprToAST body >>= \lambda ->
+    Right $ Define funcname lambda
 
 -- Handle 'if' expressions
 sexprToAST (SList [SSymbol "if", cond, thenExpr, elseExpr]) = 
@@ -53,26 +55,22 @@ sexprToAST (SList [SSymbol "if", cond, thenExpr, elseExpr]) =
 
 -- Handle lambda expressions
 sexprToAST (SList [SSymbol "lambda", SList params, body]) =
-    mapM symbolToString params >>= \paramNames ->
-    sexprToAST body >>= \bodyAst ->
-    Right $ Lambda paramNames bodyAst
+    Lambda <$> mapM symbolToString params <*> sexprToAST body
 
 -- Handle function calls, including built-in operators
-sexprToAST (SList (SSymbol func : args)) 
-    | func `elem` builtinOperators = Call func <$> mapM sexprToAST args
-    | otherwise = Call func <$> mapM sexprToAST args
+sexprToAST (SList (SSymbol func : args))
+    | func `elem` builtinOperators = Call func <$> mapSExprToAST args
+    | otherwise = Call func <$> mapSExprToAST args
 
 -- Handle lambda applications
 sexprToAST (SList (lambdaExpr : args)) =
-    sexprToAST lambdaExpr >>= \funcAst ->
-    mapM sexprToAST args >>= \argAsts ->
-    Right $ CallLambda funcAst argAsts
+    CallLambda <$> sexprToAST lambdaExpr <*> mapSExprToAST args
 
 -- Handle lists of expressions
-sexprToAST (SList exprs) = 
-    AstList <$> mapM sexprToAST exprs
+sexprToAST (SList exprs) = AstList <$> mapSExprToAST exprs
 
 -- Helper function to convert SExpr to a valid string (for parameters)
 symbolToString :: SExpr -> Either String String
 symbolToString (SSymbol s) = Right s
 symbolToString _ = Left "Expected a symbol"
+
