@@ -84,8 +84,7 @@ def execute_dir(test: Test, dir_path):
         start = time.time()
         chez_code, chez_output, chez_res = run_chez_scheme(real_path)
         end = time.time()
-        test.time_chez += end - start 
-        print(lisp_res, chez_res)
+        test.time_chez += end - start
         if (lisp_code == 84 and chez_code == 84) or (lisp_code == chez_code and lisp_output == chez_output):
             print(style.GREEN + f"{test.file_index + 1}/{test.total_files} ", end="")
             print(f"{file} passed", end="")
