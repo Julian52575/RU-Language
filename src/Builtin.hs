@@ -1,7 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 
-module Builtin (evalBuiltinFunction) where
-
+module Builtin (evalBuiltinFunction, getInt) where
 import AST (Ast(..))
 import Data.List (foldl')
 
