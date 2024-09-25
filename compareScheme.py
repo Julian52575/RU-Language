@@ -78,7 +78,7 @@ def execute_dir(test: Test, dir_path):
             execute_dir(test, os.path.join(dir_path, file))
             continue
         start = time.time()
-        lisp_code, lisp_output, lisp_res = run_interpreter(f"./{test.interpretor}", real_path)
+        lisp_code, lisp_output, lisp_res = run_interpreter(f"{test.interpretor}", real_path)
         end = time.time()
         test.time_lisp += end - start
         start = time.time()
@@ -101,20 +101,22 @@ def execute_dir(test: Test, dir_path):
     return test
 
 def main():
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2 or len(sys.argv) > 4:
         print("Usage: python compare.py <file-directory>")
         sys.exit(1)
 
     dir_path = sys.argv[1]
-    exe_path = ".stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/my-lisp-interpreter-exe/my-lisp-interpreter-exe"
+    exe = ".stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/my-lisp-interpreter-exe/my-lisp-interpreter-exe"
 
-    if not os.path.exists(exe_path):
-        exe_path = "./my-lisp-interpreter-exe"
-    if not os.path.exists(exe_path):
-        print("Please build the project first.")
-        sys.exit(1)
+    if len(sys.argv) == 3 and sys.argv[2] == "--use-stack":
+        exe = "stack run"
+    elif not os.path.exists(exe):
+        result = subprocess.run("stack build")
+        if result != 0 or not os.path.exists(exe):
+            print("Please build the project first.")
+            sys.exit(84)
 
-    test = Test(exe_path, dir_path)
+    test = Test(exe, dir_path)
     execute_dir(test, dir_path)
     print(f"\nTotal time for {test.interpretor.split('/')[-1]}: {test.time_lisp}")
     print(f"Total time for Chez Scheme: {test.time_chez}")
