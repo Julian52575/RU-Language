@@ -7,7 +7,7 @@ import qualified Data.Map as Map
 import Parser(parseSExpr, parseSExprs, parseInt, parseBool, parseSymbol, parseList)
 import AST(SExpr(..), Ast(..), sexprToAST, symbolToString)
 import Evaluator(evalAST, initEnv, evalDefine, lookupEnv, expectBool, applyLambda, applyFunction)
-import Builtin(evalBuiltinFunction)
+import Builtin(evalBuiltinFunction, getInt)
 
 -- parseSExpr Tests
 testParseSExprSSymbol :: TestTree
@@ -204,7 +204,9 @@ testEvalDefineError = testCase "Evaluate Define Error" $
 
 testEvalBuiltinFunction :: TestTree
 testEvalBuiltinFunction = testGroup "evalBuiltinFunction Tests"
-  [ testCase "Addition with valid arguments" $
+  [ testCase "getInt Error" $
+      getInt (AstSym "1") @?= Left "Expected an integer"
+  , testCase "Addition with valid arguments" $
       evalBuiltinFunction "+" [AstInt 1, AstInt 2, AstInt 3] @?= Right (AstInt 6)
   , testCase "Addition with no arguments" $
       evalBuiltinFunction "+" [] @?= Left "Addition requires at least one argument"
@@ -220,10 +222,14 @@ testEvalBuiltinFunction = testGroup "evalBuiltinFunction Tests"
       evalBuiltinFunction "div" [AstInt 20, AstInt 2, AstInt 2] @?= Right (AstInt 5)
   , testCase "Division by zero" $
       evalBuiltinFunction "div" [AstInt 20, AstInt 0] @?= Left "Division by zero error"
+  , testCase "Division with no arguments" $
+      evalBuiltinFunction "div" [] @?= Left "Division requires at least two arguments"
   , testCase "Modulo with valid arguments" $
       evalBuiltinFunction "mod" [AstInt 20, AstInt 3] @?= Right (AstInt 2)
   , testCase "Modulo by zero" $
       evalBuiltinFunction "mod" [AstInt 20, AstInt 0] @?= Left "Modulo by zero error"
+  , testCase "Modulo with no arguments" $
+      evalBuiltinFunction "mod" [] @?= Left "Modulo requires exactly two arguments"
   , testCase "Less than with valid arguments" $
       evalBuiltinFunction "<" [AstInt 1, AstInt 2] @?= Right (AstBool True)
   , testCase "Less than with invalid arguments" $
