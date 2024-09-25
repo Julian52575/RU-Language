@@ -55,6 +55,7 @@ jobs:
           apt-get upgrade -y
           apt-get install -y python3 chezscheme
           python3 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }} --use-stack
+          cat -e error.txt
         
   mirror:
     runs-on: ubuntu-latest
