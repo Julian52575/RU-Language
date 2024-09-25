@@ -49,15 +49,12 @@ jobs:
         timeout-minutes: 5
       - run:
           chown -R $(id -un):$(id -gn) ~ #https://github.com/commercialhaskell/stack/issues/2187
-      - name: build
-        run:
-          make
       - name: benchmark tests
         run: |
           apt-get update -y
           apt-get upgrade -y
           apt-get install -y python3
-          python3 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
+          python3 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }} --use-stack
         
   mirror:
     runs-on: ubuntu-latest
