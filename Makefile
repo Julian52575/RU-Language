@@ -13,7 +13,7 @@ EXAMPLE_FOLDER = examples
 all: $(NAME)
 
 $(NAME):
-	stack build
+	stack build --allow-different-user
 	cp $(shell stack path --local-install-root)/bin/my-lisp-interpreter-exe ./$(NAME)
 
 clean:
