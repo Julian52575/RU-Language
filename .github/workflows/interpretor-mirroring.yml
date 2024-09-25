@@ -10,8 +10,8 @@ env:
   TARGET_BRANCH: Interpretor-release
   CURRENT_BRANCH: Interpretor
   COMMIT_MSG: ${{ github.event.head_commit.message }}
-  BENCHMARK_SCRIPT: test.py
-  EXAMPLE_FOLDER: test-files
+  BENCHMARK_SCRIPT: compareScheme.py
+  EXAMPLE_FOLDER: examples
 
 defaults:
   run:
@@ -51,13 +51,12 @@ jobs:
           chown -R $(id -un):$(id -gn) ~ #https://github.com/commercialhaskell/stack/issues/2187
       - name: build
         run:
-          stack build --allow-different-user
+          make
       - name: benchmark tests
         run: |
           apt-get update -y
           apt-get upgrade -y
           apt-get install -y python3
-          make
           python3 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
         
   mirror:
