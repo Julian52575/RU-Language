@@ -1,9 +1,13 @@
 import Test.Tasty
 import Test.Tasty.HUnit
 import Text.Megaparsec (parse)
+import Data.Map (fromList)
+import qualified Data.Map as Map
 
 import Parser(parseSExpr, parseSExprs, parseInt, parseBool, parseSymbol, parseList)
 import AST(SExpr(..), Ast(..), sexprToAST, symbolToString)
+import Evaluator(evalAST, initEnv, evalDefine, lookupEnv, expectBool, applyLambda, applyFunction)
+import Builtin(evalBuiltinFunction)
 
 -- parseSExpr Tests
 testParseSExprSSymbol :: TestTree
@@ -115,6 +119,135 @@ testSymbolToStringError :: TestTree
 testSymbolToStringError = testCase "Symbol to String Error" $
   symbolToString (SInt 42) @?= Left "Expected a symbol"
 
+
+
+-- Evaluator Tests
+
+testInitEnv :: TestTree
+testInitEnv = testCase "Init Env" $
+  initEnv @?= fromList [("*",AstBuiltin "*"),("+",AstBuiltin "+"),("-",AstBuiltin "-"),("<",AstBuiltin "<"),("<=",AstBuiltin "<="),(">",AstBuiltin ">"),(">=",AstBuiltin ">="),("div",AstBuiltin "div"),("eq?",AstBuiltin "eq?"),("mod",AstBuiltin "mod")]
+
+testLookupEnv :: TestTree
+testLookupEnv = testCase "Lookup Env" $
+  lookupEnv "x" (fromList [("x",AstInt 42)]) @?= Right (AstInt 42)
+
+testLookupEnvError :: TestTree
+testLookupEnvError = testCase "Lookup Env Error" $
+  lookupEnv "x" (fromList []) @?= Left "Error: variable 'x' is not bound."
+
+testExpectBool :: TestTree
+testExpectBool = testCase "Expect Bool" $
+  expectBool (AstBool True) @?= Right True
+
+testExpectBoolError :: TestTree
+testExpectBoolError = testCase "Expect Bool Error" $
+  expectBool (AstInt 42) @?= Left "Error: condition in 'if' must evaluate to a boolean."
+
+-- Test applyLambda
+testApplyLambda :: TestTree
+testApplyLambda = testGroup "applyLambda Tests"
+  [ testCase "Correct number of arguments" $
+      applyLambda Map.empty ["x"] (AstInt 1) [AstInt 42] @?= Right (AstInt 1)
+  , testCase "Incorrect number of arguments" $
+      applyLambda Map.empty ["x"] (AstInt 1) [] @?= Left "Error: incorrect number of arguments."
+  ]
+
+-- Test applyFunction
+testApplyFunction :: TestTree
+testApplyFunction = testGroup "applyFunction Tests"
+  [ testCase "Apply built-in function" $
+      applyFunction Map.empty (AstBuiltin "+") [AstInt 1, AstInt 2] @?= evalBuiltinFunction "+" [AstInt 1, AstInt 2]
+  , testCase "Apply lambda function" $
+      applyFunction Map.empty (Lambda ["x"] (AstInt 1)) [AstInt 42] @?= applyLambda Map.empty ["x"] (AstInt 1) [AstInt 42]
+  , testCase "Error on non-function" $
+      applyFunction Map.empty (AstInt 1) [] @?= Left "Error: trying to call a non-function."
+  ]
+
+-- Test evalAST
+testEvalAST :: TestTree
+testEvalAST = testGroup "evalAST Tests"
+  [ testCase "Evaluate integer" $
+      evalAST Map.empty (AstInt 42) @?= Right (AstInt 42)
+  , testCase "Evaluate boolean" $
+      evalAST Map.empty (AstBool True) @?= Right (AstBool True)
+  , testCase "Evaluate symbol" $
+      evalAST (Map.fromList [("x", AstInt 42)]) (AstSym "x") @?= Right (AstInt 42)
+  , testCase "Evaluate function call" $
+      evalAST (Map.fromList [("f", Lambda ["x"] (AstInt 1))]) (Call "f" [AstInt 42]) @?= Right (AstInt 1)
+  , testCase "Evaluate lambda call" $
+      evalAST Map.empty (CallLambda (Lambda ["x"] (AstInt 1)) [AstInt 42]) @?= Right (AstInt 1)
+  , testCase "Error on non-lambda call" $
+      evalAST Map.empty (CallLambda (AstInt 1) [AstInt 42]) @?= Left "Error: trying to call a non-lambda expression."
+  , testCase "Evaluate list of expressions" $
+      evalAST Map.empty (AstList [AstInt 1, AstInt 2]) @?= Right (AstList [AstInt 1, AstInt 2])
+  , testCase "Evaluate lambda" $
+      evalAST Map.empty (Lambda ["x"] (AstInt 1)) @?= Right (Lambda ["x"] (AstInt 1))
+  , testCase "Evaluate definition" $
+      evalAST Map.empty (Define "x" (AstInt 42)) @?= Right (Define "x" (AstInt 42))
+  , testCase "Evaluate condition" $
+      evalAST Map.empty (If (AstBool True) (AstInt 1) (AstInt 2)) @?= Right (AstInt 1)
+  , testCase "Error on built-in function evaluation" $
+      evalAST Map.empty (AstBuiltin "+") @?= Left "Error: built-in function cannot be evaluated directly."
+  ]
+
+testEvalDefine :: TestTree
+testEvalDefine = testCase "Evaluate Define" $
+  evalDefine (Define "x" (AstInt 42)) Map.empty @?= Right (Map.fromList [("x", AstInt 42)])
+
+testEvalDefineError :: TestTree
+testEvalDefineError = testCase "Evaluate Define Error" $
+  evalDefine (AstList []) (Map.empty) @?= Right (fromList [])
+
+
+
+-- Builtin Tests
+
+testEvalBuiltinFunction :: TestTree
+testEvalBuiltinFunction = testGroup "evalBuiltinFunction Tests"
+  [ testCase "Addition with valid arguments" $
+      evalBuiltinFunction "+" [AstInt 1, AstInt 2, AstInt 3] @?= Right (AstInt 6)
+  , testCase "Addition with no arguments" $
+      evalBuiltinFunction "+" [] @?= Left "Addition requires at least one argument"
+  , testCase "Subtraction with valid arguments" $
+      evalBuiltinFunction "-" [AstInt 10, AstInt 3, AstInt 2] @?= Right (AstInt 5)
+  , testCase "Subtraction with no arguments" $
+      evalBuiltinFunction "-" [] @?= Left "Subtraction requires at least one argument"
+  , testCase "Multiplication with valid arguments" $
+      evalBuiltinFunction "*" [AstInt 2, AstInt 3, AstInt 4] @?= Right (AstInt 24)
+  , testCase "Multiplication with no arguments" $
+      evalBuiltinFunction "*" [] @?= Left "Multiplication requires at least one argument"
+  , testCase "Division with valid arguments" $
+      evalBuiltinFunction "div" [AstInt 20, AstInt 2, AstInt 2] @?= Right (AstInt 5)
+  , testCase "Division by zero" $
+      evalBuiltinFunction "div" [AstInt 20, AstInt 0] @?= Left "Division by zero error"
+  , testCase "Modulo with valid arguments" $
+      evalBuiltinFunction "mod" [AstInt 20, AstInt 3] @?= Right (AstInt 2)
+  , testCase "Modulo by zero" $
+      evalBuiltinFunction "mod" [AstInt 20, AstInt 0] @?= Left "Modulo by zero error"
+  , testCase "Less than with valid arguments" $
+      evalBuiltinFunction "<" [AstInt 1, AstInt 2] @?= Right (AstBool True)
+  , testCase "Less than with invalid arguments" $
+      evalBuiltinFunction "<" [AstInt 1] @?= Left "Less than requires two arguments"
+  , testCase "Greater than with valid arguments" $
+      evalBuiltinFunction ">" [AstInt 3, AstInt 2] @?= Right (AstBool True)
+  , testCase "Greater than with invalid arguments" $
+      evalBuiltinFunction ">" [AstInt 3] @?= Left "Greater than requires two arguments"
+  , testCase "Less than or equal to with valid arguments" $
+      evalBuiltinFunction "<=" [AstInt 2, AstInt 2] @?= Right (AstBool True)
+  , testCase "Less than or equal to with invalid arguments" $
+      evalBuiltinFunction "<=" [AstInt 2] @?= Left "Less than or equal to requires two arguments"
+  , testCase "Greater than or equal to with valid arguments" $
+      evalBuiltinFunction ">=" [AstInt 3, AstInt 2] @?= Right (AstBool True)
+  , testCase "Greater than or equal to with invalid arguments" $
+      evalBuiltinFunction ">=" [AstInt 3] @?= Left "Greater than or equal to requires two arguments"
+  , testCase "Equality check with valid arguments" $
+      evalBuiltinFunction "eq?" [AstInt 2, AstInt 2] @?= Right (AstBool True)
+  , testCase "Equality check with invalid arguments" $
+      evalBuiltinFunction "eq?" [AstInt 2] @?= Left "Equality check requires two arguments"
+  , testCase "Unknown function" $
+      evalBuiltinFunction "unknown" [AstInt 1] @?= Left "Unknown function: unknown"
+  ]
+
 -- Main
 main :: IO ()
 main = defaultMain $ testGroup "S-Expression Tests"
@@ -156,5 +289,20 @@ main = defaultMain $ testGroup "S-Expression Tests"
   , testGroup "Symbol to String"
       [ testSymbolToString
       , testSymbolToStringError
+      ]
+  , testGroup "Evaluator"
+      [ testInitEnv
+      , testLookupEnv
+      , testLookupEnvError
+      , testExpectBool
+      , testExpectBoolError
+      , testApplyLambda
+      , testApplyFunction
+      , testEvalAST
+      , testEvalDefine
+      , testEvalDefineError
+      ]
+  , testGroup "Builtin"
+      [ testEvalBuiltinFunction
       ]
   ]
