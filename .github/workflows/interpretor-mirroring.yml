@@ -10,8 +10,8 @@ env:
   TARGET_BRANCH: Interpretor-release
   CURRENT_BRANCH: Interpretor
   COMMIT_MSG: ${{ github.event.head_commit.message }}
-  BENCHMARK_SCRIPT: test.py
-  EXAMPLE_FOLDER: test-files
+  BENCHMARK_SCRIPT: compareScheme.py
+  EXAMPLE_FOLDER: examples
 
 defaults:
   run:
