@@ -57,6 +57,7 @@ jobs:
           apt-get update -y
           apt-get upgrade -y
           apt-get install -y python3
+          stack build
           python3 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }}
         
   mirror:
