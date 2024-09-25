@@ -109,6 +109,8 @@ def main():
     exe_path = ".stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/my-lisp-interpreter-exe/my-lisp-interpreter-exe"
 
     if not os.path.exists(exe_path):
+        exe_path = "./my-lisp-interpreter-exe"
+    if not os.path.exists(exe_path):
         print("Please build the project first.")
         sys.exit(1)
 
