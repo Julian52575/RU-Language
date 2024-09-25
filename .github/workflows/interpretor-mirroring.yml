@@ -57,7 +57,7 @@ jobs:
           python3 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }} --use-stack
       - name: check download
         run: |
-          scheme -v
+          scheme --version
           stack run -h
           cat -e error.txt
         
