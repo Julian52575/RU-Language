@@ -55,6 +55,10 @@ jobs:
           apt-get upgrade -y
           apt-get install -y python3 chezscheme
           python3 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }} --use-stack
+      - name: check download
+        run: |
+          scheme -v
+          stack run -h
           cat -e error.txt
         
   mirror:
