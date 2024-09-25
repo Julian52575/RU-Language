@@ -56,12 +56,13 @@ jobs:
           apt-get install -y python3 chezscheme
       - name: check download
         run: |
+          python3 --version
           scheme --version
           stack run -h
-          cat -e error.txt
       - name: run compare
-        run:
+        run: |
           python3 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }} --use-stack
+          cat -e error.txt
         
   mirror:
     runs-on: ubuntu-latest
