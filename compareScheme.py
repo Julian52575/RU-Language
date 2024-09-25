@@ -92,9 +92,9 @@ def execute_dir(test: Test, dir_path):
             print(style.RED + f"{test.file_index + 1}/{test.total_files} ", end="")
             print(f"{file} failed", end="")
             if (lisp_code != 84):
-                test.file_errors.append(Error(file, lisp_res.stdout, chez_res.stdout))
+                test.file_errors.append(Error(file, lisp_res.stderr, chez_res.stdout))
             else:
-                test.file_errors.append(Error(file, lisp_res.stdout, chez_res.stdout))
+                test.file_errors.append(Error(file, lisp_res.stderr, chez_res.stdout))
             test.returncode = 1
         test.file_index += 1
         print(style.RESET)
@@ -108,6 +108,8 @@ def main():
     dir_path = sys.argv[1]
     exe_path = ".stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/my-lisp-interpreter-exe/my-lisp-interpreter-exe"
 
+    if not os.path.exists(exe_path):
+        exe_path = "./my-lisp-interpreter-exe"
     if not os.path.exists(exe_path):
         print("Please build the project first.")
         sys.exit(1)

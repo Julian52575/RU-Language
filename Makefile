@@ -6,6 +6,9 @@
 ##
 
 NAME = my-lisp-interpreter-exe
+COMPARE_SCRIPT = compareScheme.py
+EXAMPLE_FOLDER = examples
+
 
 all: $(NAME)
 
@@ -19,4 +22,10 @@ clean:
 fclean: clean
 	rm -f $(NAME)
 
+test_run:
+	stack test
+	./$(COMPARE_SCRIPT) $(EXAMPLE_FOLDER)
+
 re: fclean all
+
+.Phony: all clean fclean test_run re
