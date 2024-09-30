@@ -200,6 +200,12 @@ testEvalAST = testGroup "evalAST Tests"
       evalAST Map.empty (If (AstBool True) (AstInt 1) (AstInt 2)) @?= Right (AstInt 1)
   , testCase "Error on built-in function evaluation" $
       evalAST Map.empty (AstBuiltin "+") @?= Left "Error: built-in function cannot be evaluated directly."
+  , testCase "Reserved Keyword Error" $
+      sexprToAST (SSymbol "define") @?= Left "Error: 'define' is a reserved keyword and cannot be used as a variable."
+  , testCase "Symbol AST" $
+      sexprToAST (SSymbol "x") @?= Right (AstSym "x")
+  , testCase "Built-in operator call" $
+      sexprToAST (SList [SSymbol "+", SInt 1, SInt 2]) @?= Right (Call "+" [AstInt 1, AstInt 2])
   ]
 
 testEvalDefine :: TestTree
