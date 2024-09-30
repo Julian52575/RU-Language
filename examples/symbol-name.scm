@@ -1,4 +1,5 @@
-(define abcdefghijklmnopqrstuvwxyz>_-%$/.@àé0123456789! 15)
+(define abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ>_-%$/.@àé0123456789! 15)
+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ>_-%$/.@àé0123456789!
 ;(define + -)
 ;(define - +)
 ;(define * /)

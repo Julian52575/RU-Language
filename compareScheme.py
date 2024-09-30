@@ -106,7 +106,7 @@ def main():
         sys.exit(1)
 
     dir_path = sys.argv[1]
-    exe = ".stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/my-lisp-interpreter-exe/my-lisp-interpreter-exe"
+    exe = "./my-lisp-interpreter-exe"
 
     if len(sys.argv) == 3 and sys.argv[2] == "--use-stack":
         exe = "stack run --allow-different-user"
