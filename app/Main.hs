@@ -9,33 +9,52 @@ import AST (sexprToAST, Ast(..))
 import Evaluator (evalAST, initEnv, evalDefine, Env)
 import Text.Megaparsec (parse, errorBundlePretty)
 import Prelude
+import Control.Monad (foldM)
 
--- REPL function with integrated parsing and evaluation
-repl :: Env -> IO ()
-repl env = do
-    putStrLn "Enter an expression (or 'quit' to exit):"
+import System.IO (hFlush, stdout)  -- Import hFlush and stdout
+
+-- REPL function with delayed prompt and environment update
+replLoop :: Env -> IO ()
+replLoop env = do
+    putStr "> "
+    hFlush stdout  -- Flush the output to ensure prompt is shown immediately
     input <- getLine
     if input == "quit"
         then putStrLn "Exiting REPL..."
         else do
             let parsedExpr = parse parseSExprs "" input
             case parsedExpr of
-                Left err -> hPutStrLn stderr $ "Parsing error: " ++ errorBundlePretty err
-                Right expr -> do
-                    let asts = mapM sexprToAST expr
+                Left err -> do
+                    hPutStrLn stderr $ "Parsing error: " ++ errorBundlePretty err
+                    replLoop env  -- Continue with the same environment
+                Right exprs -> do
+                    let asts = mapM sexprToAST exprs
                     case asts of
-                        Left err -> hPutStrLn stderr $ "Error converting to AST: " ++ err
-                        Right astTrees -> mapM_ (evalAndPrint True env) astTrees -- True indicates REPL mode
-            repl env
+                        Left err -> do
+                            hPutStrLn stderr $ "Error converting to AST: " ++ err
+                            replLoop env  -- Continue with the same environment
+                        Right astTrees -> do
+                            -- Evaluate each AST and update the environment accordingly
+                            newEnv <- foldM evalInRepl env astTrees
+                            replLoop newEnv  -- Continue REPL with updated environment
 
--- Modified evalAndPrint function to handle errors in REPL and non-REPL mode
-evalAndPrint :: Bool -> Env -> Ast -> IO ()
-evalAndPrint isRepl env expr = 
-    case evalAST env expr of
-        Left err -> do
-            hPutStrLn stderr $ "Error: " ++ err
-            if not isRepl then exitWith (ExitFailure 84) else return () -- Exit with 84 if not in REPL mode
-        Right result -> printResult result
+-- Function for evaluating a single expression in the REPL, with environment update
+evalInRepl :: Env -> Ast -> IO Env
+evalInRepl env expr = case expr of
+    Define var defExpr -> do
+        case evalDefine (Define var defExpr) env of
+            Left err -> do
+                hPutStrLn stderr $ "Error: " ++ err
+                return env
+            Right newEnv -> return newEnv
+    _ -> do
+        case evalAST env expr of
+            Left err -> do
+                hPutStrLn stderr $ "Error evaluating expression: " ++ err
+                return env
+            Right result -> do
+                printResult result
+                return env
 
 -- Print the result of an evaluation
 printResult :: Ast -> IO ()
@@ -79,7 +98,9 @@ runMain = do
                     case asts of
                         Left err -> hPutStrLn stderr ("Error converting to AST: " ++ err) >> exitWith (ExitFailure 84)
                         Right astTrees -> evalMultiple False astTrees initEnv -- False indicates non-REPL mode
-        ["--repl"] -> repl initEnv
+        ["--repl"] -> do
+            putStrLn "Enter an expression (or 'quit' to exit):"  -- Print once at the start
+            replLoop initEnv  -- Start REPL with the initial environment
         [filename] -> do
             putStrLn $ "Reading file: " ++ filename
             input <- readFile filename
