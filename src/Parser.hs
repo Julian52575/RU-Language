@@ -8,9 +8,13 @@ import AST (SExpr(..))
 
 type Parser = Parsec Void String
 
+-- Line comment (starts with ;)
+lineComment :: Parser ()
+lineComment = L.skipLineComment ";"
+
 -- Space consumer, skips whitespace and comments
 sc :: Parser ()
-sc = L.space space1 empty empty
+sc = L.space space1 lineComment empty
 
 -- Helper for parsing lexemes (i.e., tokens followed by spaces)
 lexeme :: Parser a -> Parser a
@@ -38,7 +42,7 @@ parseBool = lexeme $ do
 
 -- Parser for symbols (e.g., variables, operators, and function names)
 parseSymbol :: Parser SExpr
-parseSymbol = lexeme $ SSymbol <$> some (letterChar <|> oneOf ("+-*<=>?" :: [Char]))  -- Match symbols and operators
+parseSymbol = lexeme $ SSymbol <$> some (letterChar <|> digitChar <|> oneOf ("+-*/<=>!?_%$/.@àé|" :: [Char]))
 
 -- Parser for list expressions (Lisp-style lists)
 parseList :: Parser SExpr
