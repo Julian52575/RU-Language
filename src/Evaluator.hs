@@ -1,5 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
-module Evaluator (evalAST, initEnv, evalDefine, Env) where
+module Evaluator (evalAST, initEnv, evalDefine, Env, lookupEnv, expectBool, applyLambda, applyFunction) where
 
 import AST (Ast(..))
 import qualified Data.Map as Map

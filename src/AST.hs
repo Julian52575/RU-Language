@@ -1,4 +1,6 @@
-module AST (SExpr(..), Ast(..), sexprToAST) where
+{-# LANGUAGE BangPatterns #-}
+
+module AST (SExpr(..), Ast(..), sexprToAST, symbolToString) where
 
 -- List of reserved keywords
 reservedKeywords :: [String]
@@ -26,7 +28,7 @@ data Ast
     | If Ast Ast Ast
     | AstBuiltin String
     | CallLambda Ast [Ast]
-    deriving Show
+    deriving (Eq, Show)
 
 -- General helper for handling lists of SExprs as AST
 mapSExprToAST :: [SExpr] -> Either String [Ast]
