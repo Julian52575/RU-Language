@@ -110,6 +110,18 @@ testSExprToASTLambdaMultipleArgs :: TestTree
 testSExprToASTLambdaMultipleArgs = testCase "Lambda SExpr to AST with multiple args" $
   sexprToAST (SList [SSymbol "lambda", SList [SSymbol "x", SSymbol "y"], SInt 42]) @?= Right (Lambda ["x", "y"] (AstInt 42))
 
+testSExprToASTReservedKeyword :: TestTree
+testSExprToASTReservedKeyword = testCase "Reserved keyword to AST" $
+  sexprToAST (SSymbol "define") @?= Left "Error: 'define' is a reserved keyword and cannot be used as a variable."
+
+testSExprToASTOperator :: TestTree
+testSExprToASTOperator = testCase "Operator to AST" $
+  sexprToAST (SList [SSymbol "+", SInt 1, SInt 2]) @?= Right (Call "+" [AstInt 1, AstInt 2])
+
+testSExprToASTCallLambda:: TestTree
+testSExprToASTCallLambda = testCase "Lambda Application SExpr to AST" $
+  sexprToAST (SList [SList [SSymbol "lambda", SList [SSymbol "x"], SInt 42], SInt 1]) @?= Right (CallLambda (Lambda ["x"] (AstInt 42)) [AstInt 1])
+
 -- Symbol to String Tests
 testSymbolToString :: TestTree
 testSymbolToString = testCase "Symbol to String" $
@@ -291,6 +303,9 @@ main = defaultMain $ testGroup "S-Expression Tests"
       , testSExprToASTIf
       , testSExprToASTLambda
       , testSExprToASTLambdaMultipleArgs
+      , testSExprToASTReservedKeyword
+      , testSExprToASTOperator
+      , testSExprToASTCallLambda
       ]
   , testGroup "Symbol to String"
       [ testSymbolToString
