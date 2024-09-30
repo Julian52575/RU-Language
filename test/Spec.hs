@@ -110,6 +110,18 @@ testSExprToASTLambdaMultipleArgs :: TestTree
 testSExprToASTLambdaMultipleArgs = testCase "Lambda SExpr to AST with multiple args" $
   sexprToAST (SList [SSymbol "lambda", SList [SSymbol "x", SSymbol "y"], SInt 42]) @?= Right (Lambda ["x", "y"] (AstInt 42))
 
+testSExprToASTReservedKeyword :: TestTree
+testSExprToASTReservedKeyword = testCase "Reserved keyword to AST" $
+  sexprToAST (SSymbol "define") @?= Left "Error: 'define' is a reserved keyword and cannot be used as a variable."
+
+testSExprToASTOperator :: TestTree
+testSExprToASTOperator = testCase "Operator to AST" $
+  sexprToAST (SList [SSymbol "+", SInt 1, SInt 2]) @?= Right (Call "+" [AstInt 1, AstInt 2])
+
+testSExprToASTCallLambda:: TestTree
+testSExprToASTCallLambda = testCase "Lambda Application SExpr to AST" $
+  sexprToAST (SList [SList [SSymbol "lambda", SList [SSymbol "x"], SInt 42], SInt 1]) @?= Right (CallLambda (Lambda ["x"] (AstInt 42)) [AstInt 1])
+
 -- Symbol to String Tests
 testSymbolToString :: TestTree
 testSymbolToString = testCase "Symbol to String" $
@@ -188,6 +200,12 @@ testEvalAST = testGroup "evalAST Tests"
       evalAST Map.empty (If (AstBool True) (AstInt 1) (AstInt 2)) @?= Right (AstInt 1)
   , testCase "Error on built-in function evaluation" $
       evalAST Map.empty (AstBuiltin "+") @?= Left "Error: built-in function cannot be evaluated directly."
+  , testCase "Reserved Keyword Error" $
+      sexprToAST (SSymbol "define") @?= Left "Error: 'define' is a reserved keyword and cannot be used as a variable."
+  , testCase "Symbol AST" $
+      sexprToAST (SSymbol "x") @?= Right (AstSym "x")
+  , testCase "Built-in operator call" $
+      sexprToAST (SList [SSymbol "+", SInt 1, SInt 2]) @?= Right (Call "+" [AstInt 1, AstInt 2])
   ]
 
 testEvalDefine :: TestTree
@@ -291,6 +309,9 @@ main = defaultMain $ testGroup "S-Expression Tests"
       , testSExprToASTIf
       , testSExprToASTLambda
       , testSExprToASTLambdaMultipleArgs
+      , testSExprToASTReservedKeyword
+      , testSExprToASTOperator
+      , testSExprToASTCallLambda
       ]
   , testGroup "Symbol to String"
       [ testSymbolToString
