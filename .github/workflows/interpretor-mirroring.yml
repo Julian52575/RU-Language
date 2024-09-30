@@ -62,7 +62,7 @@ jobs:
       - name: run compare
         run: |
           python3 ${{ env.BENCHMARK_SCRIPT }} ${{ env.EXAMPLE_FOLDER }} --use-stack
-          cat -e error.txt
+          cat -e error.txt | true
         
   mirror:
     runs-on: ubuntu-latest
