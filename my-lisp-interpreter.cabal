@@ -62,7 +62,6 @@ test-suite my-lisp-interpreter-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Main
       Paths_my_lisp_interpreter
   autogen-modules:
       Paths_my_lisp_interpreter
@@ -70,8 +69,11 @@ test-suite my-lisp-interpreter-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , base >=4.7 && <5
     , containers
     , megaparsec >=9.0 && <10
     , my-lisp-interpreter
+    , tasty
+    , tasty-hunit
   default-language: Haskell2010

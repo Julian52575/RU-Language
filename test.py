@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/opt/homebrew/bin/python3
 
 import subprocess
 import sys
@@ -14,16 +14,20 @@ def run_interpreter(command, filename):
     """Runs an interpreter command and returns the output."""
     try:
         result = subprocess.run(f"{command} < {filename}", shell=True, capture_output=True, text=True)
-        return result.returncode, result.stdout.split()[-1]
+        if result.stdout:
+            return result.returncode, result.stdout.split()[-1]
+        else:
+            return result.returncode, ""
     except Exception as e:
         print(f"Error running {command}: {e}")
         sys.exit(1)
+
 
 def run_chez_scheme(filename):
     """Runs Chez Scheme interpreter and returns the output."""
     try:
         chez_output = subprocess.run(
-            ["scheme", "--quiet"],
+            ["chez", "--quiet"],
             input=open(filename).read(),
             capture_output=True,
             text=True
@@ -39,7 +43,7 @@ def main():
         sys.exit(1)
 
     dir_path = sys.argv[1]
-    exe_path = ".stack-work/dist/x86_64-linux-tinfo6/ghc-9.6.6/build/my-lisp-interpreter-exe/my-lisp-interpreter-exe"
+    exe_path = ".stack-work/dist/aarch64-osx/ghc-9.6.6/build/my-lisp-interpreter-exe/my-lisp-interpreter-exe"
 
     if not os.path.exists(exe_path):
         print("Please build the project first.")
@@ -57,7 +61,7 @@ def main():
         file_path = dir_path + "/" + file
         file_path = os.path.realpath(file_path)
         start = time.time()
-        lisp_code, lisp_output = run_interpreter(f"./{lisp_interpreter}", file_path)
+        lisp_code, lisp_output = run_interpreter(f"{lisp_interpreter}", file_path)
         end = time.time()
         time_lisp += end - start
         start = time.time()

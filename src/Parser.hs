@@ -22,31 +22,40 @@ symbol = L.symbol sc
 
 -- Parser for integers, including negative integers
 parseInt :: Parser SExpr
-parseInt = SInt <$> (fmap negate (char '-' *> (read <$> lexeme (some digitChar)))
-             <|> read <$> lexeme (some digitChar))
+parseInt = do
+    sign <- optional (char '-')  -- Optionally match a negative sign
+    digits <- lexeme (some digitChar)  -- Match one or more digits, ensuring spaces are handled
+    let number = read digits  -- Convert the matched digits to a number
+    return $ SInt (if sign == Just '-' then -number else number)  -- Apply the negative sign if present
 
 -- Parser for boolean values (#t and #f)
 parseBool :: Parser SExpr
-parseBool = (SBool True <$ lexeme (string "#t"))
-        <|> (SBool False <$ lexeme (string "#f"))
+parseBool = lexeme $ do
+    b <- choice [string "#t", string "#f"]  -- Match either "#t" or "#f"
+    return $ if b == "#t"                   -- Return SBool based on matched string
+             then SBool True
+             else SBool False
 
 -- Parser for symbols (e.g., variables, operators, and function names)
 parseSymbol :: Parser SExpr
-parseSymbol = SSymbol <$> lexeme (some (letterChar <|> oneOf ("+-*<=>?" :: [Char])))
+parseSymbol = lexeme $ SSymbol <$> some (letterChar <|> oneOf ("+-*<=>?" :: [Char]))  -- Match symbols and operators
 
 -- Parser for list expressions (Lisp-style lists)
 parseList :: Parser SExpr
-parseList = SList <$> (symbol "(" *> sepBy parseSExpr sc <* symbol ")")
+parseList = do
+    _ <- symbol "("        -- Match opening parenthesis, handling spaces automatically
+    exprs <- sepBy parseSExpr sc  -- Parse multiple sub-expressions, separated by spaces
+    _ <- symbol ")"        -- Match closing parenthesis, handling spaces automatically
+    return $ SList exprs    -- Return a list of parsed expressions
 
 -- Main parser for S-expressions
 parseSExpr :: Parser SExpr
-parseSExpr = lexeme (parseSymbol <|> parseInt <|> parseBool <|> parseList)
+parseSExpr = lexeme $ try parseInt  -- Try to parse an integer (including negative numbers)
+                 <|> parseBool      -- Then try to parse a boolean
+                 <|> parseSymbol    -- Then try to parse a symbol
+                 <|> parseList      -- Finally, try to parse a list
 
-{-
-parseSExpr :: Parser SExpr
-parseSExpr = lexeme (parseSymbol <|> parseInt <|> parseBool <|> parseList) <|> return (SList [])
--}
 
 -- Parser for multiple S-expressions
 parseSExprs :: Parser [SExpr]
-parseSExprs = sepEndBy parseSExpr sc
+parseSExprs = sepEndBy parseSExpr sc  -- Handle multiple S-expressions, ignoring spaces
