@@ -83,6 +83,9 @@ evalMultiple isRepl (expr:rest) env = do
                 Right result -> printResult result
             evalMultiple isRepl rest env
 
+usage :: String
+usage = "Usage: <program> [--repl | filename]"
+
 -- Main logic for handling arguments and executing the interpreter
 runMain :: IO ()
 runMain = do
@@ -101,6 +104,8 @@ runMain = do
         ["--repl"] -> do
             putStrLn "Enter an expression (or 'quit' to exit):"  -- Print once at the start
             replLoop initEnv  -- Start REPL with the initial environment
+        ["--help"] -> hPutStrLn stdout usage
+        ["-h"] -> hPutStrLn stdout usage
         [filename] -> do
             putStrLn $ "Reading file: " ++ filename
             input <- readFile filename
@@ -112,7 +117,7 @@ runMain = do
                     case asts of
                         Left err -> hPutStrLn stderr ("Error converting to AST: " ++ err) >> exitWith (ExitFailure 84)
                         Right astTrees -> evalMultiple False astTrees initEnv -- False indicates non-REPL mode
-        _ -> hPutStrLn stderr "Usage: <program> [--repl | filename]"
+        _ -> hPutStrLn stderr usage
 
 -- Error handler to catch IO exceptions and exit with code 84
 handler :: IOException -> IO ()
