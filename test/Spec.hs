@@ -66,6 +66,71 @@ testParseList = testCase "List Parsing" $
 
 
 -- AST Tests
+
+testSExprDerivingEqSInt :: TestTree
+testSExprDerivingEqSInt = testCase "SExpr Deriving Eq" $
+  (==) (SInt 2) (SInt 2) @?= True
+
+testSExprDerivingEqSSymbol :: TestTree
+testSExprDerivingEqSSymbol = testCase "SExpr Deriving Eq" $
+  (==) (SSymbol "x") (SSymbol "x") @?= True
+
+testSExprDerivingEqSList :: TestTree
+testSExprDerivingEqSList = testCase "SExpr Deriving Eq" $
+  (==) (SList [SSymbol "x", SInt 42]) (SList [SSymbol "x", SInt 42]) @?= True
+
+testSExprDerivingEqSBool :: TestTree
+testSExprDerivingEqSBool = testCase "SExpr Deriving Eq" $
+  (==) (SBool True) (SBool True) @?= True
+
+testSexprDerivingEqFalse :: TestTree
+testSexprDerivingEqFalse = testCase "SExpr Deriving Eq" $
+  (==) (SBool True) (SBool False) @?= False
+
+testSexprDerivingShow :: TestTree
+testSexprDerivingShow = testCase "SExpr Deriving Show" $
+  show (SInt 2) ++ show (SSymbol "x") ++ show (SList[]) ++ show (SBool True) @?= "SInt 2SSymbol \"x\"SList []SBool True"
+
+testASTDerivingEqAstInt :: TestTree
+testASTDerivingEqAstInt = testCase "AST Deriving Eq" $
+  (==) (AstInt 2) (AstInt 2) @?= True
+
+testASTDerivingEqAstSym :: TestTree
+testASTDerivingEqAstSym = testCase "AST Deriving Eq" $
+  (==) (AstSym "x") (AstSym "x") @?= True
+
+testASTDerivingEqCall :: TestTree
+testASTDerivingEqCall = testCase "AST Deriving Eq" $
+  (==) (Call "x" [AstInt 42]) (Call "x" [AstInt 42]) @?= True
+
+testASTDerivingEqDefine :: TestTree
+testASTDerivingEqDefine = testCase "AST Deriving Eq" $
+  (==) (Define "x" (AstInt 42)) (Define "x" (AstInt 42)) @?= True
+
+testASTDerivingEqLambda :: TestTree
+testASTDerivingEqLambda = testCase "AST Deriving Eq" $
+  (==) (Lambda ["x"] (AstInt 42)) (Lambda ["x"] (AstInt 42)) @?= True
+
+testASTDerivingEqIf :: TestTree
+testASTDerivingEqIf = testCase "AST Deriving Eq" $
+  (==) (If (AstBool True) (AstInt 1) (AstInt 2)) (If (AstBool True) (AstInt 1) (AstInt 2)) @?= True
+
+testASTDerivingEqASTBuiltIn :: TestTree
+testASTDerivingEqASTBuiltIn = testCase "AST Deriving Eq" $
+  (==) (AstBuiltin "+") (AstBuiltin "+") @?= True
+
+testASTDerivingEqCallLambda :: TestTree
+testASTDerivingEqCallLambda = testCase "AST Deriving Eq" $
+  (==) (CallLambda (Lambda ["x"] (AstInt 42)) [AstInt 1]) (CallLambda (Lambda ["x"] (AstInt 42)) [AstInt 1]) @?= True
+
+testASTDerivingEqFalse :: TestTree
+testASTDerivingEqFalse = testCase "AST Deriving Eq" $
+  (==) (AstInt 2) (AstInt 3) @?= False
+
+testASTDerivingShow :: TestTree
+testASTDerivingShow = testCase "AST Deriving Show" $
+  show (AstInt 2) ++ show (AstSym "x") ++ show (Call "x" [AstInt 42]) ++ show (Define "x" (AstInt 42)) ++ show (Lambda ["x"] (AstInt 42)) ++ show (If (AstBool True) (AstInt 1) (AstInt 2)) @?= "AstInt 2AstSym \"x\"Call \"x\" [AstInt 42]Define \"x\" (AstInt 42)Lambda [\"x\"] (AstInt 42)If (AstBool True) (AstInt 1) (AstInt 2)"
+
 testSExprToAST :: TestTree
 testSExprToAST = testCase "SExpr to AST" $
   sexprToAST (SList [SSymbol "x", SInt 42]) @?= Right (Call "x" [AstInt 42])
@@ -312,6 +377,22 @@ main = defaultMain $ testGroup "S-Expression Tests"
       , testSExprToASTReservedKeyword
       , testSExprToASTOperator
       , testSExprToASTCallLambda
+      , testSExprDerivingEqSInt
+      , testSExprDerivingEqSSymbol
+      , testSExprDerivingEqSList
+      , testSExprDerivingEqSBool
+      , testSexprDerivingEqFalse
+      , testSexprDerivingShow
+      , testASTDerivingEqAstInt
+      , testASTDerivingEqAstSym
+      , testASTDerivingEqCall
+      , testASTDerivingEqDefine
+      , testASTDerivingEqLambda
+      , testASTDerivingEqIf
+      , testASTDerivingEqASTBuiltIn
+      , testASTDerivingEqCallLambda
+      , testASTDerivingEqFalse
+      , testASTDerivingShow
       ]
   , testGroup "Symbol to String"
       [ testSymbolToString
