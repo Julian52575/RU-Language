@@ -1,0 +1,162 @@
+#include "ru.hpp"
+#include "instructionFactory.hpp"
+#include "ru.h"
+#include <cstdio>
+#include <cstring>
+#include <fcntl.h>
+#include <unistd.h>
+
+//   code section
+void ruSectionCode::addInstruction(const ruInstruction& instruction)
+{
+    ruInstruction tmp = instruction.copy();
+
+    this->_instructionVector.push_back(tmp);
+    this->_totalSize += instruction.getTotalSize();
+}
+int ruSectionCode::writeToFile(int fd) const
+{
+    uint8_t tmp = 0x00;
+
+    for (ruInstruction current : this->_instructionVector) {
+        tmp = current.getPrefix();
+        write(fd, &tmp, 1);
+        tmp = current.getInfix();
+        write(fd, &tmp, 1);
+        if (current.isCodingByteSet()) {
+            tmp = current.getCodingByte();
+            write(fd, &tmp, 1);
+        }
+        for (uint32_t i = 0; i < current.getOperandSize(); i++) {
+            tmp = current[i];
+            write(fd, &tmp, 1);
+        }
+    }
+    return 0;
+}
+uint32_t ruSectionCode::getNumberOfElement(void)
+{
+    return (uint32_t) this->_instructionVector.size();
+}
+
+//  strTab
+void ruSectionString::addString(const char *str)
+{
+    this->_stringVector.push_back(str);
+    this->_totalSize += strlen(str) + 1;
+}
+int ruSectionString::writeToFile(int fd) const
+{
+    uint8_t sep = 0x00;
+
+    write(fd, &sep, 1);
+    for (std::string current : this->_stringVector) {
+        write(fd, current.c_str(), (size_t) current.size());
+        write(fd, &sep, 1);
+    }
+    return 0;
+}
+uint32_t ruSectionString::getNumberOfElement(void)
+{
+    return this->_stringVector.size();
+}
+//   function section
+void ruSectionFunction::addFunction(const ru_function_t& fun)
+{
+    ru_function_t tmp;
+
+    tmp.code_offset = fun.code_offset;
+    tmp.instruction_count = fun.instruction_count;
+    tmp.name_index = fun.name_index;
+    this->_functionVector.push_back(tmp);
+    this->_totalSize += sizeof(ru_function_t);
+}
+int ruSectionFunction::writeToFile(int fd) const
+{
+    size_t structSize = sizeof(uint32_t) * 3;
+
+    for (ru_function_t current : this->_functionVector) {
+        write(fd, &current, structSize);
+    }
+    return 0;
+}
+uint32_t ruSectionFunction::getNumberOfElement(void)
+{
+    return this->_functionVector.size();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+ruFile::ruFile()
+{
+    memset(&this->_header, 0x00, sizeof(ru_header_t));
+    this->_header.magic[0] = 'C';
+    this->_header.magic[1] = 'R';
+    this->_header.magic[2] = 'O';
+    this->_header.magic[3] = 'U';
+    this->_header.magic[4] = 'S';
+    this->_header.file_version = 0x01;
+    this->_header.checksum[0] = ((int64_t) &this->_header) % 42;
+    this->_header.checksum[1] = ((int64_t) &this->_header) % 13;
+}
+
+void ruFile::setFileName(const char *fileName)
+{
+    this->_fileName = fileName;
+}
+
+int ruFile::writeToFile(void) const
+{
+    int fd = open(this->_fileName, O_CREAT | O_WRONLY, S_IRWXG | S_IRWXU);
+
+    if (fd == -1) {
+        perror("open");
+        return -1;
+    }
+    write(fd, &(this->_header), sizeof(ru_header_t));
+    this->_functionTable.writeToFile(fd);
+    this->_stringTable.writeToFile(fd);
+    this->_codeSection.writeToFile(fd);
+    close(fd);
+    return 0;
+}
+
+void ruFile::addInstruction(const ruInstruction& instruction)
+{
+    if (instruction.isFunctionStart() == false) {
+        goto append;
+    }
+    ru_function_t fun;
+
+    fun.code_offset = this->_codeSection.getTotalSize();
+    fun.name_index = this->_stringTable.getTotalSize();
+    if (fun.name_index == 0) {
+        fun.name_index = 1;
+    }
+    this->addString(instruction.getFunctionName().c_str());
+#warning Implement instruction count in function table
+    fun.instruction_count = 0xFF;
+    this->addFunction(fun);
+append:
+    this->_codeSection.addInstruction(instruction);
+}
+
+void ruFile::addFunction(const ru_function_t& newFunction)
+{
+    this->_header.function_number += 1;
+    this->_functionTable.addFunction(newFunction);
+    this->headerUpdateOffsets();
+}
+
+void ruFile::addString(const char *str)
+{
+    this->_header.string_number += 1;
+    this->_stringTable.addString(str);
+    this->headerUpdateOffsets();
+}
+
+void ruFile::headerUpdateOffsets(void)
+{
+    this->_header.string_table_offset = sizeof(ru_header_t) + this->_functionTable.getTotalSize();
+    this->_header.code_offset = this->_header.string_table_offset + this->_stringTable.getTotalSize();
+}
