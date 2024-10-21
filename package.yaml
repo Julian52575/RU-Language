@@ -21,8 +21,15 @@ description:         Please see the README on GitHub at <https://github.com/mich
 
 dependencies:
 - base >= 4.7 && < 5
+<<<<<<< HEAD
 - binary
 - bytestring
+=======
+- containers
+- megaparsec
+- parser-combinators
+- hspec
+>>>>>>> Compiler-dev
 
 ghc-options:
 - -Wall
