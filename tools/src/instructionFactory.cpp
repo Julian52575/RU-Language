@@ -7,9 +7,9 @@
 void ruInstruction::setOpcode(uint16_t opcode)
 {
     uint8_t *cast = (uint8_t *) &opcode;
-
-    this->_opcode[0] = cast[0];
-    this->_opcode[1] = cast[1];
+    // inversed index for little endian
+    this->_opcode[0] = cast[1];
+    this->_opcode[1] = cast[0];
 }
 uint8_t ruInstruction::getPrefix(void) const
 {

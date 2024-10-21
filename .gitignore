@@ -1,2 +1,3 @@
+glados-virtual-machine.cabal
+stack.yaml.lock
 .stack-work/
-*~

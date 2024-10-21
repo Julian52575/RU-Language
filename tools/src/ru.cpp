@@ -34,7 +34,7 @@ int ruSectionCode::writeToFile(int fd) const
     }
     return 0;
 }
-uint32_t ruSectionCode::getNumberOfElement(void)
+uint32_t ruSectionCode::getNumberOfElement(void) const
 {
     return (uint32_t) this->_instructionVector.size();
 }
@@ -56,9 +56,23 @@ int ruSectionString::writeToFile(int fd) const
     }
     return 0;
 }
-uint32_t ruSectionString::getNumberOfElement(void)
+uint32_t ruSectionString::getNumberOfElement(void) const
 {
     return this->_stringVector.size();
+}
+const std::string& ruSectionString::getStringFromIndex(uint32_t index) const
+{
+    std::size_t currentOffset = 0x00;
+
+#warning Implement getStringFromIndex
+    for (std::size_t i = 0; i < this->_stringVector.size(); i++) {
+        if (currentOffset >= index) {
+            return this->_stringVector[i];
+        }
+        currentOffset += this->_stringVector[i].size();
+
+    }
+    return this->_empty;
 }
 //   function section
 void ruSectionFunction::addFunction(const ru_function_t& fun)
@@ -66,7 +80,7 @@ void ruSectionFunction::addFunction(const ru_function_t& fun)
     ru_function_t tmp;
 
     tmp.code_offset = fun.code_offset;
-    tmp.instruction_count = fun.instruction_count;
+    tmp.size = fun.size;
     tmp.name_index = fun.name_index;
     this->_functionVector.push_back(tmp);
     this->_totalSize += sizeof(ru_function_t);
@@ -80,9 +94,15 @@ int ruSectionFunction::writeToFile(int fd) const
     }
     return 0;
 }
-uint32_t ruSectionFunction::getNumberOfElement(void)
+uint32_t ruSectionFunction::getNumberOfElement(void) const
 {
     return this->_functionVector.size();
+}
+void ruSectionFunction::updateInstructionCount(const ruSectionCode& codeSection,
+    const ruSectionString& strTab)
+{
+#warning update function size
+    return;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -98,6 +118,7 @@ ruFile::ruFile()
     this->_header.file_version = 0x01;
     this->_header.checksum[0] = ((int64_t) &this->_header) % 42;
     this->_header.checksum[1] = ((int64_t) &this->_header) % 13;
+    this->_header.entrypointFunctionIndex = 0;
 }
 
 void ruFile::setFileName(const char *fileName)
@@ -134,8 +155,7 @@ void ruFile::addInstruction(const ruInstruction& instruction)
         fun.name_index = 1;
     }
     this->addString(instruction.getFunctionName().c_str());
-#warning Implement instruction count in function table
-    fun.instruction_count = 0xFF;
+    fun.size = 0xFF;
     this->addFunction(fun);
 append:
     this->_codeSection.addInstruction(instruction);
@@ -144,8 +164,11 @@ append:
 void ruFile::addFunction(const ru_function_t& newFunction)
 {
     this->_header.function_number += 1;
-    this->_functionTable.addFunction(newFunction);
     this->headerUpdateOffsets();
+    if (this->_stringTable.getStringFromIndex(newFunction.name_index) == "main") {
+        this->_header.entrypointFunctionIndex = this->_functionTable.getNumberOfElement();
+    }
+    this->_functionTable.addFunction(newFunction);
 }
 
 void ruFile::addString(const char *str)
