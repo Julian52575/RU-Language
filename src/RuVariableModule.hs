@@ -13,16 +13,37 @@ data RuVariableValue =
 
 data RuVariable = RuVariable {
     ruVariableValue :: RuVariableValue,
+    ruVariableType :: Int,
     ruMutable :: Bool
 } deriving (Eq, Show)
 
+{-- Helper function for defining variable type
+ --}
+ruVariableTypeInt :: Int
+ruVariableTypeInt = 0x01
 
-ruVariableGetStr :: RuVariable -> Maybe String
-ruVariableGetStr (RuVariable { ruVariableValue = Str s }) = Just s
-ruVariableGetStr _ = Nothing
+ruVariableTypeStr :: Int
+ruVariableTypeStr = 0x02
 
-ruVariableGetInt :: RuVariable -> Maybe Word64
-ruVariableGetInt (RuVariable { ruVariableValue = Int64 i }) = Just i
-ruVariableGetInt _ = Nothing
+ruVariableTypeFunction :: Int
+ruVariableTypeFunction = 0x03
 
+ruVariableTypeVariableId :: Int
+ruVariableTypeVariableId = 0x04
 
+{-- Helper function for getting / checking variable type
+ --}
+ruVariableGetType :: RuVariable -> Int
+ruVariableGetType (RuVariable { ruVariableType = i }) = i
+
+ruVariableIsType :: RuVariable -> Int -> Bool
+ruVariableIsType (RuVariable { ruVariableType = i }) t = i == t
+
+{-- Helper function to create a RuVariable
+ --}
+makeRuVariable :: RuVariableValue -> Int -> Bool -> RuVariable
+makeRuVariable value typ mutable = RuVariable {
+    ruVariableValue = value,
+    ruVariableType = typ,
+    ruMutable = mutable
+}

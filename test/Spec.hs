@@ -1,2 +1,7 @@
+import Test.Hspec
+
+import RuVmTests
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = hspec $ do
+    describe "RuVM tests" RuVmTests.spec

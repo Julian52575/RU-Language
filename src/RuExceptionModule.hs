@@ -1,4 +1,6 @@
 module RuExceptionModule where
 
-data RuException = RuException String
-    deriving (Show)
+newtype RuException = RuException String
+
+ruExceptionInvalidProgramCounter :: RuException
+ruExceptionInvalidProgramCounter = RuException "Invalid program counter"

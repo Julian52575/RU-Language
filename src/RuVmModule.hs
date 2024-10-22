@@ -1,22 +1,27 @@
 module RuVmModule where
 
 import qualified Data.ByteString as BS
-import Data.Word (Word8)
+import Data.Word (Word8, Word32)
+import Data.Either
 
 import RuVariableModule
-import RuFormatModule 
+import RuFormatModule
+import RuExceptionModule
 
 
 data RuVmState = RuVmState {
-    stack :: [RuVariable],
-    pc :: Int
+    variableStack :: [RuVariable],
+    workerCodeOffset :: Word32, -- similar to PC
+    workerCode :: [Word8]
 } deriving (Eq, Show)
 
 data RuVm = RuVm {
     fileVersion :: Word8,
-    stringTable :: [String],
+    stringTable :: [String], --the first string must be '\0'
     functionTable :: [RuFunctionTable],
-    code :: [Word8]
+    code :: [Word8],
+    codeSize :: Word32,
+    ruVmState :: RuVmState
 } deriving (Eq, Show)
 
 
@@ -38,6 +43,8 @@ readFileAsWord8 filePath = do
 removeIo :: [Word8] -> [Word8]
 removeIo list = list
 
+{-- Get a RuVm from a fileName
+ --}
 fileNameToRuVm :: String -> IO RuVm
 fileNameToRuVm fileName = do
     ioByteList <- readFileAsWord8 fileName
@@ -48,3 +55,8 @@ fileNameToRuVm fileName = do
         functionTable = [],
         code = byteList
     }
+
+{-- Helper function to update program counter
+ --}
+ruVmUpdateWorkerCodeOffset :: RuVm -> Int -> Either RuException RuVm
+ruVmUpdateWorkerCodeOffset vm offset = Right vm
