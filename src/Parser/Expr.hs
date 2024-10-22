@@ -60,9 +60,9 @@ parseTupleOrParenExpr = between (sym "(") (sym ")") $ do
 -- Parses function calls
 funcCallExpr :: Parser Expr
 funcCallExpr = do
-    funcName <- identifier
+    func <- try arrayIndexExpr <|> Var <$> identifier  -- Function can be a variable or an array index expression
     args <- parens (expr `sepBy` sym ",")
-    return $ FuncCall funcName args
+    return $ FuncCall func args
 
 -- Parses array indexing expressions
 arrayIndexExpr :: Parser Expr
