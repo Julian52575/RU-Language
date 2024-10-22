@@ -4,6 +4,7 @@ import qualified TypeSpec
 import qualified ExprSpec
 import qualified StmtSpec
 import qualified PatternSpec
+import qualified FunctionSpec
 
 main :: IO ()
 main = hspec $ do
@@ -11,3 +12,5 @@ main = hspec $ do
   describe "Expression tests" ExprSpec.spec
   describe "Operator tests" StmtSpec.spec
   describe "Pattern tests" PatternSpec.spec
+  describe "Statement tests" StmtSpec.spec
+  describe "Function tests" FunctionSpec.spec

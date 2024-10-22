@@ -14,7 +14,7 @@ spec = do
     it "parses let declaration with type" $ do
       let input = "let x: int = 42;"
       parseStmt input `shouldBe` Right (LetStmt "x" (Just TInt) (LitInt 42))
-
+    
     it "parses let declaration with expression" $ do
       let input = "let y = 10 + 20;"
       parseStmt input `shouldBe` Right (LetStmt "y" Nothing (BinArith Add (LitInt 10) (LitInt 20)))
@@ -182,7 +182,7 @@ spec = do
 
     it "parses return with function call" $ do
       let input = "return foo(42, x + y);"
-      parseStmt input `shouldBe` Right (ReturnStmt (Just (FuncCall "foo" [LitInt 42, BinArith Add (Var "x") (Var "y")])))
+      parseStmt input `shouldBe` Right (ReturnStmt (Just (FuncCall (Var "foo") [LitInt 42, BinArith Add (Var "x") (Var "y")])))
 
     -- Tests supplémentaires pour if statements
     it "parses if statement with logical operations" $ do
@@ -252,7 +252,7 @@ spec = do
 
     it "parses assignment with tuple access" $ do
       let input = "tuple._1 = 42;"
-      parseStmt input `shouldBe` Right (ExprStmt (Assign (FuncCall "tuple" [LitString "_1"]) (LitInt 42)))
+      parseStmt input `shouldBe` Right (ExprStmt (Assign (FuncCall (Var "tuple") [LitString "_1"]) (LitInt 42)))
 
         -- Tests pour match statement
     it "parses match statement with literal patterns" $ do
@@ -405,7 +405,7 @@ spec = do
     let input = "match x { 1 => return (x + y) * z, 2 => return foo(x, y, z) }"
     parseStmt input `shouldBe` Right (MatchStmt (Var "x")
                                         [ (PatLitInt 1, ReturnStmt (Just (BinArith Multiply (BinArith Add (Var "x") (Var "y")) (Var "z"))))
-                                        , (PatLitInt 2, ReturnStmt (Just (FuncCall "foo" [Var "x", Var "y", Var "z"]))) ])
+                                        , (PatLitInt 2, ReturnStmt (Just (FuncCall (Var "foo") [Var "x", Var "y", Var "z"]))) ])
 
   -- Tests pour match avec des motifs imbriqués
   it "parses match statement with nested patterns" $ do
@@ -439,8 +439,8 @@ spec = do
   it "parses match statement with function call in return" $ do
     let input = "match x { 1 => return foo(42), 2 => return bar(x, y) }"
     parseStmt input `shouldBe` Right (MatchStmt (Var "x")
-                                        [ (PatLitInt 1, ReturnStmt (Just (FuncCall "foo" [LitInt 42])))
-                                        , (PatLitInt 2, ReturnStmt (Just (FuncCall "bar" [Var "x", Var "y"]))) ])
+                                        [ (PatLitInt 1, ReturnStmt (Just (FuncCall (Var "foo") [LitInt 42])))
+                                        , (PatLitInt 2, ReturnStmt (Just (FuncCall (Var "bar") [Var "x", Var "y"]))) ])
 
   -- Test avec des match simples sans bloc
   it "parses match statement with simple return statements" $ do
@@ -514,8 +514,8 @@ spec = do
   it "parses match statement with function call in return" $ do
     let input = "match x { 1 => return foo(42), 2 => return bar(43) }"
     parseStmt input `shouldBe` Right (MatchStmt (Var "x")
-                                        [ (PatLitInt 1, ReturnStmt (Just (FuncCall "foo" [LitInt 42])))
-                                        , (PatLitInt 2, ReturnStmt (Just (FuncCall "bar" [LitInt 43]))) ])
+                                        [ (PatLitInt 1, ReturnStmt (Just (FuncCall (Var "foo") [LitInt 42])))
+                                        , (PatLitInt 2, ReturnStmt (Just (FuncCall (Var "bar") [LitInt 43]))) ])
 
   -- Test avec des expressions ternaires dans un match
   it "parses match statement with ternary expressions" $ do
@@ -564,7 +564,7 @@ spec = do
     -- Tests pour les fonctions avec des paramètres de type tuple
   it "parses function declaration with tuple parameters" $ do
     let input = "fn processTuple(pair: (int, string)) -> void { let x = pair._1; let y = pair._2; }"
-    parseStmt input `shouldBe` Right (FuncDeclStmt "processTuple" [("pair", TTuple [TInt, TString], Nothing)] TVoid (Just (BlockStmt [LetStmt "x" Nothing (FuncCall "pair" [LitString "_1"]), LetStmt "y" Nothing (FuncCall "pair" [LitString "_2"])])))
+    parseStmt input `shouldBe` Right (FuncDeclStmt "processTuple" [("pair", TTuple [TInt, TString], Nothing)] TVoid (Just (BlockStmt [LetStmt "x" Nothing (FuncCall (Var "pair") [LitString "_1"]), LetStmt "y" Nothing (FuncCall (Var "pair") [LitString "_2"])])))
 
     -- Tests pour la déclaration de fonction avec des conditions dans le corps
   it "parses function declaration with if-else in the body" $ do
@@ -579,4 +579,4 @@ spec = do
     -- Tests pour la fonction avec une fonction imbriquée dans le corps
   it "parses function declaration with nested function call" $ do
     let input = "fn outer(a: int) -> int { return inner(a); }"
-    parseStmt input `shouldBe` Right (FuncDeclStmt "outer" [("a", TInt, Nothing)] TInt (Just (BlockStmt [ReturnStmt (Just (FuncCall "inner" [Var "a"]))])))
+    parseStmt input `shouldBe` Right (FuncDeclStmt "outer" [("a", TInt, Nothing)] TInt (Just (BlockStmt [ReturnStmt (Just (FuncCall (Var "inner") [Var "a"]))])))
