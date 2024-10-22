@@ -38,7 +38,7 @@ typedef struct ru_header_s {
     uint32_t string_number;
     uint32_t code_offset;
     uint32_t entrypointFunctionIndex;
-    uint8_t padding[28];
+    uint8_t padding[36];
 } ru_header_t;
 
 typedef struct ru_function_s {

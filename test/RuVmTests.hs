@@ -12,7 +12,6 @@ import RuVmModule
 } deriving (Eq, Show)
 
 data RuVm = RuVm {
-    fileVersion :: Word8,
     stringTable :: [String], --the first string must be '\0'
     functionTable :: [RuFunctionTable],
     code :: [Word8],
@@ -25,7 +24,6 @@ spec :: Spec
 spec = do
     let tabCode = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05]
     let vm = RuVm {
-        fileVersion = 0x00,
         stringTable = ["0"],
         functionTable = [],
         code = tabCode,
@@ -40,7 +38,7 @@ spec = do
         it "moves forward" $ do
             let result = ruVmUpdateWorkerCodeOffset vm 3
             isRight result `shouldBe` True
-            let newVm = fromRight (error "Unexpected Left") result 
+            let newVm = fromRight (error "Unexpected Left") result
             (workerCodeOffset (ruVmState newVm)) `shouldBe` 3
             (workerCode (ruVmState newVm)) `shouldBe` [0x03, 0x04, 0x05]
 

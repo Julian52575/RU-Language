@@ -1,6 +1,7 @@
 module RuInstructionsModule where
 
 import Data.Word (Word8)
+
 import RuVmModule
 
 data RuInstruction = RuInstruction {
