@@ -82,7 +82,7 @@ spec = do
               [ ReturnStmt (Just (Ternary (BinComp GreaterThan (Var "x") (LitInt 10)) (LitBool True) (LitBool False)))])) ]
 
     it "parses a function with nested blocks" $ do
-      let input = "fn myFunction() -> void { { let x = 42; } }"
+      let input = "fn myFunction() -> void { { let x: int = 42; } }"
       parseFromString input `shouldBe` Right
         [ FuncDeclStmt
             "myFunction"
@@ -269,6 +269,7 @@ spec = do
               ])
             )
         ]
+
 
     it "parses a function with nested ternary expressions" $ do
       let input = "fn myFunction(x: int, y: int) -> bool { return x > 10 ? y < 5 ? true : false : false; }"

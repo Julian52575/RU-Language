@@ -8,7 +8,7 @@ data Expr
     | LitString String
     | LitBool Bool
     | Var String
-    | FuncCall String [Expr]
+    | FuncCall Expr [Expr]
     | BinArith ArithOp Expr Expr
     | BinComp CompOp Expr Expr
     | BinLogic LogicOp Expr Expr
