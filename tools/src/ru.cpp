@@ -42,6 +42,9 @@ uint32_t ruSectionCode::getNumberOfElement(void) const
 //  strTab
 void ruSectionString::addString(const char *str)
 {
+    if (this->_stringVector.size() == 0) {
+        this->_stringVector.push_back("\0");
+    }
     this->_stringVector.push_back(str);
     this->_totalSize += strlen(str) + 1;
 }
@@ -62,17 +65,7 @@ uint32_t ruSectionString::getNumberOfElement(void) const
 }
 const std::string& ruSectionString::getStringFromIndex(uint32_t index) const
 {
-    std::size_t currentOffset = 0x00;
-
-#warning Implement getStringFromIndex
-    for (std::size_t i = 0; i < this->_stringVector.size(); i++) {
-        if (currentOffset >= index) {
-            return this->_stringVector[i];
-        }
-        currentOffset += this->_stringVector[i].size();
-
-    }
-    return this->_empty;
+    return this->_stringVector[index];
 }
 //   function section
 void ruSectionFunction::addFunction(const ru_function_t& fun)
@@ -150,7 +143,7 @@ void ruFile::addInstruction(const ruInstruction& instruction)
     ru_function_t fun;
 
     fun.code_offset = this->_codeSection.getTotalSize();
-    fun.name_index = this->_stringTable.getTotalSize();
+    fun.name_index = this->_stringTable.getNumberOfElement();
     if (fun.name_index == 0) {
         fun.name_index = 1;
     }
