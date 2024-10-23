@@ -6,6 +6,9 @@ import Data.Either
 
 import qualified Data.ByteString as BS
 
+import Control.Monad.Trans.Except
+import Control.Monad.IO.Class (liftIO)
+
 import RuExceptionModule
 
 -- fromIntegral
@@ -162,15 +165,32 @@ fileContentToRuFormat tab = do
     let format = defaultRuFormat
     let result = checkMagic format tab
     if (isLeft result == True) then result
-    else Right format
+    else do
+        let newFormat = defaultRuFormat
+        let header = ruHeader (fromRight newFormat result)
+        let functionTable = take (fromIntegral (functionTableCount header)) (drop (fromIntegral (strTableOffset header)) tab)
+        let strTable = take (fromIntegral (strTableCount header)) (drop (fromIntegral (strTableOffset header)) tab)
+        let codeSection = drop (fromIntegral (codeOffset header)) tab
+        Right newFormat {
+            ruFunctionTable = functionTable,
+            strTab = strTable,
+            codeSection = codeSection
+        }
 
 {-- Get a RuFormat from a fileName
-fileNameToRuFormat :: String -> Either RuException RuFormat
-fileNameToRuFormat fileName = do
-    byteString <- BS.readFile fileName
+--}
+fileNameToRuFormat :: String -> IO (Either RuException RuFormat)
+fileNameToRuFormat fileName = runExceptT $ do
+    byteString <- liftIO $ BS.readFile fileName
     let byteList = BS.unpack byteString
     let result = fileContentToRuFormat byteList
-    if (isLeft result == True) then result
-    else Right (fromLeft defaultRuFormat result)
+    if (isLeft result == True) then throwE (fromLeft ruExceptionGenericFileError result)
+    else return $ (fromRight defaultRuFormat result)
 
-    --}
+-- fileNameToRuFormat :: String -> Either RuException RuFormat
+-- fileNameToRuFormat fileName = runExceptT $ do
+--     byteString <- liftIO $ BS.readFile fileName
+--     let byteList = BS.unpack byteString
+--     let result = fileContentToRuFormat byteList
+--     if (isLeft result == True) then result
+--     else Right (fromRight defaultRuFormat result)
