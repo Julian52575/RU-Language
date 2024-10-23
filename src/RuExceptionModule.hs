@@ -14,3 +14,5 @@ ruExceptionUnsupportedVersion = RuException "Unsupported file version"
 ruExceptionWrongFileFormat :: RuException
 ruExceptionWrongFileFormat = RuException "Invalid file format"
 
+ruExceptionBadFunctionTableCount :: RuException
+ruExceptionBadFunctionTableCount = RuException "Invalid function table count"
