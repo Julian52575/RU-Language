@@ -19,6 +19,16 @@ data RuVmState = RuVmState {
     conditionalMode :: Bool
 } deriving (Eq, Show)
 
+ruFormatToRuVmState :: RuFormat -> Either RuException RuVmState
+ruFormatToRuVmState format = do
+    let codeOffsetInt = fromIntegral (codeOffset (ruHeader format))
+    Right RuVmState {
+        variableStack = [],
+        workerCodeOffset = codeOffset (ruHeader format),
+        workerCode = drop codeOffsetInt (codeSection format),
+        conditionalMode = False
+    }
+
 data RuVmInfo = RuVmInfo {
     stringTable :: [String], --the first string must be '\0'
     functionTable :: [RuFunctionTable],

@@ -63,6 +63,42 @@ spec = do
             let result = ruVmStateUpdateWorkerCodeOffset vmState oobOffset
             isLeft result `shouldBe` True
 
+    -- ruFormatToRuVmState :: RuFormat -> Either RuException RuVmState
+    describe "Convert RuFormat to RuVmState" $ do
+        let header = RuHeader {
+            fileSize = 0x00,
+            fileVersion = 0x01,
+            functionTableCount = 0x01,
+            strTableOffset = 0x42,
+            strTableCount = 0x01,
+            codeOffset = 0x42,
+            entrypointOffset = 0x02
+        }
+        let funTab = [ 0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22, 0x33, 0x33, 0x33, 0x33]
+        let strTabl = [ 0x00, 0x65, 0x00]
+        let codeSec = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a]
+        let format = RuFormat {
+                ruHeader = header,
+                ruFunctionTable = funTab,
+                strTab = strTabl,
+                codeSection = codeSec
+        }
+        let expected = RuVmState {
+                variableStack = [],
+                workerCodeOffset = 0x02,
+                workerCode = (drop 0x02 codeSec),
+                conditionalMode = False
+        }
+        let result = ruFormatToRuVmState format
+        let state = fromRight (RuVmState {} ) result
+        it "Convert RuFormat to RuVmState" $ do
+            isLeft result `shouldBe` False
+        it "Parse entrypointOffset" $ do
+            workerCodeOffset state `shouldBe` codeOffset (ruHeader format)
+        it "Parse code" $ do
+            let codeOffsetInt = fromIntegral (codeOffset (ruHeader format))
+            workerCode state `shouldBe` drop codeOffsetInt (codeSection format)
+
     describe "Convert RuFormat to RuVmInfo" $ do
         let funSection = [0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xb3, 0xb4, 0xc1, 0xc2, 0xc3, 0xc4]
         let stringSection = [0x65, 0x66, 0x67] -- A B C
