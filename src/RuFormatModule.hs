@@ -4,6 +4,8 @@ import Data.Word (Word8, Word16, Word32, Word64)
 import Data.Bits
 import Data.Either
 
+import qualified Data.ByteString as BS
+
 import RuExceptionModule
 
 -- fromIntegral
@@ -95,7 +97,63 @@ checkChecksumFileVersion format (check:sum:version:next) = do
 {--
  --}
 checkFunctionTableCount :: RuFormat -> [Word8] -> Either RuException RuFormat
-checkFunctionTableCount format _ = Left (RuException "Todo")
+checkFunctionTableCount format (a:b:c:d:next) = do
+    let count = (word84ToWord32 a b c d)
+    let newFormat = format {
+            ruHeader = (ruHeader format) {
+                functionTableCount = count
+            }
+        }
+    if count < 0 then Left ruExceptionBadFunctionTableCount
+    else checkStrTableOffset newFormat next 
+
+
+checkStrTableOffset :: RuFormat -> [Word8] -> Either RuException RuFormat
+checkStrTableOffset format (a:b:c:d:next) = do
+    let offset = (word84ToWord32 a b c d)
+    let newFormat = format {
+            ruHeader = (ruHeader format) {
+                strTableOffset = offset
+            }
+        }
+    if offset < 0 then Left ruExceptionBadFunctionTableCount
+    else checkStrTableCount newFormat next
+
+checkStrTableCount :: RuFormat -> [Word8] -> Either RuException RuFormat
+checkStrTableCount format (a:b:c:d:next) = do
+    let count = (word84ToWord32 a b c d)
+    let newFormat = format {
+            ruHeader = (ruHeader format) {
+                strTableCount = count
+            }
+        }
+    if count < 0 then Left ruExceptionBadFunctionTableCount
+    else checkCodeOffset newFormat next
+
+
+checkCodeOffset :: RuFormat -> [Word8] -> Either RuException RuFormat
+checkCodeOffset format (a:b:c:d:next) = do
+    let offset = (word84ToWord32 a b c d)
+    let newFormat = format {
+            ruHeader = (ruHeader format) {
+                codeOffset = offset
+            }
+        }
+    if offset < 0 then Left ruExceptionBadFunctionTableCount
+    else checkEntrypointOffset newFormat next
+
+
+checkEntrypointOffset :: RuFormat -> [Word8] -> Either RuException RuFormat
+checkEntrypointOffset format (a:b:c:d:next) = do
+    let offset = (word84ToWord32 a b c d)
+    let newFormat = format {
+            ruHeader = (ruHeader format) {
+                entrypointOffset = offset
+            }
+        }
+    if offset < 0 then Left ruExceptionBadFunctionTableCount
+    else Right newFormat
+
 
 {-- Helper function to extract file field
  --}
@@ -104,6 +162,15 @@ fileContentToRuFormat tab = do
     let format = defaultRuFormat
     let result = checkMagic format tab
     if (isLeft result == True) then result
-    else Left (RuException "Todo")
+    else Right format
 
+{-- Get a RuFormat from a fileName
+fileNameToRuFormat :: String -> Either RuException RuFormat
+fileNameToRuFormat fileName = do
+    byteString <- BS.readFile fileName
+    let byteList = BS.unpack byteString
+    let result = fileContentToRuFormat byteList
+    if (isLeft result == True) then result
+    else Right (fromLeft defaultRuFormat result)
 
+    --}
