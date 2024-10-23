@@ -1,13 +1,14 @@
 module RuInstructionsModule where
 
-import Data.Word (Word8)
+import Data.Word (Word8, Word32)
 
 import RuVmModule
 
 data RuInstruction = RuInstruction {
     ruInstructionMnemonic :: Word8,
     ruInstructionName :: String,
-    ruInstructionFunction :: (RuVm -> [Word8] -> [Word8])
+    ruInstructionFunction :: (RuVmInfo -> RuVmState -> RuVmState),
+    fixedSize :: Word32 --Taille de l'instruction si pas coding byte
 }
 
 ruInstructionListPrefix0x00 :: [ RuInstruction ]

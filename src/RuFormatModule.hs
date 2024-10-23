@@ -22,6 +22,7 @@ word84ToWord32 a b c d = (x `shiftL` 24) + (y `shiftL` 16) + (z `shiftL` 8) + v
     v = fromIntegral d
 
 data RuHeader = RuHeader {
+    fileSize :: Word32,
     fileVersion :: Word8,
     functionTableCount :: Word32,
     strTableOffset :: Word32,
@@ -31,21 +32,22 @@ data RuHeader = RuHeader {
 } deriving(Eq, Show)
 
 data RuFunctionTable = RuFunctionTable {
-    nameIndex :: Word64,
-    codeSectionOffset :: Word64,
-    size :: Word64
+    nameIndex :: Word32,
+    codeSectionOffset :: Word32,
+    size :: Word32
 } deriving (Eq, Show)
 
 data RuFormat = RuFormat {
     ruHeader :: RuHeader,
-    ruFunctionTable :: [RuFunctionTable],
-    strTab :: [String],
+    ruFunctionTable :: [Word8],
+    strTab :: [Word8],
     codeSection :: [Word8]
-}
+} deriving (Eq, Show)
 
 defaultRuFormat :: RuFormat
 defaultRuFormat = RuFormat {
     ruHeader = RuHeader {
+        fileSize = 0x00,
         fileVersion = 0x00,
         functionTableCount = 0x00,
         strTableOffset = 0x00,
@@ -85,7 +87,7 @@ checkChecksumFileVersion format (check:sum:version:next) = do
     else checkFunctionTableCount newFormat next
     where
         newFormat = format {
-            ruHeader = RuHeader {
+            ruHeader = (ruHeader format) {
                 fileVersion = version
             }
         }
@@ -103,3 +105,5 @@ fileContentToRuFormat tab = do
     let result = checkMagic format tab
     if (isLeft result == True) then result
     else Left (RuException "Todo")
+
+
