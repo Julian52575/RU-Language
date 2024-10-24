@@ -51,15 +51,15 @@ data RuFormat = RuFormat {
 
 defaultRuFormat :: RuFormat
 defaultRuFormat = RuFormat {
-    ruHeader = RuHeader {
-        fileSize = 0x00,
-        fileVersion = 0x00,
-        functionTableCount = 0x00,
-        strTableOffset = 0x00,
-        strTableCount = 0x00,
-        codeOffset = 0x00,
-        entrypointOffset = 0x00
-    },
+        ruHeader = RuHeader {
+            fileSize = 0x00,
+            fileVersion = 0x00,
+            functionTableCount = 0x00,
+            strTableOffset = 0x00,
+            strTableCount = 0x00,
+            codeOffset = 0x00,
+            entrypointOffset = 0x00
+        },
     ruFunctionTable = [],
     strTab = [],
     codeSection = []
@@ -168,10 +168,12 @@ fileContentToRuFormat tab = do
     else do
         let newFormat = defaultRuFormat
         let header = ruHeader (fromRight newFormat result)
-        let functionTable = take (fromIntegral (functionTableCount header)) (drop (fromIntegral (strTableOffset header)) tab)
-        let strTable = take (fromIntegral (strTableCount header)) (drop (fromIntegral (strTableOffset header)) tab)
+        -- let functionTable = take (fromIntegral (functionTableCount header)) (drop ((fromIntegral (strTableOffset header)) - 1) tab)
+        let functionTable = take (12 * (fromIntegral(functionTableCount header))) (drop 64 tab)
+        let strTable = take ((fromIntegral (codeOffset header)) - (fromIntegral (strTableOffset header))) (drop (fromIntegral (strTableOffset header)) tab)
         let codeSection = drop (fromIntegral (codeOffset header)) tab
         Right newFormat {
+            ruHeader = header,
             ruFunctionTable = functionTable,
             strTab = strTable,
             codeSection = codeSection
@@ -184,13 +186,13 @@ fileNameToRuFormat fileName = runExceptT $ do
     byteString <- liftIO $ BS.readFile fileName
     let byteList = BS.unpack byteString
     let result = fileContentToRuFormat byteList
-    if (isLeft result == True) then throwE (fromLeft ruExceptionGenericFileError result)
-    else return $ (fromRight defaultRuFormat result)
+    if isLeft result then throwE (fromLeft ruExceptionGenericFileError result)
+    else return (fromRight (error "Unexpected error: result should be Right") result)
 
--- fileNameToRuFormat :: String -> Either RuException RuFormat
+-- fileNameToRuFormat :: String -> IO (Either RuException RuFormat)
 -- fileNameToRuFormat fileName = runExceptT $ do
 --     byteString <- liftIO $ BS.readFile fileName
 --     let byteList = BS.unpack byteString
 --     let result = fileContentToRuFormat byteList
---     if (isLeft result == True) then result
---     else Right (fromRight defaultRuFormat result)
+--     if (isLeft result == True) then throwE (fromLeft ruExceptionGenericFileError result)
+--     else return $ (fromRight defaultRuFormat result)
