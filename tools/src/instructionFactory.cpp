@@ -44,7 +44,7 @@ void ruInstruction::addOperandByte(uint8_t value)
 }
 void ruInstruction::addOperandByte(uint32_t value)
 {
-    for (int i = 0; i < 4; i++) {
+    for (int i = 3; i >= 0; i--) {
         this->_bytes.push_back(((uint8_t *) (&value))[i]);
     }
 }

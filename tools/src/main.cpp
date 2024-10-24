@@ -25,7 +25,7 @@ worker(ruFile& ru, instructionFactory& facto)
     ru.addInstruction(worker);
     worker = facto.createVar(RU_VARTYPE_INT, 0x02020202);
     ru.addInstruction(worker);
-    worker = facto.createVar(RU_VARTYPE_INT, 0x03030303);
+    worker = facto.createVar(RU_VARTYPE_INT, 0x000000FF);
     ru.addInstruction(worker);
 }
 
