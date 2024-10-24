@@ -4,13 +4,13 @@ import Data.Word
 import Numeric
 
 newtype RuException = RuException String
+    deriving (Eq, Show)
 
 ruExceptionInvalidProgramCounter :: RuException
 ruExceptionInvalidProgramCounter = RuException "Invalid program counter"
 
 ruExceptionBadChecksum :: RuException
 ruExceptionBadChecksum = RuException "Checksum is invalid"
-
 
 ruExceptionGenericFileError :: RuException
 ruExceptionGenericFileError = RuException "Error on file"
@@ -27,8 +27,13 @@ ruExceptionWrongFileFormat = RuException "Invalid file format"
 ruExceptionBadFunctionTableCount :: RuException
 ruExceptionBadFunctionTableCount = RuException "Invalid function table count"
 
-ruExceptionIncompleteOpcode :: Word32 -> RuException
-ruExceptionIncompleteOpcode offset32 = RuException exc
-    where
-    offsetStr = showHex offset32 "0x??"
-    exc = "Opcode is complete at pc:" ++ offsetStr
+ruExceptionIncompleteInstruction :: RuException
+ruExceptionIncompleteInstruction = RuException "Instruction is incomplete."
+
+ruExceptionUnknowInstruction :: RuException
+ruExceptionUnknowInstruction = RuException "Unknow instruction."
+
+ruExceptionUnknowOpcode :: Word8 -> Word8 -> RuException
+ruExceptionUnknowOpcode p i = RuException ("Unknow opcode 0x" ++ (showHex p "??") ++ (showHex i "??"))
+
+

@@ -3,39 +3,75 @@ module Main (main) where
 import System.Environment (getArgs)
 import System.Exit (exitWith, ExitCode(ExitFailure, ExitSuccess))
 import Control.Exception
+import Data.Word
+import Data.Either
+import Data.Maybe
 
-import RuException
 import RuVmModule
 import RuVariableModule
 import RuExceptionModule
+import RuInstructionsModule
 
 
+{-- Obtient la taille COMPLETE (+ mnemonic) de l'instruction par le mnemonic / codingByte
+ --}
+getInstructionSize :: Word8 -> Word8 -> RuVmState -> Word32
+getInstructionSize pre inf state
+    | (isNothing maybeInstruction == True) = 0
+    | (fixedSize instruction /= 0)         = fixedSize instruction
+    | otherwise                            = 2 + 1 + operandsSize
+    where
+        maybeInstruction = getRuInstruction pre inf
+        instruction = fromMaybe (error "Unknow Instruction.") maybeInstruction
+        codingByte = (workerCode state) !! 0
+        operandsSize = codingByteToOperandsSize codingByte
 
+{-- Move Pc to the new instruction if previous instruction didn't
+ --}
+getNextPcState :: Word8 -> Word8 -> RuVmState -> RuVmState -> RuVmState
+getNextPcState pre inf oldState newState
+    | (oldPc /= newPc)  = newState
+    | otherwise         = newState { workerCodeOffset = (newPc + (previousInstructionSize - 2)) }
+    where
+        oldPc = workerCodeOffset oldState
+        newPc = workerCodeOffset newState
+        previousInstructionSize = getInstructionSize pre inf oldState
+
+{-- Execute chaque instruction et met à jour le PC / workerCode pour chaque 
+ --}
 runInstructions :: RuVmInfo -> RuVmState -> Either RuException RuVmState
-runInstructions state = do --Left (RuException "ToDo")
-    if length (workerCode state) < 2
-    then Left (ruExceptionIncompleteOpcode (workerCodeOffset state))
-    else do
-        let insPrefix = (workerCode state) !! 0
-        let insInfix = (workerCode state) !! 1
-        let movedState = state {
-            workerCode = drop 2 (workerCode state)
-        }
-        let newState = runSingleInstruction state
-        
+runInstructions info state
+    | (isLeft updatedPcResult == True)     = updatedPcResult
+    | (length (workerCode movedState) < 2) = Left ruExceptionIncompleteInstruction
+    | (isNothing maybeFunction == True)    = Left (ruExceptionUnknowOpcode prefix iinfix)
+    | (isLeft functionResult == True)      = functionResult
+    | otherwise = runInstructions info nextState
+    where
+    updatedPcResult = ruVmStateUpdateWorkerCodeToPc info state
+    updatedPcState = (fromRight (RuVmState {}) updatedPcResult)
+    prefix = (workerCode updatedPcState !! 0)
+    iinfix = (workerCode updatedPcState !! 1)
+    movedState = updatedPcState {
+        workerCode = drop 2 (workerCode updatedPcState)
+    }
+    maybeFunction = getInstructionFunction prefix iinfix
+    function = fromMaybe (error "Unknow Instruction") maybeFunction
+    instructionOperandSize = getInstructionSize prefix iinfix
+    functionResult = function movedState
+    functionResultState = fromRight (error "fromRight error") functionResult
+    nextState = functionResultState
 
+{-- Appelle runInstructions et gère le retour
+ --}
 runRuVm :: RuVmInfo -> Either RuException RuVariable
-runRuVm info = Left (RuException "ToDo")
-    
-    
-{-- --}
+runRuVm info = Left (RuException "ToDo") --TODO
 
+{-- --}
 usage :: String
 usage = "Usage:\t./ru_vm [--dump] filename"
 
 runMain :: IO ()
 runMain = do
-    let vmInfo = Nothing
     args <- getArgs
     case args of
         ["--usage"] -> do
@@ -43,23 +79,11 @@ runMain = do
         ["--dump"] -> do
             putStrLn "You requested a dump"
         [filename] -> do
-            vmInfo = Just (fileNameToRuVm filename)
+            putStrLn "ToDo"
+
         [] -> do
             putStrLn "No arguments provided."
-    if vmInfo == Nothing
-    then
-        putStrLn "No file to execute."
-        exitWith(ExitFailure 84)
-    else do
-        let defaultState = ruVmTo
-        let result = runRuVm (fromMaybe vmInfo)
-        if isLeft result == True
-        then
-            putStrLn (fromLeft (RuException "RuException" result)
-            exitWith(ExitFailure 84)
-        else
-            printRuVariable (fromRight (RuVariable {}) result)
-            exitWith(ExitSuccess 0)
+
 
 
 handler :: IOException -> IO ()

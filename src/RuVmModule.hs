@@ -27,6 +27,16 @@ data RuVmState = RuVmState {
     stateDeep :: Int
 } deriving (Eq, Show)
 
+checkVmStateCodeOffset :: RuVmInfo -> RuVmState -> Maybe RuException
+checkVmStateCodeOffset info state
+    | workerCodeOffset state > codeSize info = Just ruExceptionInvalidProgramCounter
+    | otherwise = Nothing
+
+checkVmState :: RuVmInfo -> RuVmState -> Maybe RuException
+checkVmState info state = checkVmStateCodeOffset info state
+
+
+
 ruFormatToRuVmState :: RuFormat -> Either RuException RuVmState
 ruFormatToRuVmState format = do
     let codeOffsetInt = fromIntegral (codeOffset (ruHeader format))
@@ -121,5 +131,18 @@ fileNameToRuVm fileName = runExceptT $ do --lire fichier
 
 {-- Helper function to update program counter
  --}
-ruVmStateUpdateWorkerCodeOffset :: RuVmState -> Int -> Either RuException RuVmState
-ruVmStateUpdateWorkerCodeOffset vm offset = Right vm
+ --
+ruVmStateCheckOutOfBound :: RuVmInfo -> RuVmState -> Bool
+ruVmStateCheckOutOfBound info state
+    | (workerCodeOffset state) >= (codeSize info) = True
+    | otherwise = False
+
+ruVmStateUpdateWorkerCodeToPc :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruVmStateUpdateWorkerCodeToPc info state
+    | ruVmStateCheckOutOfBound info state = Left ruExceptionInvalidProgramCounter
+    | otherwise = Right movedState
+    where
+        offsetInt = fromIntegral (workerCodeOffset state)
+        movedState = state {
+            workerCode = drop offsetInt (code info)
+        }
