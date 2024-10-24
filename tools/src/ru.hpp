@@ -1,6 +1,7 @@
 
 #ifndef RU_HPP
 #define RU_HPP
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <utility>
@@ -8,6 +9,10 @@
 #include "ru.h"
 #include "instructionFactory.hpp"
 
+int writeBigEndian(int fd, uint16_t i);
+int writeBigEndian(int fd, uint32_t i);
+int writeBigEndian(int fd, ru_header_t header);
+int writeBigEndian(int fd, ru_function_t fun);
 
 struct ruSection {
     public:

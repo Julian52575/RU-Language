@@ -29,6 +29,7 @@
 
 #define RU_HEADER_SIZE 64
 #define RU_HEADER_PADDING_SIZE 32
+
 typedef struct ru_header_s {
     uint8_t magic[5];
     uint8_t checksum[2];

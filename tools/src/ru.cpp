@@ -1,10 +1,75 @@
 #include "ru.hpp"
 #include "instructionFactory.hpp"
 #include "ru.h"
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
+
+
+int writeBigEndian(int fd, uint16_t i)
+{
+    uint8_t *cast = ((uint8_t *) &i);
+
+    write(fd, &cast[1], 1);
+    write(fd, &cast[0], 1);
+    return 0;
+}
+
+int writeBigEndian(int fd, uint32_t i)
+{
+    uint8_t *cast = ((uint8_t *) &i);
+
+    write(fd, &cast[3], 1);
+    write(fd, &cast[2], 1);
+    write(fd, &cast[1], 1);
+    write(fd, &cast[0], 1);
+    return 0;
+}
+
+int writeBigEndian(int fd, ru_header_t header)
+{
+    write(fd, "CROUS", 5);
+    write(fd, &header.checksum, 2);
+    write(fd, &header.file_version, 1);
+    writeBigEndian(fd, header.function_number);
+    writeBigEndian(fd, header.string_table_offset);
+    writeBigEndian(fd, header.string_number);
+    writeBigEndian(fd, header.code_offset);
+    writeBigEndian(fd, header.entrypointFunctionIndex);
+    uint8_t padding = 0x00;
+    for (int i = 0; i < 36; i++) {
+        write(fd, &padding, 1);
+    }
+    return 0;
+}
+
+int writeBigEndian(int fd, ru_function_t fun)
+{
+/*    uint32_t name_index;
+    uint32_t code_offset;
+    uint32_t size;*/
+    uint8_t *cast = ((uint8_t *) &(fun.name_index));
+
+    write(fd, &cast[3], 1);
+    write(fd, &cast[2], 1);
+    write(fd, &cast[1], 1);
+    write(fd, &cast[0], 1);
+
+    cast = ((uint8_t *) &(fun.code_offset));
+    write(fd, &cast[3], 1);
+    write(fd, &cast[2], 1);
+    write(fd, &cast[1], 1);
+    write(fd, &cast[0], 1);
+
+    cast = ((uint8_t *) &(fun.size));
+    write(fd, &cast[3], 1);
+    write(fd, &cast[2], 1);
+    write(fd, &cast[1], 1);
+    write(fd, &cast[0], 1);
+    return 0;
+}
 
 //   code section
 void ruSectionCode::addInstruction(const ruInstruction& instruction)
@@ -14,6 +79,7 @@ void ruSectionCode::addInstruction(const ruInstruction& instruction)
     this->_instructionVector.push_back(tmp);
     this->_totalSize += instruction.getTotalSize();
 }
+
 int ruSectionCode::writeToFile(int fd) const
 {
     uint8_t tmp = 0x00;
@@ -83,7 +149,7 @@ int ruSectionFunction::writeToFile(int fd) const
     size_t structSize = sizeof(uint32_t) * 3;
 
     for (ru_function_t current : this->_functionVector) {
-        write(fd, &current, structSize);
+        writeBigEndian(fd, current);
     }
     return 0;
 }
@@ -127,7 +193,7 @@ int ruFile::writeToFile(void) const
         perror("open");
         return -1;
     }
-    write(fd, &(this->_header), sizeof(ru_header_t));
+    writeBigEndian(fd, this->_header);
     this->_functionTable.writeToFile(fd);
     this->_stringTable.writeToFile(fd);
     this->_codeSection.writeToFile(fd);
