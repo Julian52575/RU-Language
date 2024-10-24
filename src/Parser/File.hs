@@ -10,6 +10,7 @@ import Data.Void (Void)
 import Parser.Utils (sc)
 import Parser.Stmt (Stmt, stmt)
 import Text.Megaparsec (many, eof)
+import Opcode (test)
 
 parseFromString :: String -> Either String [Stmt]
 parseFromString input = 
@@ -24,4 +25,6 @@ parseFromFile path = do
     let result = parseFromString (T.unpack content)
     case result of
         Left err -> putStrLn $ "Parse error:\n" ++ err
-        Right ast -> putStrLn $ "Successfully parsed AST:\n" ++ show ast
+        Right ast -> do 
+            putStrLn $ "Successfully parsed AST:\n" ++ show ast
+            test ast

@@ -1,80 +1,50 @@
 module Opcode (
-    OpCode(..),
-    Builtin(..),
-    Instruction(..),
-    buildInstructions,
-    buildBuiltin
+    test
 ) where
 
 import Data.Word (Word8, Word16)
+import qualified Data.ByteString as B
+import Data.Bits (shiftR, (.&.))
+import Compiler.String (getStringTable)
+import Compiler.Function(getFunctionTable, Function)
+import Parser.AST (Stmt(..), Expr(..), ArithOp(..), CompOp(..), LogicOp(..), UnaryOp(..))
+import Parser.Type (Type(..))
+import Data.List (elemIndex, nub)
+import Data.Maybe (fromJust)
+import Compiler.CreateVar (getCreateVar)
+import Compiler.Type (Scope(..), OpCode(..), Compile(..))
+import Compiler.Compile (getScopeFromList, compile)
 
-data OpCode = OpCode {
-    mnemonic :: Word16,
-    operand1 :: [Word8],
-    operand2 :: [Word8],
-    operand3 :: [Word8],
-    operand4 :: [Word8]
-} deriving (Show, Eq)
+getIntFromExpr :: Expr -> Scope -> Int
+getIntFromExpr (LitInt int) _ = int
+getIntFromExpr (Var var) scope = if length (vars scope) == 0 then 0 else length (vars scope) - (fromJust $ elemIndex var (vars scope))
+getIntFromExpr _ _ = 0
 
-data Builtin = Noop OpCode
-            | Print OpCode
-            | PrintLn OpCode
-            deriving (Show, Eq)
+addToScope :: Scope -> String-> Scope
+addToScope scope var = Scope (var : vars scope) (function scope) (indexStart scope)
 
-data Instruction = CreateVar OpCode
-                | SetVar OpCode
-                | SetTmpVar OpCode
-                | SetArg OpCode
-                | UnsetArg OpCode
-                | SetReturn OpCode
-                | UnsetReturn OpCode
-                | Return OpCode
-                | Call OpCode
-                | Jump OpCode
-                | JumpCarry OpCode
-                | JumpNotCarry OpCode
-                | OpAdd OpCode
-                | OpSub OpCode
-                | OpDiv OpCode
-                | OpMul OpCode
-                | OpEq OpCode
-                | OpNeq OpCode
-                deriving (Show, Eq)
+listByteString :: [B.ByteString] -> B.ByteString
+listByteString = B.concat
 
-buildOpCode :: Word16 -> [Word8] -> [Word8] -> [Word8] -> [Word8] -> OpCode
-buildOpCode m o1 o2 o3 o4 = OpCode {
-    mnemonic = m,
-    operand1 = o1,
-    operand2 = o2,
-    operand3 = o3,
-    operand4 = o4
-}
+compileAdd :: Expr -> [String] -> Scope -> Int -> [OpCode]
+compileAdd (BinArith Add e1 e2) strTable scope id = OpAdd (getIntFromExpr e1 scope) (getIntFromExpr e2 scope) : [OpUnsetReturn id]
+compileAdd _ _ _ _ = []
 
-buildInstructions :: [Instruction]
-buildInstructions = [
-    CreateVar (buildOpCode 0x0100 [1] [1, 2] [0] [0]),
-    SetVar (buildOpCode 0x0101 [2] [1, 2] [0] [0]),
-    SetTmpVar (buildOpCode 0x0102 [1] [1] [0] [0]),
-    SetArg (buildOpCode 0x0103 [1, 2] [1] [0] [0]),
-    UnsetArg (buildOpCode 0x0104 [2] [1] [0] [0]),
-    SetReturn (buildOpCode 0x0105 [1, 2] [0] [0] [0]),
-    UnsetReturn (buildOpCode 0x0106 [2] [0] [0] [0]),
-    Return (buildOpCode 0x0200 [0] [0] [0] [0]),
-    Call (buildOpCode 0x0201 [1] [0] [0] [0]),
-    Jump (buildOpCode 0x0202 [1] [0] [0] [0]),
-    JumpCarry (buildOpCode 0x0203 [1] [0] [0] [0]),
-    JumpNotCarry (buildOpCode 0x0204 [1] [0] [0] [0]),
-    OpAdd (buildOpCode 0x0300 [2] [1, 2] [0] [0]),
-    OpSub (buildOpCode 0x0301 [2] [1, 2] [0] [0]),
-    OpDiv (buildOpCode 0x0302 [2] [1, 2] [0] [0]),
-    OpMul (buildOpCode 0x0303 [2] [1, 2] [0] [0]),
-    OpEq (buildOpCode 0x0304 [2] [1, 2] [0] [0]),
-    OpNeq (buildOpCode 0x0305 [2] [1, 2] [0] [0])
-    ]
+compileBlock :: [Stmt] -> [String] -> Scope -> [OpCode]
+compileBlock [] _ _ = []
+compileBlock (LetStmt var _ (BinArith op e1 e2) : xs) strTable scope = compileAdd (BinArith op e1 e2) strTable scope (getIntFromExpr (Var var) (addToScope scope var)) ++ compileBlock xs strTable (addToScope scope var)
+compileBlock (LetStmt var _ val : xs) strTable scope = OpCreateVar 0x01 (getIntFromExpr val scope) : compileBlock xs strTable (addToScope scope var)
+compileBlock (ReturnStmt (Just val) : xs) strTable scope = OpSetReturn (getIntFromExpr val scope) : compileBlock xs strTable scope
+compileBlock (_ : xs) strTable scope = compileBlock xs strTable scope
 
-buildBuiltin :: [Builtin]
-buildBuiltin = [
-    Noop (buildOpCode 0x0000 [0] [0] [0] [0]),
-    Print (buildOpCode 0x00001 [2] [0] [0] [0]),
-    PrintLn (buildOpCode 0x00002 [2] [0] [0] [0])
-    ]
+test :: [Stmt] -> IO ()
+test ast = do
+    let stringTable = nub $ getStringTable ast
+    let functionTable = getFunctionTable ast stringTable
+    let globalVars = getCreateVar ast stringTable
+    let globalScope = getScopeFromList globalVars "global" 0
+    let compileData = Compile stringTable functionTable globalScope
+
+    print $ compileData
+    print $ compile ast compileData
+

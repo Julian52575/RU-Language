@@ -80,6 +80,5 @@ findString (FuncDeclStmt _ args _ Nothing : xs) = argsToString args ++ findStrin
 findString (_:xs) = findString xs
 findString [] = []
 
-
 getStringTable :: [Stmt] -> [String]
 getStringTable ast = getFunctions ast ++ findString ast
