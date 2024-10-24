@@ -110,6 +110,7 @@ void ruSectionString::addString(const char *str)
 {
     if (this->_stringVector.size() == 0) {
         this->_stringVector.push_back("\0");
+        this->_totalSize += 1;
     }
     this->_stringVector.push_back(str);
     this->_totalSize += strlen(str) + 1;
@@ -222,11 +223,11 @@ append:
 void ruFile::addFunction(const ru_function_t& newFunction)
 {
     this->_header.function_number += 1;
-    this->headerUpdateOffsets();
     if (this->_stringTable.getStringFromIndex(newFunction.name_index) == "main") {
         this->_header.entrypointFunctionIndex = this->_functionTable.getNumberOfElement();
     }
     this->_functionTable.addFunction(newFunction);
+    this->headerUpdateOffsets();
 }
 
 void ruFile::addString(const char *str)
