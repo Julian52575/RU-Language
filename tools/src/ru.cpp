@@ -118,7 +118,6 @@ int ruSectionString::writeToFile(int fd) const
 {
     uint8_t sep = 0x00;
 
-    write(fd, &sep, 1);
     for (std::string current : this->_stringVector) {
         write(fd, current.c_str(), (size_t) current.size());
         write(fd, &sep, 1);
