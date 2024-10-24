@@ -11,19 +11,26 @@ import RuVariableModule
 import RuFormatModule as RF
 import RuExceptionModule
 
+data RuVmVariables = RuVmVariables {
+    variableStack :: [RuVariable],
+    tmpVariable :: RuVariable,
+    returnVariable :: RuVariable,
+    argumentVariables :: [RuVariable],
+    globalVariables :: [RuVariable]
+} deriving (Eq, Show)
 
 data RuVmState = RuVmState {
-    variableStack :: [RuVariable],
+    variables :: RuVmVariables, 
     workerCodeOffset :: Word32, -- similar to PC
     workerCode :: [Word8],
-    conditionalMode :: Bool
+    conditionalMode :: Bool,
+    stateDeep :: Int
 } deriving (Eq, Show)
 
 ruFormatToRuVmState :: RuFormat -> Either RuException RuVmState
 ruFormatToRuVmState format = do
     let codeOffsetInt = fromIntegral (codeOffset (ruHeader format))
     Right RuVmState {
-        variableStack = [],
         workerCodeOffset = codeOffset (ruHeader format),
         workerCode = drop codeOffsetInt (codeSection format),
         conditionalMode = False
@@ -33,7 +40,8 @@ data RuVmInfo = RuVmInfo {
     stringTable :: [String], --the first string must be '\0'
     functionTable :: [RuFunctionTable],
     code :: [Word8],
-    codeSize :: Word32
+    codeSize :: Word32,
+    dumpMode :: Bool
     --vmState :: RuVmState -- Separate to ensure only VmState is updated ?
 } deriving (Eq, Show)
 
@@ -83,7 +91,6 @@ ruFormatToRuVmInfo format = do
                 code = codeSection format,
                 codeSize =  fileSize (ruHeader format)
             }
-            where 
 
 
 {-- Get a RuVm from a fileName

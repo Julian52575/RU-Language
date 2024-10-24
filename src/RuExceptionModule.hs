@@ -1,5 +1,8 @@
 module RuExceptionModule where
 
+import Data.Word
+import Numeric
+
 newtype RuException = RuException String
 
 ruExceptionInvalidProgramCounter :: RuException
@@ -23,3 +26,9 @@ ruExceptionWrongFileFormat = RuException "Invalid file format"
 
 ruExceptionBadFunctionTableCount :: RuException
 ruExceptionBadFunctionTableCount = RuException "Invalid function table count"
+
+ruExceptionIncompleteOpcode :: Word32 -> RuException
+ruExceptionIncompleteOpcode offset32 = RuException exc
+    where
+    offsetStr = showHex offset32 "0x??"
+    exc = "Opcode is complete at pc:" ++ offsetStr

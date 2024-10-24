@@ -17,6 +17,13 @@ data RuVariable = RuVariable {
     ruMutable :: Bool
 } deriving (Eq, Show)
 
+printRuVariable :: RuVariable -> IO ()
+printRuVariable variable
+    | typ == ruVariableTypeInt = putStrLn (show (ruVariableValue variable)) 
+    | typ == ruVariableTypeStr = putStrLn (show (ruVariableValue variable)) 
+    where
+        typ = ruVariableType variable
+
 {-- Helper function for defining variable type
  --}
 ruVariableTypeInt :: Int
