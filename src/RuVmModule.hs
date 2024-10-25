@@ -35,7 +35,8 @@ data RuVmState = RuVmState {
     workerCodeOffset :: Word32, -- similar to PC
     workerCode :: [Word8],
     conditionalMode :: Bool,
-    scopeDeep :: Int
+    scopeDeep :: Int,
+    toPrint :: String
 } deriving (Eq, Show)
 
 checkVmStateCodeOffset :: RuVmInfo -> RuVmState -> Maybe RuException
@@ -56,7 +57,8 @@ ruFormatToRuVmState format = do
         workerCodeOffset = codeOffset (ruHeader format),
         workerCode = drop codeOffsetInt (codeSection format),
         conditionalMode = False,
-        scopeDeep = 0
+        scopeDeep = 0,
+        toPrint = []
     }
 
 data RuVmInfo = RuVmInfo {
