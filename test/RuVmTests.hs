@@ -3,6 +3,7 @@ module RuVmTests where
 import Test.Hspec
 import Data.Either
 
+import RuVariableModule
 import RuExceptionModule
 import RuFormatModule
 import RuVmModule
@@ -106,5 +107,379 @@ spec = do
             let fun = convertWord8ToFunctionTable finalTab
             fun `shouldBe` [ expected, expected ] 
 
+    {--
+    data RuVmVariables = RuVmVariables {
+    variableStack :: [[RuVariable]], -- first is current scope, last is global
+    tmpVariable :: RuVariable,
+    returnVariable :: RuVariable,
+    argumentVariables :: [RuVariable],
+    carry :: Bool
+} deriving (Eq, Show) --}
+--ruVmVariablesGetVariableInCurrentScope :: RuVmVariables -> Word8 -> Maybe RuVariable
+    describe "ruVmVariablesGetVariableInCurrentScope" $ do
+        it "Get existing variable" $ do
+            let badVar = RuVariable {
+                ruVariableValue = Str "Bad day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x02,
+                ruMutable = True
+            }           
+            let goodVar = RuVariable {
+                ruVariableValue = Str "Good day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [badVar, goodVar, badVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            (ruVmVariablesGetVariableInCurrentScope baseVariables 0x01) `shouldBe` Just goodVar
+        it "Doesn't get variable from other scope" $ do
+            let badVar = RuVariable {
+                ruVariableValue = Str "Bad day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }           
+            let goodVar = RuVariable {
+                ruVariableValue = Str "Good day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [goodVar], [badVar], [badVar], [badVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            (ruVmVariablesGetVariableInCurrentScope baseVariables 0x01) `shouldBe` Just goodVar
+        it "Doesn't get unknow variable" $ do
+            let badVar = RuVariable {
+                ruVariableValue = Str "Bad day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x02,
+                ruMutable = True
+            }           
+            let goodVar = RuVariable {
+                ruVariableValue = Str "Good day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [badVar], [badVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            (ruVmVariablesGetVariableInCurrentScope baseVariables 0x01) `shouldBe` Nothing
 
+--ruVmVariablesGetVariableInGlobalScope :: RuVmVariables -> Word8 -> Maybe RuVariable --TODO
+    describe "ruVmVariablesGetVariableInGlobalScope" $ do
+        it "get existing variable" $ do
+            let badVar = RuVariable {
+                ruVariableValue = Str "Bad day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x02,
+                ruMutable = True
+            }           
+            let goodVar = RuVariable {
+                ruVariableValue = Str "Good day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [badVar], [badVar, goodVar, badVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            (ruVmVariablesGetVariableInGlobalScope baseVariables 0x01) `shouldBe` Just goodVar
+        it "doesn't get variable from other scope" $ do
+            let badVar = RuVariable {
+                ruVariableValue = Str "Bad day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }           
+            let goodVar = RuVariable {
+                ruVariableValue = Str "Good day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [badVar], [badVar], [badVar], [goodVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            (ruVmVariablesGetVariableInGlobalScope baseVariables 0x01) `shouldBe` Just goodVar
+        it "doesn't get unknow variable" $ do
+            let badVar = RuVariable {
+                ruVariableValue = Str "Bad day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x02,
+                ruMutable = True
+            }           
+            let goodVar = RuVariable {
+                ruVariableValue = Str "Good day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [goodVar, badVar], [badVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            (ruVmVariablesGetVariableInGlobalScope baseVariables 0x01) `shouldBe` Nothing
 
+--ruVmVariablesSetVariableInCurrentScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables
+    describe "ruVmVariablesSetVariableInCurrentScope" $ do
+        it "Add variable to global scope" $ do
+            let baseVariables = RuVmVariables {
+                variableStack = [ [] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            let newVar = RuVariable {
+                ruVariableValue = Str "Hello World",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 1,
+                ruMutable = True
+            }
+            case ruVmVariablesSetVariableInCurrentScope baseVariables newVar of
+                Nothing -> False `shouldBe` True
+                Just variablesResult -> do
+                    variableStack variablesResult `shouldBe` [ [newVar] ]
+        it "Add variable to function scope" $ do
+            let oldVar = RuVariable {
+                ruVariableValue = Int64 84,
+                ruVariableType = ruVariableTypeInt,
+                ruVariableId = 84,
+                ruMutable = False
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [oldVar], [oldVar, oldVar], [oldVar, oldVar, oldVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            let newVar = RuVariable {
+                ruVariableValue = Int64 42,
+                ruVariableType = ruVariableTypeInt,
+                ruVariableId = 42,
+                ruMutable = True
+            }
+            case ruVmVariablesSetVariableInCurrentScope baseVariables newVar of
+                Nothing -> False `shouldBe` True
+                Just variablesResult -> do
+                    variableStack variablesResult `shouldBe` [ [oldVar, newVar], [oldVar, oldVar], [oldVar, oldVar, oldVar] ]
+        it "Doesn't set variable when duplicate id in function scope" $ do
+            let var = RuVariable {
+                ruVariableValue = Str "Hello World",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 1,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [var], [] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            ruVmVariablesSetVariableInCurrentScope baseVariables var `shouldBe` Nothing
+        it "Doesn't set variable when duplicate id in global scope" $ do
+            let var = RuVariable {
+                ruVariableValue = Str "Hello World",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 1,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [var] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            ruVmVariablesSetVariableInCurrentScope baseVariables var `shouldBe` Nothing
+        it "Doesn't add variable to function scope when duplicate id in global scope" $ do
+            let var = RuVariable {
+                ruVariableValue = Int64 42,
+                ruVariableType = ruVariableTypeInt,
+                ruVariableId = 42,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [], [var] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            ruVmVariablesSetVariableInCurrentScope baseVariables var `shouldBe` Nothing
+        it "Add variable to function scope when duplicate id in other scope" $ do
+            let var = RuVariable {
+                ruVariableValue = Int64 42,
+                ruVariableType = ruVariableTypeInt,
+                ruVariableId = 42,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [], [var], [] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            case ruVmVariablesSetVariableInCurrentScope baseVariables var of
+                Nothing -> False `shouldBe` True
+                Just variablesResult -> do
+                    variableStack variablesResult `shouldBe` [ [var], [var], [] ]
+
+--ruVmVariablesSetVariableInGlobalScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables --TODO
+    describe "ruVmVariablesSetVariableInGlobalScope" $ do
+        it "Add variable to global scope instead of function scope" $ do
+            let baseVariables = RuVmVariables {
+                variableStack = [ [], [] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            let newVar = RuVariable {
+                ruVariableValue = Str "Hello World",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 1,
+                ruMutable = True
+            }
+            case ruVmVariablesSetVariableInGlobalScope baseVariables newVar of
+                Nothing -> False `shouldBe` True
+                Just variablesResult -> do
+                    variableStack variablesResult `shouldBe` [ [], [newVar] ]
+        it "Doesn't add variable when duplicate id in global scope" $ do
+            let newVar = RuVariable {
+                ruVariableValue = Str "Hello World",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 1,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [], [newVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            ruVmVariablesSetVariableInGlobalScope baseVariables newVar `shouldBe` Nothing
+        it "Add variable to global scope when duplicate id in other scope" $ do
+            let newVar = RuVariable {
+                ruVariableValue = Str "Hello World",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 1,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [newVar], [newVar], [] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            case ruVmVariablesSetVariableInGlobalScope baseVariables newVar of
+                Nothing -> False `shouldBe` True
+                Just variablesResult -> do
+                    variableStack variablesResult `shouldBe` [ [newVar], [newVar], [newVar] ]
+
+--ruVmVariablesGetVariable :: RuVmVariables -> Word8 -> Maybe RuVariable
+    describe "ruVmVariablesGetVariable" $ do
+        it "Get variable in global scope" $ do
+            let badVar = RuVariable {
+                ruVariableValue = Str "Bad day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x02,
+                ruMutable = True
+            }           
+            let goodVar = RuVariable {
+                ruVariableValue = Str "Good day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [badVar], [badVar], [goodVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            (ruVmVariablesGetVariable baseVariables 0x01) `shouldBe` Just goodVar
+        it "Get variable in function scope" $ do
+            let badVar = RuVariable {
+                ruVariableValue = Str "Bad day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x02,
+                ruMutable = True
+            }           
+            let goodVar = RuVariable {
+                ruVariableValue = Str "Good day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [goodVar], [badVar], [badVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            (ruVmVariablesGetVariable baseVariables 0x01) `shouldBe` Just goodVar
+        it "Doesn't get variable in other scope" $ do
+            let badVar = RuVariable {
+                ruVariableValue = Str "Bad day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x01,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [], [badVar], [] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            (ruVmVariablesGetVariable baseVariables 0x01) `shouldBe` Nothing
+        it "Doesn't get unknow variable" $ do
+            let badVar = RuVariable {
+                ruVariableValue = Str "Bad day",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 0x02,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [badVar], [badVar] ],
+                tmpVariable = defaultRuVariable,
+                returnVariable = defaultRuVariable,
+                argumentVariables = [],
+                carry = False
+            }
+            (ruVmVariablesGetVariable baseVariables 0x01) `shouldBe` Nothing

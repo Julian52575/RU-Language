@@ -13,7 +13,8 @@ data RuVariableValue =
 
 data RuVariable = RuVariable {
     ruVariableValue :: RuVariableValue,
-    ruVariableType :: Int,
+    ruVariableType :: Word8,
+    ruVariableId :: Word8,
     ruMutable :: Bool
 } deriving (Eq, Show)
 
@@ -21,6 +22,7 @@ defaultRuVariable :: RuVariable
 defaultRuVariable = RuVariable {
     ruVariableValue = Na,
     ruVariableType = 0x00,
+    ruVariableId = 0x00,
     ruMutable = True
 }
 
@@ -33,29 +35,32 @@ printRuVariable variable
 
 {-- Helper function for defining variable type
  --}
-ruVariableTypeInt :: Int
+ruVariableTypeInt :: Word8
 ruVariableTypeInt = 0x01
 
-ruVariableTypeStr :: Int
+ruVariableTypeStr :: Word8
 ruVariableTypeStr = 0x02
 
-ruVariableTypeFunction :: Int
+ruVariableTypeFunction :: Word8
 ruVariableTypeFunction = 0x03
 
-ruVariableTypeVariableId :: Int
+ruVariableTypeVariableId :: Word8
 ruVariableTypeVariableId = 0x04
 
 {-- Helper function for getting / checking variable type
  --}
-ruVariableGetType :: RuVariable -> Int
+ruVariableGetType :: RuVariable -> Word8
 ruVariableGetType (RuVariable { ruVariableType = i }) = i
 
-ruVariableIsType :: RuVariable -> Int -> Bool
+ruVariableIsType :: RuVariable -> Word8 -> Bool
 ruVariableIsType (RuVariable { ruVariableType = i }) t = i == t
+
+ruVariableHasId :: RuVariable -> Word8 -> Bool
+ruVariableHasId var id = (ruVariableId var == id)
 
 {-- Helper function to create a RuVariable
  --}
-makeRuVariable :: RuVariableValue -> Int -> Bool -> RuVariable
+makeRuVariable :: RuVariableValue -> Word8 -> Bool -> RuVariable
 makeRuVariable value typ mutable = RuVariable {
     ruVariableValue = value,
     ruVariableType = typ,
