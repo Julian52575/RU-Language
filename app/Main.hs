@@ -48,7 +48,7 @@ runInstructions info state
     | otherwise = runInstructions info nextState
     where
     updatedPcResult = ruVmStateUpdateWorkerCodeToPc info state
-    updatedPcState = (fromRight (RuVmState {}) updatedPcResult)
+    updatedPcState = (fromRight (error "fromRight error") updatedPcResult)
     prefix = (workerCode updatedPcState !! 0)
     iinfix = (workerCode updatedPcState !! 1)
     movedState = updatedPcState {
@@ -79,9 +79,8 @@ runMain = do
         ["--dump"] -> do
             putStrLn "You requested a dump"
         [filename] -> do
-            putStrLn "ToDo"
-
-        [] -> do
+            putStrLn filename --TODO
+        _ -> do
             putStrLn "No arguments provided."
 
 

@@ -16,7 +16,8 @@ data RuVmVariables = RuVmVariables {
     tmpVariable :: RuVariable,
     returnVariable :: RuVariable,
     argumentVariables :: [RuVariable],
-    globalVariables :: [RuVariable]
+    globalVariables :: [RuVariable],
+    carry :: Bool
 } deriving (Eq, Show)
 
 defaultRuVmVariables :: RuVmVariables
@@ -25,7 +26,8 @@ defaultRuVmVariables = RuVmVariables {
     tmpVariable = defaultRuVariable,
     returnVariable = defaultRuVariable,
     argumentVariables = [],
-    globalVariables = []
+    globalVariables = [],
+    carry = False
 }
 
 data RuVmState = RuVmState {
@@ -33,7 +35,7 @@ data RuVmState = RuVmState {
     workerCodeOffset :: Word32, -- similar to PC
     workerCode :: [Word8],
     conditionalMode :: Bool,
-    stateDeep :: Int
+    scopeDeep :: Int
 } deriving (Eq, Show)
 
 checkVmStateCodeOffset :: RuVmInfo -> RuVmState -> Maybe RuException
@@ -50,9 +52,11 @@ ruFormatToRuVmState :: RuFormat -> Either RuException RuVmState
 ruFormatToRuVmState format = do
     let codeOffsetInt = fromIntegral (codeOffset (ruHeader format))
     Right RuVmState {
+        variables = defaultRuVmVariables,
         workerCodeOffset = codeOffset (ruHeader format),
         workerCode = drop codeOffsetInt (codeSection format),
-        conditionalMode = False
+        conditionalMode = False,
+        scopeDeep = 0
     }
 
 data RuVmInfo = RuVmInfo {
@@ -71,18 +75,9 @@ convertWord8ToStringTable (w:ws) currentStr
     | 0x01 <= w && w <= 0x7f = convertWord8ToStringTable ws (currentStr ++ [wCharTrue])
     | otherwise = convertWord8ToStringTable ws (currentStr ++ [wChar])
     where
-        wInt = fromIntegral w
         wChar = '.'
         wCharTrue = chr (fromIntegral w)
-convertWord8ToStringTable (w:_) currentStr 
-    | w == 0x00 = [ currentStr ++ "\0" ]
-    | 0x01 <= w && w <= 0x7f = [ currentStr ++ [wCharTrue] ++ "\0" ]
-    | otherwise = [ currentStr ++ [wChar] ++ "\0" ]
-    where
-        wInt = fromIntegral w
-        wChar = '.'
-        wCharTrue = chr (fromIntegral w)
-convertWord8ToStringTable [] _ = []
+convertWord8ToStringTable _ _ = []
 
 
 convertWord8ToFunctionTable :: [Word8] -> [RuFunctionTable]
@@ -94,15 +89,7 @@ convertWord8ToFunctionTable (n:a:m:e:o:f:f2:t:s:i:z:e2:next) = do
         codeSectionOffset = word84ToWord32 o f f2 t,
         size = word84ToWord32 s i z e2
     }
-convertWord8ToFunctionTable (n:a:m:e:o:f:f2:t:s:i:z:e2:_) = do
-    [ fun ]
-    where
-    fun = RuFunctionTable {
-        nameIndex = word84ToWord32 n a m e,
-        codeSectionOffset = word84ToWord32 o f f2 t,
-        size = word84ToWord32 s i z e2
-    }
-convertWord8ToFunctionTable [] = []
+convertWord8ToFunctionTable _ = []
 
 
 {-- Assume RuFormat is valid

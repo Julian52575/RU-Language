@@ -74,6 +74,7 @@ checkMagic :: RuFormat -> [Word8] -> Either RuException RuFormat
 checkMagic format (m:a:g:i:c:next)
     | [m, a, g, i, c] /= ruMagic = Left ruExceptionWrongFileFormat
     | otherwise = checkChecksumFileVersion format next
+checkMagic _ _ = Left ruExceptionGenericFileError
 
 {--
  --}
@@ -84,18 +85,16 @@ getFileChecksum (x:xs) value = getFileChecksum xs (value + a)
 getFileChecksum [] value = value
 
 checkChecksumFileVersion :: RuFormat -> [Word8] -> Either RuException RuFormat
-checkChecksumFileVersion format (check:sum:version:next) = do
-    let calculatedChecksum = (getFileChecksum next 0)
-    let fileChecksum = (word82ToWord16 check sum)
-    --if calculatedChecksum != fileChecksum then Left ruExceptionBadChecksum
-    if version /= 0x01 then Left ruExceptionUnsupportedVersion
-    else checkFunctionTableCount newFormat next
+checkChecksumFileVersion format (_:_:version:next)
+    | version /= 0x01 = Left ruExceptionUnsupportedVersion
+    | otherwise       = checkFunctionTableCount newFormat next
     where
         newFormat = format {
             ruHeader = (ruHeader format) {
                 fileVersion = version
             }
         }
+checkChecksumFileVersion _ _ = Left ruExceptionGenericFileError
 
 {--
  --}
@@ -109,6 +108,7 @@ checkFunctionTableCount format (a:b:c:d:next) = do
         }
     if count < 0 then Left ruExceptionBadFunctionTableCount
     else checkStrTableOffset newFormat next 
+checkFunctionTableCount _ _ = Left ruExceptionGenericFileError
 
 
 checkStrTableOffset :: RuFormat -> [Word8] -> Either RuException RuFormat
@@ -121,6 +121,7 @@ checkStrTableOffset format (a:b:c:d:next) = do
         }
     if offset < 0 then Left ruExceptionBadFunctionTableCount
     else checkStrTableCount newFormat next
+checkStrTableOffset _ _ = Left ruExceptionGenericFileError
 
 checkStrTableCount :: RuFormat -> [Word8] -> Either RuException RuFormat
 checkStrTableCount format (a:b:c:d:next) = do
@@ -132,6 +133,7 @@ checkStrTableCount format (a:b:c:d:next) = do
         }
     if count < 0 then Left ruExceptionBadFunctionTableCount
     else checkCodeOffset newFormat next
+checkStrTableCount _ _ = Left ruExceptionGenericFileError
 
 
 checkCodeOffset :: RuFormat -> [Word8] -> Either RuException RuFormat
@@ -144,10 +146,11 @@ checkCodeOffset format (a:b:c:d:next) = do
         }
     if offset < 0 then Left ruExceptionBadFunctionTableCount
     else checkEntrypointOffset newFormat next
+checkCodeOffset _ _ = Left ruExceptionGenericFileError
 
 
 checkEntrypointOffset :: RuFormat -> [Word8] -> Either RuException RuFormat
-checkEntrypointOffset format (a:b:c:d:next) = do
+checkEntrypointOffset format (a:b:c:d:_) = do
     let offset = (word84ToWord32 a b c d)
     let newFormat = format {
             ruHeader = (ruHeader format) {
@@ -156,6 +159,7 @@ checkEntrypointOffset format (a:b:c:d:next) = do
         }
     if offset < 0 then Left ruExceptionBadFunctionTableCount
     else Right newFormat
+checkEntrypointOffset _ _ = Left ruExceptionGenericFileError
 
 
 {-- Helper function to extract file field
@@ -171,12 +175,12 @@ fileContentToRuFormat tab = do
         -- let functionTable = take (fromIntegral (functionTableCount header)) (drop ((fromIntegral (strTableOffset header)) - 1) tab)
         let functionTable = take (12 * (fromIntegral(functionTableCount header))) (drop 64 tab)
         let strTable = take ((fromIntegral (codeOffset header)) - (fromIntegral (strTableOffset header))) (drop (fromIntegral (strTableOffset header)) tab)
-        let codeSection = drop (fromIntegral (codeOffset header)) tab
+        let codSection = drop (fromIntegral (codeOffset header)) tab
         Right newFormat {
             ruHeader = header,
             ruFunctionTable = functionTable,
             strTab = strTable,
-            codeSection = codeSection
+            codeSection = codSection
         }
 
 {-- Get a RuFormat from a fileName

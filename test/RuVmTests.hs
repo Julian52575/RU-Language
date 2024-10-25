@@ -24,19 +24,6 @@ data RuVm = RuVm {
 
 spec :: Spec
 spec = do
-    let tabCode = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05]
-    {--let vm = RuVmInfo {
-        stringTable = ["0"],
-        functionTable = [],
-        code = tabCode,
-        codeSize = 0x05
-    }--}
-    let vmState = RuVmState {
-        variables = defaultRuVmVariables,
-        workerCodeOffset = 0x00,
-        workerCode = tabCode
-    }
-    -- ruFormatToRuVmState :: RuFormat -> Either RuException RuVmState
     describe "Convert RuFormat to RuVmState" $ do
         let header = RuHeader {
             fileSize = 0x00,
@@ -56,14 +43,8 @@ spec = do
                 strTab = strTabl,
                 codeSection = codeSec
         }
-        let expected = RuVmState {
-                variables = defaultRuVmVariables,
-                workerCodeOffset = 0x02,
-                workerCode = (drop 0x02 codeSec),
-                conditionalMode = False
-        }
         let result = ruFormatToRuVmState format
-        let state = fromRight (RuVmState {} ) result
+        let state = fromRight (error "fromRight error" ) result
         it "Convert RuFormat to RuVmState" $ do
             isLeft result `shouldBe` False
         it "Parse entrypointOffset" $ do
