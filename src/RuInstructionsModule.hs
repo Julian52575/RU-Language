@@ -27,6 +27,50 @@ ruInstructionNoop = RuInstruction {
 ruInstructionFunctionNoop :: RuVmState -> Either RuException RuVmState
 ruInstructionFunctionNoop state = Right state
 
+{-- print
+ --}
+ruInstructionPrint :: RuInstruction
+ruInstructionPrint = RuInstruction {
+    ruInstructionPrefix = 0x00,
+    ruInstructionInfix = 0x01,
+    ruInstructionName = "PRINT",
+    ruInstructionFunction = ruInstructionFunctionPrint,
+    fixedSize = 2
+}
+
+ruInstructionFunctionPrint :: RuVmState -> Either RuException RuVmState
+ruInstructionFunctionPrint state = do
+    let code = workerCode state
+    let codeOffset = workerCodeOffset state
+    let codeSize = length code
+    if codeSize < 3 then Left ruExceptionIncompleteInstruction
+    else do
+        let operand = code !! 2
+        let newState = state { toPrint = show operand }
+        Right newState
+
+{-- PrintLn
+ --}
+ruInstructionPrintLn :: RuInstruction
+ruInstructionPrintLn = RuInstruction {
+    ruInstructionPrefix = 0x00,
+    ruInstructionInfix = 0x02,
+    ruInstructionName = "PRINTLN",
+    ruInstructionFunction = ruInstructionFunctionPrintLn,
+    fixedSize = 2
+}
+
+ruInstructionFunctionPrintLn :: RuVmState -> Either RuException RuVmState
+ruInstructionFunctionPrintLn state = do
+    let code = workerCode state
+    let codeOffset = workerCodeOffset state
+    let codeSize = length code
+    if codeSize < 3 then Left ruExceptionIncompleteInstruction
+    else do
+        let operand = code !! 2
+        let newState = state { toPrint = show operand ++ "\n" }
+        Right newState
+
 {-- List
  --}
 ruInstructionListPrefix0x00 :: [ RuInstruction ]

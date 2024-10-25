@@ -22,9 +22,10 @@ spec = do
     let baseState = RuVmState {
         variables = defaultRuVmVariables,
         workerCodeOffset = 0x00,
-        workerCode = [0x01, 0x00, 0x00, 0x00, 0x00, 0x01],
+        workerCode = [0xff, 0x00, 0x00, 0x00, 0x01],
         conditionalMode = False,
-        scopeDeep = 0
+        scopeDeep = 0,
+        toPrint = []
     }
     describe "Noop" $ do
         it "Noop" $ do
@@ -35,3 +36,18 @@ spec = do
                 Right resultState -> do
                     resultState `shouldBe` baseState
 
+        it "Print" $ do
+            case ruInstructionFunctionPrint baseState of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    resultState `shouldBe` baseState { toPrint = "0" }
+
+        it "PrintLn" $ do
+            case ruInstructionFunctionPrintLn baseState of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    resultState `shouldBe` baseState { toPrint = "0\n" }
