@@ -1,11 +1,16 @@
 module Compiler.Type (
     Scope(..),
     OpCode(..),
-    Compile(..)
+    Compile(..),
+    Function(..),
+    CodingByte(..)
 ) where
 
 import Data.Word (Word8, Word16)
-import Compiler.Function (Function)
+
+data CodingByte = CbConst Int Int Int
+    | CbVar Int Int
+    deriving (Show, Eq)
 
 data Scope = Scope {
     vars :: [String],
@@ -14,13 +19,13 @@ data Scope = Scope {
 } deriving (Show, Eq)
 
 data OpCode = OpNoop 
-    | OpPrint Int
-    | OpPrintLn Int
+    | OpPrint CodingByte
+    | OpPrintLn CodingByte
     | OpCreateVar Int Int
-    | OpSetVar Int Int
-    | OpSetArg Int Int
+    | OpSetVar Int CodingByte 
+    | OpSetArg Int CodingByte
     | OpUnsetArg Int Int
-    | OpSetReturn Int
+    | OpSetReturn CodingByte
     | OpUnsetReturn Int
     | OpReturn
     | OpCall Int
@@ -28,14 +33,21 @@ data OpCode = OpNoop
     | OpJumpCarry Int
     | OpJumpNotCarry Int
     | OpIfCarry Int
-    | OpAdd Int Int
-    | OpSub Int Int
-    | OpDiv Int Int
-    | OpMul Int Int
-    | OpEq Int Int
-    | OpNeq Int Int
-    | OpMod Int Int
+    | OpAdd CodingByte CodingByte
+    | OpSub CodingByte CodingByte
+    | OpDiv CodingByte CodingByte
+    | OpMul CodingByte CodingByte
+    | OpEq CodingByte CodingByte
+    | OpNeq CodingByte CodingByte
+    | OpMod CodingByte CodingByte
     deriving (Show, Eq)
+
+data Function = Function {
+    fIndex :: Int,
+    fName :: String,
+    fOffset :: Maybe Int,
+    fSize :: Maybe Int
+} deriving (Show, Eq)
 
 data Compile = Compile {
     stringTable :: [String],

@@ -26,17 +26,6 @@ addToScope scope var = Scope (var : vars scope) (function scope) (indexStart sco
 listByteString :: [B.ByteString] -> B.ByteString
 listByteString = B.concat
 
-compileAdd :: Expr -> [String] -> Scope -> Int -> [OpCode]
-compileAdd (BinArith Add e1 e2) strTable scope id = OpAdd (getIntFromExpr e1 scope) (getIntFromExpr e2 scope) : [OpUnsetReturn id]
-compileAdd _ _ _ _ = []
-
-compileBlock :: [Stmt] -> [String] -> Scope -> [OpCode]
-compileBlock [] _ _ = []
-compileBlock (LetStmt var _ (BinArith op e1 e2) : xs) strTable scope = compileAdd (BinArith op e1 e2) strTable scope (getIntFromExpr (Var var) (addToScope scope var)) ++ compileBlock xs strTable (addToScope scope var)
-compileBlock (LetStmt var _ val : xs) strTable scope = OpCreateVar 0x01 (getIntFromExpr val scope) : compileBlock xs strTable (addToScope scope var)
-compileBlock (ReturnStmt (Just val) : xs) strTable scope = OpSetReturn (getIntFromExpr val scope) : compileBlock xs strTable scope
-compileBlock (_ : xs) strTable scope = compileBlock xs strTable scope
-
 test :: [Stmt] -> IO ()
 test ast = do
     let stringTable = nub $ getStringTable ast
@@ -45,6 +34,6 @@ test ast = do
     let globalScope = getScopeFromList globalVars "global" 0
     let compileData = Compile stringTable functionTable globalScope
 
-    print $ compileData
+    -- print $ compileData
     print $ compile ast compileData
 

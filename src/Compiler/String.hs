@@ -48,6 +48,7 @@ findMatchString :: [(Pattern, Stmt)] -> [String]
 findMatchString ((pat, stmt) : xs) = findPatterString pat ++ findString [stmt] ++ findMatchString xs
 findMatchString [] = []
 
+-- find all the strings and variable names in the AST
 findString :: [Stmt] -> [String]
 
 findString (LetStmt var _ (LitString str):xs) = var:str:findString xs
