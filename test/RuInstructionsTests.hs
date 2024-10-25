@@ -19,6 +19,13 @@ import RuInstructionsModule
 
 spec :: Spec
 spec = do
+    let baseInfo = RuVmInfo {
+        stringTable = ["\0", "lol"],
+        functionTable = [],
+        code = [],
+        codeSize = 0xff,
+        dumpMode = False
+    }
     let baseState = RuVmState {
         variables = defaultRuVmVariables,
         workerCodeOffset = 0x00,
@@ -29,7 +36,7 @@ spec = do
     }
     describe "Noop" $ do
         it "Noop" $ do
-            case ruInstructionFunctionNoop baseState of
+            case ruInstructionFunctionNoop baseInfo baseState of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
                     False `shouldBe` True --Fail
@@ -37,7 +44,7 @@ spec = do
                     resultState `shouldBe` baseState
 
         it "Print" $ do
-            case ruInstructionFunctionPrint baseState of
+            case ruInstructionFunctionPrint baseInfo baseState of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
                     False `shouldBe` True --Fail
@@ -45,7 +52,7 @@ spec = do
                     resultState `shouldBe` baseState { toPrint = "0" }
 
         it "PrintLn" $ do
-            case ruInstructionFunctionPrintLn baseState of
+            case ruInstructionFunctionPrintLn baseInfo baseState of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
                     False `shouldBe` True --Fail

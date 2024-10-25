@@ -8,6 +8,7 @@ import Data.Either
 import Data.Maybe
 
 import RuVmModule
+import RuOperandModule
 import RuVariableModule
 import RuExceptionModule
 import RuInstructionsModule
@@ -57,7 +58,7 @@ runInstructions info state
     maybeFunction = getInstructionFunction prefix iinfix
     function = fromMaybe (error "Unknow Instruction") maybeFunction
     instructionOperandSize = getInstructionSize prefix iinfix
-    functionResult = function movedState
+    functionResult = function info movedState
     functionResultState = fromRight (error "fromRight error") functionResult
     nextState = functionResultState
 

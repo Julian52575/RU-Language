@@ -10,7 +10,7 @@ data RuInstruction = RuInstruction {
     ruInstructionPrefix :: Word8,
     ruInstructionInfix :: Word8,
     ruInstructionName :: String,
-    ruInstructionFunction :: (RuVmState -> Either RuException RuVmState),
+    ruInstructionFunction :: (RuVmInfo -> RuVmState -> Either RuException RuVmState),
     fixedSize :: Word32 --Taille de l'instruction si pas coding byte
 }
 
@@ -24,8 +24,8 @@ ruInstructionNoop = RuInstruction {
     ruInstructionFunction = ruInstructionFunctionNoop,
     fixedSize = 2
 }
-ruInstructionFunctionNoop :: RuVmState -> Either RuException RuVmState
-ruInstructionFunctionNoop state = Right state
+ruInstructionFunctionNoop :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionNoop _ state = Right state
 
 {-- print
  --}
@@ -38,8 +38,8 @@ ruInstructionPrint = RuInstruction {
     fixedSize = 2
 }
 
-ruInstructionFunctionPrint :: RuVmState -> Either RuException RuVmState
-ruInstructionFunctionPrint state = do
+ruInstructionFunctionPrint :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionPrint _ state = do
     let code = workerCode state
     let codeOffset = workerCodeOffset state
     let codeSize = length code
@@ -60,8 +60,8 @@ ruInstructionPrintLn = RuInstruction {
     fixedSize = 2
 }
 
-ruInstructionFunctionPrintLn :: RuVmState -> Either RuException RuVmState
-ruInstructionFunctionPrintLn state = do
+ruInstructionFunctionPrintLn :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionPrintLn _ state = do
     let code = workerCode state
     let codeOffset = workerCodeOffset state
     let codeSize = length code
@@ -79,13 +79,6 @@ ruInstructionListPrefix0x00 = [ ruInstructionNoop ]
 ruInstructionList :: [ [RuInstruction] ]
 ruInstructionList = [ ruInstructionListPrefix0x00 ]
 
-
-{-- Helper function
- --}
-
-codingByteToOperandsSize :: Word8 -> Word32
-codingByteToOperandsSize i = 0xff --TODO
-
 {--
  --}
 
@@ -100,7 +93,7 @@ getRuInstruction insPrefix insInfix
     prefixList = ruInstructionList !! prefixInt
     instruction = prefixList !! infixInt
 
-getInstructionFunction :: Word8 -> Word8 -> Maybe (RuVmState -> Either RuException RuVmState)
+getInstructionFunction :: Word8 -> Word8 -> Maybe (RuVmInfo -> RuVmState -> Either RuException RuVmState)
 getInstructionFunction insPrefix insInfix =
     case getRuInstruction insPrefix insInfix of
         Nothing -> Nothing
