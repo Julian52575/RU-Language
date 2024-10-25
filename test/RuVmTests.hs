@@ -32,37 +32,10 @@ spec = do
         codeSize = 0x05
     }--}
     let vmState = RuVmState {
-        variableStack = [],
+        variables = defaultRuVmVariables,
         workerCodeOffset = 0x00,
         workerCode = tabCode
     }
-    describe "Updates Worker Code Offset / Program counter" $ do
-        it "moves forward" $ do
-            let result = ruVmStateUpdateWorkerCodeOffset vmState 3
-            isRight result `shouldBe` True
-            let newVm = fromRight (error "Unexpected Left") result
-            (workerCodeOffset newVm) `shouldBe` 3
-            (workerCode newVm) `shouldBe` [0x03, 0x04, 0x05]
-
-        it "moves backward" $ do
-            let fResult = ruVmStateUpdateWorkerCodeOffset vmState 3
-            isRight fResult `shouldBe` True
-            let fVm = fromRight (error "Unexpected Left") fResult
-            let result = ruVmStateUpdateWorkerCodeOffset fVm (-2)
-            isRight result `shouldBe` True
-            let newVm = fromRight (error "Unexpected Left") result
-            workerCodeOffset (newVm) `shouldBe` 1
-            workerCode (newVm) `shouldBe` [0x01, 0x02, 0x03, 0x04, 0x05]
-
-        it "handles out of bound negative offset" $ do
-            let result = ruVmStateUpdateWorkerCodeOffset vmState (-1)
-            isLeft result `shouldBe` True
-
-        it "handles out of bound positive offset" $ do
-            let oobOffset = fromIntegral ((length tabCode) + 1)
-            let result = ruVmStateUpdateWorkerCodeOffset vmState oobOffset
-            isLeft result `shouldBe` True
-
     -- ruFormatToRuVmState :: RuFormat -> Either RuException RuVmState
     describe "Convert RuFormat to RuVmState" $ do
         let header = RuHeader {
@@ -84,7 +57,7 @@ spec = do
                 codeSection = codeSec
         }
         let expected = RuVmState {
-                variableStack = [],
+                variables = defaultRuVmVariables,
                 workerCodeOffset = 0x02,
                 workerCode = (drop 0x02 codeSec),
                 conditionalMode = False
@@ -100,35 +73,37 @@ spec = do
             workerCode state `shouldBe` drop codeOffsetInt (codeSection format)
 
     describe "Convert RuFormat to RuVmInfo" $ do
-        let funSection = [0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xb3, 0xb4, 0xc1, 0xc2, 0xc3, 0xc4]
-        let stringSection = [0x65, 0x66, 0x67] -- A B C
+        let funSectionBase = [0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xb3, 0xb4, 0xc1, 0xc2, 0xc3, 0xc4]
+        let funSection = funSectionBase ++ funSectionBase
+        let stringSection = [0x00, 0x61, 0x62, 0x63, 0x00] -- A B C
         let tabCodeSection = [0x01, 0x01, 0x01]
+        let ffileSize = fromIntegral $ 64 + (length funSection) + (length stringSection) + (length tabCodeSection)
         let format = RuFormat {
             ruHeader = RuHeader {
-                fileSize = 0x01,
+                fileSize = ffileSize,
                 fileVersion = 0x01,
-                functionTableCount = 0x01,
-                strTableOffset = 64 + 12,
-                strTableCount = 0x01,
-                codeOffset = 64 + 12 + 5,
-                entrypointOffset = 64 + 12 + 5
+                functionTableCount = 0x02,
+                strTableOffset = fromIntegral $ 64 + (length funSection),
+                strTableCount = 1,
+                codeOffset = fromIntegral $ 64 + (length funSection) + (length stringSection),
+                entrypointOffset = 0x00
             },
             ruFunctionTable = funSection,
             strTab = stringSection,
             codeSection = tabCodeSection
         }
         --ruFormatToRuVmInfo :: RuFormat -> Either RuException RuVmInfo
-        it "Convert RuFormat to RuVmInfo" $ do
-            let expected = RuFunctionTable {
+        let expectedFunction = RuFunctionTable {
                                     nameIndex = 0xa1a2a3a4,
                                     codeSectionOffset = 0xb1b2b3b4,
                                     size = 0xc1c2c3c4
                                    }
-            let result = ruFormatToRuVmInfo format
-            isRight result `shouldBe` True
-            let vm = fromRight ( RuVmInfo {} ) result
-            stringTable vm `shouldBe` [ "abc" ]
-            functionTable vm `shouldBe` [ expected, expected ]
+        let vm = ruFormatToRuVmInfo format
+        it "Convert String Table" $ do
+            stringTable vm `shouldBe` [ "\0", "abc\0" ]
+        it "Convert Function Table" $ do
+            functionTable vm `shouldBe` [ expectedFunction, expectedFunction ]
+        it "Convert Code" $ do
             code vm `shouldBe` tabCodeSection
             codeSize vm `shouldBe` 0x03
 

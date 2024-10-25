@@ -19,6 +19,15 @@ data RuVmVariables = RuVmVariables {
     globalVariables :: [RuVariable]
 } deriving (Eq, Show)
 
+defaultRuVmVariables :: RuVmVariables
+defaultRuVmVariables = RuVmVariables {
+    variableStack = [],
+    tmpVariable = defaultRuVariable,
+    returnVariable = defaultRuVariable,
+    argumentVariables = [],
+    globalVariables = []
+}
+
 data RuVmState = RuVmState {
     variables :: RuVmVariables, 
     workerCodeOffset :: Word32, -- similar to PC
@@ -85,23 +94,29 @@ convertWord8ToFunctionTable (n:a:m:e:o:f:f2:t:s:i:z:e2:next) = do
         codeSectionOffset = word84ToWord32 o f f2 t,
         size = word84ToWord32 s i z e2
     }
+convertWord8ToFunctionTable (n:a:m:e:o:f:f2:t:s:i:z:e2:_) = do
+    [ fun ]
+    where
+    fun = RuFunctionTable {
+        nameIndex = word84ToWord32 n a m e,
+        codeSectionOffset = word84ToWord32 o f f2 t,
+        size = word84ToWord32 s i z e2
+    }
 convertWord8ToFunctionTable [] = []
 
-ruFormatToRuVmInfo :: RuFormat -> Either RuException RuVmInfo
-ruFormatToRuVmInfo format = do
-    let intFileSize = fromIntegral (fileSize (ruHeader format))
-    let intCodeOffset = fromIntegral (codeOffset (ruHeader format))
-    if intCodeOffset >= intFileSize - 64
-        then Left ruExceptionInvalidCodeOffset
-        else do
-            let size = intFileSize - intCodeOffset
-            Right RuVmInfo {
-                stringTable = convertWord8ToStringTable (strTab format) "\0",
-                functionTable = convertWord8ToFunctionTable (ruFunctionTable format),
-                code = codeSection format,
-                codeSize =  fileSize (ruHeader format)
-            }
 
+{-- Assume RuFormat is valid
+ --}
+ruFormatToRuVmInfo :: RuFormat -> RuVmInfo
+ruFormatToRuVmInfo format = RuVmInfo {
+    stringTable = convertWord8ToStringTable (strTab format) [],
+    functionTable = convertWord8ToFunctionTable (ruFunctionTable format),
+    code = codeSection format,
+    codeSize = codSiz,
+    dumpMode = False
+}
+    where
+        codSiz = (fileSize (ruHeader format)) - (codeOffset (ruHeader format))
 
 {-- Get a RuVm from a fileName
  --}
@@ -110,24 +125,14 @@ fileNameToRuVm fileName = runExceptT $ do --lire fichier
     byteString <- liftIO $ BS.readFile fileName
     let byteList = BS.unpack byteString
     let result = RF.fileContentToRuFormat byteList
-    if isLeft result
-        then throwE (fromLeft ruExceptionGenericFileError result)
-        else do --get format from right
-        let format = fromRight defaultRuFormat result
-        if format == defaultRuFormat
-            then throwE ruExceptionGenericFileError
-            else do --convert format to VmInfo
-                let result2 = (ruFormatToRuVmInfo format)
-                if isLeft result2
-                    then throwE (fromLeft ruExceptionGenericFileError result2)
-                    else do --return vmInfo. Fuck fromRight default value
-                        let vmInfo = fromRight ( RuVmInfo {
-                            stringTable = [],
-                            functionTable = [],
-                            code = [],
-                            codeSize = 0
-                        }) result2
-                        return vmInfo
+    case result of
+        Left err -> throwE err
+        Right format -> do
+            case ruFormatIsValid format of
+                Left err -> throwE err
+                Right validFormat -> return (ruFormatToRuVmInfo validFormat)
+
+
 
 {-- Helper function to update program counter
  --}

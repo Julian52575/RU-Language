@@ -196,3 +196,6 @@ fileNameToRuFormat fileName = runExceptT $ do
 --     let result = fileContentToRuFormat byteList
 --     if (isLeft result == True) then throwE (fromLeft ruExceptionGenericFileError result)
 --     else return $ (fromRight defaultRuFormat result)
+--
+ruFormatIsValid :: RuFormat -> Either RuException RuFormat
+ruFormatIsValid format = Left ruExceptionGenericFileError --TODO
