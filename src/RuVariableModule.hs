@@ -32,6 +32,7 @@ printRuVariable variable
     | typ == ruVariableTypeStr = putStrLn (show (ruVariableValue variable)) 
     where
         typ = ruVariableType variable
+printRuVariable _ = putStrLn "Empty RuVariable"
 
 {-- Helper function for defining variable type
  --}
@@ -56,13 +57,4 @@ ruVariableIsType :: RuVariable -> Word8 -> Bool
 ruVariableIsType (RuVariable { ruVariableType = i }) t = i == t
 
 ruVariableHasId :: RuVariable -> Word8 -> Bool
-ruVariableHasId var id = (ruVariableId var == id)
-
-{-- Helper function to create a RuVariable
- --}
-makeRuVariable :: RuVariableValue -> Word8 -> Bool -> RuVariable
-makeRuVariable value typ mutable = RuVariable {
-    ruVariableValue = value,
-    ruVariableType = typ,
-    ruMutable = mutable
-}
+ruVariableHasId var idd = (ruVariableId var == idd)

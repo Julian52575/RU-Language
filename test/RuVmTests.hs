@@ -165,13 +165,7 @@ spec = do
                 ruVariableType = ruVariableTypeStr,
                 ruVariableId = 0x02,
                 ruMutable = True
-            }           
-            let goodVar = RuVariable {
-                ruVariableValue = Str "Good day",
-                ruVariableType = ruVariableTypeStr,
-                ruVariableId = 0x01,
-                ruMutable = True
-            }
+            } 
             let baseVariables = RuVmVariables {
                 variableStack = [ [badVar], [badVar] ],
                 tmpVariable = defaultRuVariable,
@@ -354,6 +348,29 @@ spec = do
                 Nothing -> False `shouldBe` True
                 Just variablesResult -> do
                     variableStack variablesResult `shouldBe` [ [var], [var], [] ]
+        it "Doesn't change other fields" $ do
+            let newVar = RuVariable {
+                ruVariableValue = Str "Hello World",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 1,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [], [] ],
+                tmpVariable = newVar,
+                returnVariable = newVar,
+                argumentVariables = [[newVar]],
+                carry = True
+            }
+            case ruVmVariablesSetVariableInCurrentScope baseVariables newVar of
+                Nothing -> False `shouldBe` True
+                Just variablesResult -> do
+                    variableStack variablesResult `shouldBe` [ [newVar], [] ]
+                    tmpVariable variablesResult `shouldBe` tmpVariable baseVariables
+                    returnVariable variablesResult `shouldBe` returnVariable baseVariables
+                    argumentVariables variablesResult `shouldBe` argumentVariables baseVariables
+                    carry variablesResult `shouldBe` carry baseVariables
+
 
 --ruVmVariablesSetVariableInGlobalScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables --TODO
     describe "ruVmVariablesSetVariableInGlobalScope" $ do
@@ -408,6 +425,28 @@ spec = do
                 Nothing -> False `shouldBe` True
                 Just variablesResult -> do
                     variableStack variablesResult `shouldBe` [ [newVar], [newVar], [newVar] ]
+        it "Doesn't change other fields" $ do
+            let newVar = RuVariable {
+                ruVariableValue = Str "Hello World",
+                ruVariableType = ruVariableTypeStr,
+                ruVariableId = 1,
+                ruMutable = True
+            }
+            let baseVariables = RuVmVariables {
+                variableStack = [ [], [] ],
+                tmpVariable = newVar,
+                returnVariable = newVar,
+                argumentVariables = [[newVar]],
+                carry = True
+            }
+            case ruVmVariablesSetVariableInGlobalScope baseVariables newVar of
+                Nothing -> False `shouldBe` True
+                Just variablesResult -> do
+                    variableStack variablesResult `shouldBe` [ [], [newVar] ]
+                    tmpVariable variablesResult `shouldBe` tmpVariable baseVariables
+                    returnVariable variablesResult `shouldBe` returnVariable baseVariables
+                    argumentVariables variablesResult `shouldBe` argumentVariables baseVariables
+                    carry variablesResult `shouldBe` carry baseVariables
 
 --ruVmVariablesGetVariable :: RuVmVariables -> Word8 -> Maybe RuVariable
     describe "ruVmVariablesGetVariable" $ do

@@ -5,7 +5,7 @@ import Data.Word (Word8, Word32)
 import Data.Char
 import Data.Either
 import Data.Maybe
-import Data.List
+import Data.List(head, last, tail, init, find)
 import Control.Monad.Trans.Except
 import Control.Monad.IO.Class (liftIO)
 
@@ -20,7 +20,7 @@ data RuVmVariables = RuVmVariables {
     variableStack :: [[RuVariable]], -- first is current scope, last is global
     tmpVariable :: RuVariable,
     returnVariable :: RuVariable,
-    argumentVariables :: [RuVariable],
+    argumentVariables :: [[RuVariable]],
     carry :: Bool
 } deriving (Eq, Show)
 
@@ -35,58 +35,58 @@ defaultRuVmVariables = RuVmVariables {
 
 
 ruVmVariablesSetVariableInCurrentScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables
-ruVmVariablesSetVariableInCurrentScope variables newVar
-    | length stack == 0                       = Just variables { variableStack = [ [newVar] ] }      --Stack vide -> new tab
+ruVmVariablesSetVariableInCurrentScope variabless newVar
+    | length stack == 0                       = Just variabless { variableStack = [ [newVar] ] }      --Stack vide -> new tab
     | (isNothing globalSearchResult) == False = Nothing --Variable id déjà présent dans la stack globale 
-    | length stack == 1                       = Just variables { variableStack = [ globalStack ++ [newVar] ] }  --1 seul stack (globale) -> ajout variable
+    | length stack == 1                       = Just variabless { variableStack = [ globalStack ++ [newVar] ] }  --1 seul stack (globale) -> ajout variable
     | (isNothing scopeSearchResult) == False  = Nothing --Variable id déjà présent dans la première stack (fonction)
-    | otherwise                               = Just variables { variableStack = ( [(scopeStack ++ [newVar])] ++ middleStacks ++ [globalStack] ) }
+    | otherwise                               = Just variabless { variableStack = ( [(scopeStack ++ [newVar])] ++ middleStacks ++ [globalStack] ) }
     where
-        stack = (variableStack variables)
+        stack = (variableStack variabless)
         scopeStack = head stack
-        scopeSearchResult = ruVmVariablesGetVariableInCurrentScope variables (ruVariableId newVar)
+        scopeSearchResult = ruVmVariablesGetVariableInCurrentScope variabless (ruVariableId newVar)
         globalStack = last stack
-        globalSearchResult = ruVmVariablesGetVariableInGlobalScope variables (ruVariableId newVar)
+        globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless (ruVariableId newVar)
         middleStacks = (init. tail) stack
 
-ruVmVariablesSetVariableInGlobalScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables --TODO
-ruVmVariablesSetVariableInGlobalScope variables newVar
-    | length stack == 0                       = Just variables { variableStack = [ [newVar] ] } --pas de tab
+ruVmVariablesSetVariableInGlobalScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables
+ruVmVariablesSetVariableInGlobalScope variabless newVar
+    | length stack == 0                       = Just variabless { variableStack = [ [newVar] ] } --pas de tab
     | (isNothing globalSearchResult) == False = Nothing --déjà présente
-    | length stack == 1                       = Just variables { variableStack = [ globalStack ++ [newVar] ] }
-    | otherwise                               = Just variables { variableStack = ( firstStacks ++ [(globalStack ++ [newVar])] ) } 
+    | length stack == 1                       = Just variabless { variableStack = [ globalStack ++ [newVar] ] }
+    | otherwise                               = Just variabless { variableStack = ( firstStacks ++ [(globalStack ++ [newVar])] ) } 
     where 
-        stack = (variableStack variables)
-        globalSearchResult = ruVmVariablesGetVariableInGlobalScope variables (ruVariableId newVar)
+        stack = (variableStack variabless)
+        globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless (ruVariableId newVar)
         globalStack = last stack
         firstStacks = init stack
     
 ruVmVariablesGetVariableInCurrentScope :: RuVmVariables -> Word8 -> Maybe RuVariable
-ruVmVariablesGetVariableInCurrentScope variables id
+ruVmVariablesGetVariableInCurrentScope variabless idd
     | length stack == 0 = Nothing --Rien à trouver
     | otherwise         = searchResult --Les resultats de la recherche
     where
-        stack = (variableStack variables)
+        stack = (variableStack variabless)
         scopeStack = head stack
-        searchResult = find (\ruVarParser -> ruVariableHasId ruVarParser id) scopeStack
+        searchResult = find (\ruVarParser -> ruVariableHasId ruVarParser idd) scopeStack
 
 ruVmVariablesGetVariableInGlobalScope :: RuVmVariables -> Word8 -> Maybe RuVariable
-ruVmVariablesGetVariableInGlobalScope variables id
+ruVmVariablesGetVariableInGlobalScope variabless idd
     | length stack == 0 = Nothing --Rien à trouver
     | otherwise         = searchResult --Les resultats de la recherche
     where
-        stack = (variableStack variables)
+        stack = (variableStack variabless)
         globalStack = last stack
-        searchResult = find (\ruVarParser -> ruVariableHasId ruVarParser id) globalStack
+        searchResult = find (\ruVarParser -> ruVariableHasId ruVarParser idd) globalStack
 
 ruVmVariablesGetVariable :: RuVmVariables -> Word8 -> Maybe RuVariable
-ruVmVariablesGetVariable variables id
+ruVmVariablesGetVariable variabless idd
     | (isNothing globalSearchResult == False) = globalSearchResult
     | (isNothing scopeSearchResult == False)  = scopeSearchResult
     | otherwise                               = Nothing
     where
-        globalSearchResult = ruVmVariablesGetVariableInGlobalScope variables id
-        scopeSearchResult = ruVmVariablesGetVariableInCurrentScope variables id
+        globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless idd
+        scopeSearchResult = ruVmVariablesGetVariableInCurrentScope variabless idd
 
 {-- VmState
  --}

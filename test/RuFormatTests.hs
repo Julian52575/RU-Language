@@ -19,7 +19,7 @@ spec = do
         it "Read a RuFormat from a file" $ do
             ruFormatResult <- fileNameToRuFormat "test/test.ru"
             case ruFormatResult of
-                Left err -> expectationFailure $ "Failed with error: "
+                Left err -> expectationFailure $ ("Failed with error: " ++ show err)
                 Right ruFormat -> ruFormat `shouldNotBe` defaultRuFormat
     describe "fileContentToRuFormat" $ do
                 -- it "Returns an error for invalid magic number" $ do
@@ -70,7 +70,7 @@ spec = do
                                                ]
                     let result = fileContentToRuFormat (B.unpack validContent)
                     case result of
-                        Left err -> expectationFailure $ "Failed with error: " 
+                        Left err -> expectationFailure $ ("Failed with error: " ++ show err)
                         Right ruFormat -> do
                             let header = ruHeader ruFormat
                             fileVersion header `shouldBe` 0x01

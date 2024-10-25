@@ -40,12 +40,12 @@ ruInstructionPrint = RuInstruction {
 
 ruInstructionFunctionPrint :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionPrint _ state = do
-    let code = workerCode state
-    let codeOffset = workerCodeOffset state
-    let codeSize = length code
-    if codeSize < 3 then Left ruExceptionIncompleteInstruction
+    let ccode = workerCode state
+    --let codeOffset = workerCodeOffset state
+    let ccodeSize = length ccode
+    if ccodeSize < 3 then Left ruExceptionIncompleteInstruction
     else do
-        let operand = code !! 2
+        let operand = ccode !! 2
         let newState = state { toPrint = show operand }
         Right newState
 
@@ -62,12 +62,12 @@ ruInstructionPrintLn = RuInstruction {
 
 ruInstructionFunctionPrintLn :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionPrintLn _ state = do
-    let code = workerCode state
-    let codeOffset = workerCodeOffset state
-    let codeSize = length code
-    if codeSize < 3 then Left ruExceptionIncompleteInstruction
+    let ccode = workerCode state
+    let ccodeOffset = workerCodeOffset state
+    let ccodeSize = length ccode
+    if ccodeSize < 3 then Left ruExceptionIncompleteInstruction
     else do
-        let operand = code !! 2
+        let operand = ccode !! 2
         let newState = state { toPrint = show operand ++ "\n" }
         Right newState
 
