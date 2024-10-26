@@ -133,16 +133,42 @@ ruVmStateReadWord8 state RuOperandVariableId
         value32bit = word84ToWord32 a b c d
         searchResult = ruVmVariablesGetVariable (variables state) value32bit
 
-{--
+ruVmStateParseOperand :: RuVmState -> [RuOperand] -> Either RuException [RuVariable]
+ruVmStateParseOperand _ []                            = Right []
+ruVmStateParseOperand _ (RuOperandNone:_)             = Right []
+ruVmStateParseOperand _ (RuOperandUnused:_)           = Left ruExceptionInvalidCodingByte
+ruVmStateParseOperand state (currentOp:nextOp)      = do
+    let opSize = (ruOperandToSize currentOp)
+    let opSizeInt = fromIntegral opSize
+    let nextState = state {
+        workerCode = drop opSizeInt (workerCode state),
+        workerCodeOffset = ((workerCodeOffset state) + opSize)
+    }
+    let result = ruVmStateReadWord8 state currentOp
+    let nextResult = ruVmStateParseOperand nextState nextOp
+    case result of
+        Left err -> Left err
+        Right var1 -> case nextResult of 
+            Left err -> Left err
+            Right var2 -> Right ([var1] ++ var2)
+
+
+{-- Call this function instead of ruVmStateReadOperand
+ --}
 ruVmStateReadOperand :: RuVmState -> Either RuException [RuVariable]
 ruVmStateReadOperand state
-    | length ccode == 0         = Left ruExceptionIncompleteInstruction
-    |
-    |
-    |
+    | length ccode == 0                = Left ruExceptionIncompleteInstruction
+    | (length ccode) - 1 < operandSize = Left ruExceptionIncompleteInstruction --Code is shorter than operandSize
+    | otherwise = ruVmStateParseOperand stateWithoutCodingByte list       
     where
         ccode = workerCode state
-        codingByte = ccode !! 0--}
+        codingByte = ccode !! 0
+        list = codingByteToRuOperand codingByte
+        operandSize = fromIntegral (codingByteToOperandsSize codingByte)
+        stateWithoutCodingByte = state {
+            workerCode = drop 1 (workerCode state),
+            workerCodeOffset = ((workerCodeOffset state) + 1)
+        }
 
 
 checkVmStateCodeOffset :: RuVmInfo -> RuVmState -> Maybe RuException

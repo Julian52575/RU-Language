@@ -619,3 +619,222 @@ spec = do
                 toPrint = []
             }
             ruVmStateReadWord8 state RuOperandNone `shouldBe` (Right defaultRuVariable)
+--ruVmStateReadOperand :: RuVmState -> Either RuException [RuVariable]
+    describe "ruVmStateReadOperand" $ do
+        it "Read 4 RuOperandConstant" $ do
+            let expected1 = RuVariable {
+                ruVariableValue = Int64 0x11111111,
+                ruVariableType = ruVariableTypeInt,
+                ruVariableId = 0x00,
+                ruMutable = False
+            }
+            let expected2 = expected1 {
+                ruVariableValue = Int64 0x22222222
+            }
+            let expected3 = expected1 {
+                ruVariableValue = Int64 0x33333333
+            }
+            let expected4 = expected1 {
+                ruVariableValue = Int64 0x44444444
+            }
+            let state = RuVmState {
+                variables = defaultRuVmVariables,
+                workerCodeOffset = 0x00,
+                workerCode = [0xAA, 0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22, 0x33, 0x33, 0x33, 0x33, 0x44, 0x44, 0x44, 0x44],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            case ruVmStateReadOperand state of
+                Left err -> do
+                    putStrLn (show err)
+                    False `shouldBe` True
+                Right list -> list `shouldBe` [expected1, expected2, expected3, expected4]
+        it "Read 4 RuOperandVariableId" $ do
+            let expected1 = RuVariable {
+                ruVariableValue = Int64 0x11111111,
+                ruVariableType = ruVariableTypeInt,
+                ruVariableId = 0x01,
+                ruMutable = False
+            }
+            let expected2 = expected1 {
+                ruVariableValue = Int64 0x22222222,
+                ruVariableId = 0x02
+            }
+            let expected3 = expected1 {
+                ruVariableValue = Int64 0x33333333,
+                ruVariableId = 0x03
+            }
+            let expected4 = expected1 {
+                ruVariableValue = Int64 0x44444444,
+                ruVariableId = 0x04
+            }
+            let state = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [ [expected1, expected2, expected3], [expected4] ]
+                },
+                workerCodeOffset = 0x00,
+                workerCode = [0xFF, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            case ruVmStateReadOperand state of
+                Left err -> do
+                    putStrLn (show err)
+                    False `shouldBe` True
+                Right list -> list `shouldBe` [expected1, expected2, expected3, expected4]
+        it "Stops at RuOperandNone" $ do
+            let state = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [ ]
+                },
+                workerCodeOffset = 0x00,
+                workerCode = [0x2A, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            case ruVmStateReadOperand state of
+                Left err -> do
+                    putStrLn (show err)
+                    False `shouldBe` True
+                Right list -> list `shouldBe` []
+        it "Read only 1 RuOperandVariableId" $ do
+            let expected1 = RuVariable {
+                ruVariableValue = Int64 0x11111111,
+                ruVariableType = ruVariableTypeInt,
+                ruVariableId = 0x01,
+                ruMutable = False
+            }
+            let expected2 = expected1 {
+                ruVariableValue = Int64 0x22222222,
+                ruVariableId = 0x02
+            }
+            let expected3 = expected1 {
+                ruVariableValue = Int64 0x33333333,
+                ruVariableId = 0x03
+            }
+            let expected4 = expected1 {
+                ruVariableValue = Int64 0x44444444,
+                ruVariableId = 0x04
+            }
+            let state = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [ [expected1, expected2, expected3], [expected4] ]
+                },
+                workerCodeOffset = 0x00,
+                workerCode = [0xC0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            case ruVmStateReadOperand state of
+                Left err -> do
+                    putStrLn (show err)
+                    False `shouldBe` True
+                Right list -> list `shouldBe` [expected1]
+        it "Read only 2 RuOperandVariableId" $ do
+            let expected1 = RuVariable {
+                ruVariableValue = Int64 0x11111111,
+                ruVariableType = ruVariableTypeInt,
+                ruVariableId = 0x01,
+                ruMutable = False
+            }
+            let expected2 = expected1 {
+                ruVariableValue = Int64 0x22222222,
+                ruVariableId = 0x02
+            }
+            let expected3 = expected1 {
+                ruVariableValue = Int64 0x33333333,
+                ruVariableId = 0x03
+            }
+            let expected4 = expected1 {
+                ruVariableValue = Int64 0x44444444,
+                ruVariableId = 0x04
+            }
+            let state = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [ [expected1, expected2, expected3], [expected4] ]
+                },
+                workerCodeOffset = 0x00,
+                workerCode = [0xF0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            case ruVmStateReadOperand state of
+                Left err -> do
+                    putStrLn (show err)
+                    False `shouldBe` True
+                Right list -> list `shouldBe` [expected1, expected2]
+        it "Read only 3 RuOperandVariableId" $ do
+            let expected1 = RuVariable {
+                ruVariableValue = Int64 0x11111111,
+                ruVariableType = ruVariableTypeInt,
+                ruVariableId = 0x01,
+                ruMutable = False
+            }
+            let expected2 = expected1 {
+                ruVariableValue = Int64 0x22222222,
+                ruVariableId = 0x02
+            }
+            let expected3 = expected1 {
+                ruVariableValue = Int64 0x33333333,
+                ruVariableId = 0x03
+            }
+            let expected4 = expected1 {
+                ruVariableValue = Int64 0x44444444,
+                ruVariableId = 0x04
+            }
+            let state = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [ [expected1, expected2, expected3], [expected4] ]
+                },
+                workerCodeOffset = 0x00,
+                workerCode = [0xFC, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            case ruVmStateReadOperand state of
+                Left err -> do
+                    putStrLn (show err)
+                    False `shouldBe` True
+                Right list -> list `shouldBe` [expected1, expected2, expected3]
+        it "Handle RuOperandUnused" $ do
+            let state = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [  ]
+                },
+                workerCodeOffset = 0x00,
+                workerCode = [0x55, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            ruVmStateReadOperand state `shouldBe` Left ruExceptionInvalidCodingByte
+        it "Handle Incomplete instruction" $ do
+            let state = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [  ]
+                },
+                workerCodeOffset = 0x00,
+                workerCode = [0xAA, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00], 
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            ruVmStateReadOperand state `shouldBe` Left ruExceptionIncompleteInstruction
+        it "Handle Unknow variable" $ do
+            let state = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [ [] ]
+                },
+                workerCodeOffset = 0x00,
+                workerCode = [0xC0, 0x00, 0x00, 0x00, 0x01], 
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            ruVmStateReadOperand state `shouldBe` Left (ruExceptionUnknowVariable 0x01)
