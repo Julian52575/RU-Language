@@ -9,6 +9,7 @@ import Data.List(head, last, tail, init, find)
 import Control.Monad.Trans.Except
 import Control.Monad.IO.Class (liftIO)
 
+import RuOperandModule
 import RuVariableModule
 import RuFormatModule as RF
 import RuExceptionModule
@@ -61,7 +62,7 @@ ruVmVariablesSetVariableInGlobalScope variabless newVar
         globalStack = last stack
         firstStacks = init stack
     
-ruVmVariablesGetVariableInCurrentScope :: RuVmVariables -> Word8 -> Maybe RuVariable
+ruVmVariablesGetVariableInCurrentScope :: RuVmVariables -> Word32 -> Maybe RuVariable
 ruVmVariablesGetVariableInCurrentScope variabless idd
     | length stack == 0 = Nothing --Rien à trouver
     | otherwise         = searchResult --Les resultats de la recherche
@@ -70,7 +71,7 @@ ruVmVariablesGetVariableInCurrentScope variabless idd
         scopeStack = head stack
         searchResult = find (\ruVarParser -> ruVariableHasId ruVarParser idd) scopeStack
 
-ruVmVariablesGetVariableInGlobalScope :: RuVmVariables -> Word8 -> Maybe RuVariable
+ruVmVariablesGetVariableInGlobalScope :: RuVmVariables -> Word32 -> Maybe RuVariable
 ruVmVariablesGetVariableInGlobalScope variabless idd
     | length stack == 0 = Nothing --Rien à trouver
     | otherwise         = searchResult --Les resultats de la recherche
@@ -79,7 +80,7 @@ ruVmVariablesGetVariableInGlobalScope variabless idd
         globalStack = last stack
         searchResult = find (\ruVarParser -> ruVariableHasId ruVarParser idd) globalStack
 
-ruVmVariablesGetVariable :: RuVmVariables -> Word8 -> Maybe RuVariable
+ruVmVariablesGetVariable :: RuVmVariables -> Word32 -> Maybe RuVariable
 ruVmVariablesGetVariable variabless idd
     | (isNothing globalSearchResult == False) = globalSearchResult
     | (isNothing scopeSearchResult == False)  = scopeSearchResult
@@ -98,6 +99,51 @@ data RuVmState = RuVmState {
     scopeDeep :: Int,
     toPrint :: String
 } deriving (Eq, Show)
+
+ruVmStateReadWord8 :: RuVmState -> RuOperand -> Either RuException RuVariable --TODO
+ruVmStateReadWord8 _ RuOperandUnused = Left ruExceptionInvalidCodingByte
+ruVmStateReadWord8 _ RuOperandNone = Right defaultRuVariable
+ruVmStateReadWord8 state RuOperandConstant
+    | length tab < 4      = Left ruExceptionIncompleteInstruction
+    | otherwise           = Right RuVariable {
+                                ruVariableValue = Int64 valueInt,
+                                ruVariableType = ruVariableTypeInt,
+                                ruVariableId = 0x00,
+                                ruMutable = False
+    }
+    where
+        tab = workerCode state
+        a = tab !! 0
+        b = tab !! 1
+        c = tab !! 2
+        d = tab !! 3
+        value32bit = word84ToWord32 a b c d
+        valueInt = fromIntegral value32bit
+ruVmStateReadWord8 state RuOperandVariableId
+    | length tab < 4      = Left ruExceptionIncompleteInstruction
+    | otherwise           = case searchResult of
+                                Nothing -> Left (ruExceptionUnknowVariable value32bit)
+                                Just var -> Right var
+    where
+        tab = workerCode state
+        a = tab !! 0
+        b = tab !! 1
+        c = tab !! 2
+        d = tab !! 3
+        value32bit = word84ToWord32 a b c d
+        searchResult = ruVmVariablesGetVariable (variables state) value32bit
+
+{--
+ruVmStateReadOperand :: RuVmState -> Either RuException [RuVariable]
+ruVmStateReadOperand state
+    | length ccode == 0         = Left ruExceptionIncompleteInstruction
+    |
+    |
+    |
+    where
+        ccode = workerCode state
+        codingByte = ccode !! 0--}
+
 
 checkVmStateCodeOffset :: RuVmInfo -> RuVmState -> Maybe RuException
 checkVmStateCodeOffset info state

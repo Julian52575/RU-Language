@@ -7,6 +7,7 @@ import RuVariableModule
 import RuExceptionModule
 import RuFormatModule
 import RuVmModule
+import RuOperandModule
 {--
  - data RuVmState = RuVmState {
     variableStack :: [RuVariable],
@@ -522,3 +523,99 @@ spec = do
                 carry = False
             }
             (ruVmVariablesGetVariable baseVariables 0x01) `shouldBe` Nothing
+--ruVmStateReadWord8 :: RuVmState -> RuOperand -> Either RuException RuVariable
+    describe "ruVmStateReadWord8" $ do
+        it "Read constant" $ do
+            let state = RuVmState {
+                variables = defaultRuVmVariables,
+                workerCodeOffset = 0,
+                workerCode = [0x12, 0x34, 0x56, 0x78],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            let expected = RuVariable {
+                            ruVariableValue = Int64 0x12345678,
+                            ruVariableType = ruVariableTypeInt,
+                            ruVariableId = 0x00,
+                            ruMutable = False
+            }
+            case ruVmStateReadWord8 state RuOperandConstant of
+                Left err -> do
+                    putStrLn (show err)
+                    False `shouldBe` True
+                Right var -> var `shouldBe` expected
+        it "Read variable id" $ do
+            let expected = RuVariable {
+                            ruVariableValue = Str "Hello World",
+                            ruVariableType = ruVariableTypeStr,
+                            ruVariableId = 0x42,
+                            ruMutable = False
+            }
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [expected ], [], [] ]
+            }
+            let state = RuVmState {
+                variables = variabless,
+                workerCodeOffset = 0,
+                workerCode = [0x00, 0x00, 0x00, 0x42],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            case ruVmStateReadWord8 state RuOperandVariableId of
+                Left err -> do
+                    putStrLn (show err)
+                    False `shouldBe` True
+                Right var -> var `shouldBe` expected
+        it "Handles RuOperandConstant incomplete code" $ do
+            let state = RuVmState {
+                variables = defaultRuVmVariables,
+                workerCodeOffset = 0,
+                workerCode = [0x00, 0x00, 0x00],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            ruVmStateReadWord8 state RuOperandConstant `shouldBe` (Left ruExceptionIncompleteInstruction)
+        it "Handles RuOperandVariableId incomplete code" $ do
+            let state = RuVmState {
+                variables = defaultRuVmVariables,
+                workerCodeOffset = 0,
+                workerCode = [0x00, 0x00, 0x00],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            ruVmStateReadWord8 state RuOperandVariableId `shouldBe` (Left ruExceptionIncompleteInstruction)
+
+        it "Handles unknow variable id" $ do
+            let state = RuVmState {
+                variables = defaultRuVmVariables,
+                workerCodeOffset = 0,
+                workerCode = [0x00, 0x00, 0x00, 0x42],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            ruVmStateReadWord8 state RuOperandVariableId `shouldBe` (Left (ruExceptionUnknowVariable 0x42))
+        it "Handles RuOperandUnused" $ do
+            let state = RuVmState {
+                variables = defaultRuVmVariables,
+                workerCodeOffset = 0,
+                workerCode = [0x00, 0x00, 0x00, 0x42],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            ruVmStateReadWord8 state RuOperandUnused `shouldBe` (Left ruExceptionInvalidCodingByte)
+        it "Handles RuOperandNone" $ do
+            let state = RuVmState {
+                variables = defaultRuVmVariables,
+                workerCodeOffset = 0,
+                workerCode = [0x00, 0x00, 0x00, 0x42],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            ruVmStateReadWord8 state RuOperandNone `shouldBe` (Right defaultRuVariable)

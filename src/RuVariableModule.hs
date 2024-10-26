@@ -3,7 +3,7 @@ module RuVariableModule where
 import Data.Maybe
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
-import Data.Word (Word8, Word16, Word64)
+import Data.Word (Word8, Word16, Word32, Word64)
 
 data RuVariableValue =
     Na |
@@ -14,7 +14,7 @@ data RuVariableValue =
 data RuVariable = RuVariable {
     ruVariableValue :: RuVariableValue,
     ruVariableType :: Word8,
-    ruVariableId :: Word8,
+    ruVariableId :: Word32,
     ruMutable :: Bool
 } deriving (Eq, Show)
 
@@ -56,5 +56,5 @@ ruVariableGetType (RuVariable { ruVariableType = i }) = i
 ruVariableIsType :: RuVariable -> Word8 -> Bool
 ruVariableIsType (RuVariable { ruVariableType = i }) t = i == t
 
-ruVariableHasId :: RuVariable -> Word8 -> Bool
+ruVariableHasId :: RuVariable -> Word32 -> Bool
 ruVariableHasId var idd = (ruVariableId var == idd)

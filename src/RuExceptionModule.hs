@@ -36,4 +36,8 @@ ruExceptionUnknowInstruction = RuException "Unknow instruction."
 ruExceptionUnknowOpcode :: Word8 -> Word8 -> RuException
 ruExceptionUnknowOpcode p i = RuException ("Unknow opcode 0x" ++ (showHex p "??") ++ (showHex i "??"))
 
+ruExceptionInvalidCodingByte :: RuException
+ruExceptionInvalidCodingByte = RuException "Invalid codingByte using 0x01 bit pair."
 
+ruExceptionUnknowVariable :: Word32 -> RuException
+ruExceptionUnknowVariable idd = RuException ("Unknow variable id: " ++ showHex idd "??")

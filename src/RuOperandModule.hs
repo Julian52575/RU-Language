@@ -50,7 +50,7 @@ parseCodingByteListToSize (x:xs) size = parseCodingByteListToSize xs newSize
         newSize = size + ruOperandToSize x
 parseCodingByteListToSize [] size = size
 
-codingByteToOperandsSize :: Word8 -> Word32 --TODO
+codingByteToOperandsSize :: Word8 -> Word32
 codingByteToOperandsSize cb = parseCodingByteListToSize list 0x00
         where
             list = codingByteToRuOperand cb
