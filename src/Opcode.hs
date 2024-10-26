@@ -7,13 +7,14 @@ import qualified Data.ByteString as B
 import Data.Bits (shiftR, (.&.))
 import Compiler.String (getStringTable)
 import Compiler.Function(getFunctionTable, Function)
-import Parser.AST (Stmt(..), Expr(..), ArithOp(..), CompOp(..), LogicOp(..), UnaryOp(..))
+import Parser.AST
 import Parser.Type (Type(..))
 import Data.List (elemIndex, nub)
 import Data.Maybe (fromJust)
 import Compiler.CreateVar (getCreateVar)
 import Compiler.Type (Scope(..), OpCode(..), Compile(..))
-import Compiler.Compile (getScopeFromList, compile)
+import Compiler.Compile (getScopeFromList, compile, compileStmt)
+import Compiler.Header (getHeader, headerToByteString)
 
 getIntFromExpr :: Expr -> Scope -> Int
 getIntFromExpr (LitInt int) _ = int
@@ -23,9 +24,6 @@ getIntFromExpr _ _ = 0
 addToScope :: Scope -> String-> Scope
 addToScope scope var = Scope (var : vars scope) (function scope) (indexStart scope)
 
-listByteString :: [B.ByteString] -> B.ByteString
-listByteString = B.concat
-
 test :: [Stmt] -> IO ()
 test ast = do
     let stringTable = nub $ getStringTable ast
@@ -33,7 +31,11 @@ test ast = do
     let globalVars = getCreateVar ast stringTable
     let globalScope = getScopeFromList globalVars "global" 0
     let compileData = Compile stringTable functionTable globalScope
+    let compiled = compile ast compileData
+    let header = getHeader compileData compiled
+    let headerByteString = headerToByteString header
 
     -- print $ compileData
-    print $ compile ast compileData
-
+    print $ compiled
+    print $ header
+    B.writeFile "out.bin" headerByteString

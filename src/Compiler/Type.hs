@@ -3,10 +3,11 @@ module Compiler.Type (
     OpCode(..),
     Compile(..),
     Function(..),
-    CodingByte(..)
+    CodingByte(..),
+    Header(..)
 ) where
 
-import Data.Word (Word8, Word16)
+import Data.Word (Word8, Word16, Word32)
 
 data CodingByte = CbConst Int Int Int
     | CbVar Int Int
@@ -24,6 +25,7 @@ data OpCode = OpNoop
     | OpCreateVar Int Int
     | OpSetVar Int CodingByte 
     | OpSetArg Int CodingByte
+    | OpSetTmp Int CodingByte
     | OpUnsetArg Int Int
     | OpSetReturn CodingByte
     | OpUnsetReturn Int
@@ -53,4 +55,18 @@ data Compile = Compile {
     stringTable :: [String],
     functionTable :: [Function],
     globalScope :: Scope
+} deriving (Show, Eq)
+
+data Header = Header {
+    magic :: [Word8],
+    checkSum :: Word16,
+    version :: Word8,
+    functionTableCount :: Word32,
+    stringTableOffset :: Word32,
+    stringTableSize :: Word32,
+    codeOffset :: Word32,
+    firstInstructionOffset :: Word32,
+    unused :: [Word8],
+    headerStringTable :: [Word8],
+    headerFunctionTable :: [Word8]
 } deriving (Show, Eq)

@@ -1,7 +1,8 @@
 module Compiler.Compile (
     -- compileStmt
     compile,
-    getScopeFromList
+    getScopeFromList,
+    compileStmt
 ) where
 
 import Compiler.Type (Scope(..), OpCode(..), Compile(..))
