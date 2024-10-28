@@ -41,7 +41,7 @@ printRuHeader :: RuHeader -> IO ()
 printRuHeader head =
     putStrLn ("File version:\t" ++ (show (fileVersion head))) >>
     putStrLn ("Function count:\t" ++ (show (functionTableCount head))) >>
-    putStrLn ("Strtab offset:\t" ++ (show (strTableCount head))) >>
+    putStrLn ("Strtab offset:\t" ++ (show (strTableOffset head))) >>
     putStrLn ("String count:\t" ++ (show (strTableCount head))) >>
     putStrLn ("Code offset:\t" ++ (show (codeOffset head))) >>
     putStrLn ("Entrypoint offset:\t" ++ (show (entrypointOffset head)))
@@ -59,14 +59,16 @@ printRuFunctionTable str fun = do
     else do
         let index = fromIntegral (nameIndex fun)
         let name = str !! index
-        putStrLn (name ++ show ":\t")
+        putStrLn ("-Function\t'" ++ name ++ "':")
         putStrLn ("Offset:\t" ++ (show (codeSectionOffset fun)))
         putStrLn ("Size:\t" ++ (show (size fun)))
+printRuFunctionTable [] _ = putStrLn []
 
 printRuFunctionTableArray :: [String] -> [RuFunctionTable] -> IO ()
 printRuFunctionTableArray str (current:next) =
     printRuFunctionTable str current >>
     printRuFunctionTableArray str next
+printRuFunctionTableArray _ _ = putStrLn []
 
 data RuFormat = RuFormat {
     ruHeader :: RuHeader,
@@ -121,7 +123,9 @@ printRuFormat format = do
     let funTab = convertWord8ToFunctionTable (ruFunctionTable format)
     let string = (convertWord8ToStringTable (strTab format) [])
     printRuHeader (ruHeader format)
+    putStrLn "\nFunction Table:"
     printRuFunctionTableArray string funTab
+    putStrLn "String Table:"
     mapM_ (putStrLn) string
 
 
