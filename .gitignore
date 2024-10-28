@@ -1,3 +1,4 @@
 glados-virtual-machine.cabal
 stack.yaml.lock
 .stack-work/
+glados-virtual-machine-exe
