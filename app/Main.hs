@@ -12,24 +12,10 @@ import RuVmModule
 import RuOperandModule
 import RuVariableModule
 import RuExceptionModule
-import RuInstructionsModule
+import RuInstructionsHelperModule
 
-
-{-- Obtient la taille COMPLETE (+ mnemonic) de l'instruction par le mnemonic / codingByte
- --}
-getInstructionSize :: Word8 -> Word8 -> RuVmState -> Word32
-getInstructionSize pre inf state
-    | (isNothing maybeInstruction == True) = 0
-    | (fixedSize instruction /= 0)         = fixedSize instruction
-    | otherwise                            = 2 + 1 + operandsSize
-    where
-        maybeInstruction = getRuInstruction pre inf
-        instruction = fromMaybe (error "Unknow Instruction.") maybeInstruction
-        codingByte = (workerCode state) !! 0
-        operandsSize = codingByteToOperandsSize codingByte
 
 {-- Move Pc to the new instruction if previous instruction didn't
- --}
 getNextPcState :: Word8 -> Word8 -> RuVmState -> RuVmState -> RuVmState
 getNextPcState pre inf oldState newState
     | (oldPc /= newPc)  = newState
@@ -62,6 +48,7 @@ runInstructions info state
     functionResult = function info movedState
     functionResultState = fromRight (error "fromRight error") functionResult
     nextState = functionResultState
+ --}
 
 {-- Appelle runInstructions et gère le retour
  --}
