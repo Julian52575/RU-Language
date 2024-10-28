@@ -2,14 +2,16 @@ module Compiler.Compile (
     -- compileStmt
     compile,
     getScopeFromList,
-    compileStmt
+    compileStmt,
+    compileGlobal
 ) where
 
-import Compiler.Type (Scope(..), OpCode(..), Compile(..))
+import Compiler.Type (Scope(..), OpCode(..), Compile(..), CodingByte(..))
 import Parser.AST (Stmt(..), Expr(..))
 import Compiler.CreateVar (getCreateVar, getFunctionVar)
 import Compiler.Function (unsetFuncVar, getFunctionIndex)
 import Compiler.CodingByte (getCodingByte)
+import Compiler.Header (opListCountByte)
 
 -- Create a scope from a list of variable names
 getScopeFromList :: [(OpCode, String)] -> String -> Int -> Scope
@@ -68,7 +70,12 @@ compileFunction (FuncDeclStmt name args retType (Just body)) comp = do
     opcode ++ unsetVars ++ bodyOpCode ++ [OpReturn]
 compileFunction _ _ = []
 
--- compileStmt :: [Stmt] 
+compileGlobal :: Stmt -> Compile -> Bool -> [OpCode]
+compileGlobal stmts comp isMain = do
+    let createVars = getCreateVar [stmts] (stringTable comp)
+    let opcode = map fst createVars
+    let bodyOpCode = compileStmt stmts (globalScope comp) comp
+    opcode ++ bodyOpCode ++ (if isMain then [OpCall 0] else []) ++ [OpSetReturn (CbConst 0x02 0x01 0x00)] ++ [OpReturn]
 
 compile :: [Stmt] -> Compile -> [[OpCode]]
 compile [] _ = []

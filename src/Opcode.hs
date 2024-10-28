@@ -2,40 +2,50 @@ module Opcode (
     test
 ) where
 
-import Data.Word (Word8, Word16)
 import qualified Data.ByteString as B
-import Data.Bits (shiftR, (.&.))
 import Compiler.String (getStringTable)
-import Compiler.Function(getFunctionTable, Function)
+import Compiler.Function(getFunctionTable, getFunctionIndex)
 import Parser.AST
-import Parser.Type (Type(..))
-import Data.List (elemIndex, nub)
-import Data.Maybe (fromJust)
+import Data.List (nub)
 import Compiler.CreateVar (getCreateVar)
-import Compiler.Type (Scope(..), OpCode(..), Compile(..))
-import Compiler.Compile (getScopeFromList, compile, compileStmt)
-import Compiler.Header (getHeader, headerToByteString)
+import Compiler.Type (OpCode(..), Compile(..), Function(..))
+import Compiler.Compile (getScopeFromList, compile, compileGlobal)
+import Compiler.Header (getHeader, headerToByteString, opCodeToByteString)
 
-getIntFromExpr :: Expr -> Scope -> Int
-getIntFromExpr (LitInt int) _ = int
-getIntFromExpr (Var var) scope = if length (vars scope) == 0 then 0 else length (vars scope) - (fromJust $ elemIndex var (vars scope))
-getIntFromExpr _ _ = 0
+swapElementsAt :: Int -> Int -> [a] -> [a]
+swapElementsAt _ _ [] = []
+swapElementsAt a b list = list1 ++ [list !! b] ++ list2 ++ [list !! a] ++ list3
+    where   list1 = take a list;
+            list2 = drop (succ a) (take b list);
+            list3 = drop (succ b) list
 
-addToScope :: Scope -> String-> Scope
-addToScope scope var = Scope (var : vars scope) (function scope) (indexStart scope)
+swapMainFunction :: Compile -> [[OpCode]] -> (Compile, [[OpCode]])
+swapMainFunction comp [] = (comp, [])
+swapMainFunction comp (x:[]) = (comp, [x])
+swapMainFunction comp opcodes = do
+    let mainIndex = (getFunctionIndex "main" comp)
+    let swapedOpCode = swapElementsAt 0 mainIndex opcodes
+    let functionList = swapElementsAt 0 mainIndex (functionTable comp)
+    ((Compile (stringTable comp) (functionList) (globalScope comp)), swapedOpCode)
+
+isMain :: [Function] -> Bool
+isMain [] = False
+isMain (x:xs) = if fName x == "main" then True else isMain xs
 
 test :: [Stmt] -> IO ()
 test ast = do
-    let stringTable = nub $ getStringTable ast
-    let functionTable = getFunctionTable ast stringTable
-    let globalVars = getCreateVar ast stringTable
-    let globalScope = getScopeFromList globalVars "global" 0
-    let compileData = Compile stringTable functionTable globalScope
+    let stringTbl = nub $ getStringTable ast
+    let functionTbl = getFunctionTable ast stringTbl
+    let globalVars = getCreateVar ast stringTbl
+    let sGlobal = getScopeFromList globalVars "global" 0
+    let compileData = Compile stringTbl functionTbl sGlobal
     let compiled = compile ast compileData
-    let header = getHeader compileData compiled
+    let globalCompiled = compileGlobal (BlockStmt ast) compileData (isMain functionTbl)
+    let swapData = swapMainFunction compileData compiled
+    let compileData' = fst swapData
+    let compiled' = snd swapData
+    let header = getHeader compileData' globalCompiled compiled'
     let headerByteString = headerToByteString header
+    let codeByteString = B.pack $ opCodeToByteString $ globalCompiled ++ (concat compiled')
 
-    -- print $ compileData
-    print $ compiled
-    print $ header
-    B.writeFile "out.bin" headerByteString
+    B.writeFile "out.bin" $ B.append headerByteString codeByteString

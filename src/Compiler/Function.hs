@@ -13,7 +13,7 @@ import Compiler.Type (OpCode(..), Function(..), Scope(..), Compile(..))
 getFunctionIndex :: String -> Compile -> Int
 getFunctionIndex name compile =
     let maybeFunction = find (\f -> fName f == name) (functionTable compile)
-    in fIndex $ fromJust maybeFunction
+    in maybe 0 fIndex maybeFunction
 
 -- unset all the arguments given to a function
 unsetFuncVar :: Int -> Int -> [OpCode]
