@@ -203,29 +203,6 @@ data RuVmInfo = RuVmInfo {
 } deriving (Eq, Show)
 
 
-convertWord8ToStringTable :: [Word8] -> String -> [String]
-convertWord8ToStringTable (w:ws) currentStr
-    | w == 0x00 = [ (currentStr ++ "\0") ] ++ convertWord8ToStringTable ws []
-    | 0x01 <= w && w <= 0x7f = convertWord8ToStringTable ws (currentStr ++ [wCharTrue])
-    | otherwise = convertWord8ToStringTable ws (currentStr ++ [wChar])
-    where
-        wChar = '.'
-        wCharTrue = chr (fromIntegral w)
-convertWord8ToStringTable _ _ = []
-
-
-convertWord8ToFunctionTable :: [Word8] -> [RuFunctionTable]
-convertWord8ToFunctionTable (n:a:m:e:o:f:f2:t:s:i:z:e2:next) = do
-    [ fun ] ++ convertWord8ToFunctionTable next
-    where
-    fun = RuFunctionTable {
-        nameIndex = word84ToWord32 n a m e,
-        codeSectionOffset = word84ToWord32 o f f2 t,
-        size = word84ToWord32 s i z e2
-    }
-convertWord8ToFunctionTable _ = []
-
-
 {-- Assume RuFormat is valid
  --}
 ruFormatToRuVmInfo :: RuFormat -> RuVmInfo

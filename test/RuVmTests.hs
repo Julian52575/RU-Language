@@ -90,24 +90,6 @@ spec = do
             code vm `shouldBe` tabCodeSection
             codeSize vm `shouldBe` 0x03
 
-        --convertWord8ToStringTable :: [Word8] -> String -> [String]
-        it "Convert [Word8] into a string array" $ do
-            let tab = [0x00, 0x65, 0x00, 0x65, 0x065, 0x00, 0x65, 0x65, 0x65, 0x00]
-            let stringTab = convertWord8ToStringTable tab ""
-            stringTab `shouldBe` [ "\0", "e\0", "ee\0", "eee\0" ]
-
-        --convertWord8ToFunctionTable :: [Word8] -> [ruFunctionTable]
-        it "Convert [Word8] into function table" $ do
-            let tab = [0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xb3, 0xb4, 0xc1, 0xc2, 0xc3, 0xc4]
-            let expected = RuFunctionTable {
-                nameIndex = 0xa1a2a3a4,
-                codeSectionOffset = 0xb1b2b3b4,
-                size = 0xc1c2c3c4
-            }
-            let finalTab = tab ++ tab
-            let fun = convertWord8ToFunctionTable finalTab
-            fun `shouldBe` [ expected, expected ] 
-
     {--
     data RuVmVariables = RuVmVariables {
     variableStack :: [[RuVariable]], -- first is current scope, last is global

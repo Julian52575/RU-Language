@@ -3,6 +3,7 @@ module RuFormatModule where
 import Data.Word (Word8, Word16, Word32, Word64)
 import Data.Bits
 import Data.Either
+import Data.Char
 
 import qualified Data.ByteString as BS
 
@@ -36,11 +37,36 @@ data RuHeader = RuHeader {
     entrypointOffset :: Word32
 } deriving(Eq, Show)
 
+printRuHeader :: RuHeader -> IO ()
+printRuHeader head =
+    putStrLn ("File version:\t" ++ (show (fileVersion head))) >>
+    putStrLn ("Function count:\t" ++ (show (functionTableCount head))) >>
+    putStrLn ("Strtab offset:\t" ++ (show (strTableCount head))) >>
+    putStrLn ("String count:\t" ++ (show (strTableCount head))) >>
+    putStrLn ("Code offset:\t" ++ (show (codeOffset head))) >>
+    putStrLn ("Entrypoint offset:\t" ++ (show (entrypointOffset head)))
+
 data RuFunctionTable = RuFunctionTable {
     nameIndex :: Word32,
     codeSectionOffset :: Word32,
     size :: Word32
 } deriving (Eq, Show)
+
+printRuFunctionTable :: [String] -> RuFunctionTable -> IO ()
+printRuFunctionTable str fun = do
+    if (fromIntegral (nameIndex fun)) >= (length str)
+    then error "Function has an Out of Bound name index"
+    else do
+        let index = fromIntegral (nameIndex fun)
+        let name = str !! index
+        putStrLn (name ++ show ":\t")
+        putStrLn ("Offset:\t" ++ (show (codeSectionOffset fun)))
+        putStrLn ("Size:\t" ++ (show (size fun)))
+
+printRuFunctionTableArray :: [String] -> [RuFunctionTable] -> IO ()
+printRuFunctionTableArray str (current:next) =
+    printRuFunctionTable str current >>
+    printRuFunctionTableArray str next
 
 data RuFormat = RuFormat {
     ruHeader :: RuHeader,
@@ -64,6 +90,40 @@ defaultRuFormat = RuFormat {
     strTab = [],
     codeSection = []
 }
+
+convertWord8ToStringTable :: [Word8] -> String -> [String]
+convertWord8ToStringTable (w:ws) currentStr
+    | w == 0x00 = [ (currentStr ++ "\0") ] ++ convertWord8ToStringTable ws []
+    | 0x01 <= w && w <= 0x7f = convertWord8ToStringTable ws (currentStr ++ [wCharTrue])
+    | otherwise = convertWord8ToStringTable ws (currentStr ++ [wChar])
+    where
+        wChar = '.'
+        wCharTrue = chr (fromIntegral w)
+convertWord8ToStringTable _ _ = []
+
+
+convertWord8ToFunctionTable :: [Word8] -> [RuFunctionTable]
+convertWord8ToFunctionTable (n:a:m:e:o:f:f2:t:s:i:z:e2:next) = do
+    [ fun ] ++ convertWord8ToFunctionTable next
+    where
+    fun = RuFunctionTable {
+        nameIndex = word84ToWord32 n a m e,
+        codeSectionOffset = word84ToWord32 o f f2 t,
+        size = word84ToWord32 s i z e2
+    }
+convertWord8ToFunctionTable _ = []
+
+{-- print
+ --}
+
+printRuFormat :: RuFormat -> IO ()
+printRuFormat format = do
+    let funTab = convertWord8ToFunctionTable (ruFunctionTable format)
+    let string = (convertWord8ToStringTable (strTab format) [])
+    printRuHeader (ruHeader format)
+    printRuFunctionTableArray string funTab
+    mapM_ (putStrLn) string
+
 
 {--
  --}

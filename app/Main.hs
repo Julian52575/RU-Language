@@ -7,6 +7,7 @@ import Data.Word
 import Data.Either
 import Data.Maybe
 
+import RuFormatModule
 import RuVmModule
 import RuOperandModule
 import RuVariableModule
@@ -67,6 +68,10 @@ runInstructions info state
 runRuVm :: RuVmInfo -> Either RuException RuVariable
 runRuVm info = Left (RuException "ToDo") --TODO
 
+
+{-- objdump for ru
+ --}
+
 {-- --}
 usage :: String
 usage = "Usage:\t./ru_vm [--dump] filename"
@@ -77,8 +82,11 @@ runMain = do
     case args of
         ["--usage"] -> do
             putStrLn usage
-        ["--dump"] -> do
-            putStrLn "You requested a dump"
+        ["--dump", filename] -> do
+            result <- fileNameToRuFormat filename 
+            case result of
+                Left (RuException exception) -> putStrLn exception
+                Right format -> printRuFormat format
         [filename] -> do
             putStrLn filename --TODO
         _ -> do

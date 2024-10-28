@@ -85,4 +85,22 @@ spec = do
                             ruFunctionTable ruFormat `shouldBe` [0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x23, 0x00, 0x00, 0x00, 0xff]
                             strTab ruFormat `shouldBe` [0,102,117,110,99,116,105,111,110,49,0,102,117,110,147,116,105,111,110,50,0]
                             codeSection ruFormat `shouldBe` [1,0,1,1,1,1,1,1,0,1,2,2,2,2,1,0,1,1,1,1,1,1,0,1,2,2,2,2,1,0,1,3,3,3,3,1,0,1,1,1,1,1,1,0,1,2,2,2,2,1,0,1,3,3,3,3]
+        
+    describe "Word8 to table" $ do
+        --convertWord8ToStringTable :: [Word8] -> String -> [String]
+        it "Convert [Word8] into a string array" $ do
+            let tab = [0x00, 0x65, 0x00, 0x65, 0x065, 0x00, 0x65, 0x65, 0x65, 0x00]
+            let stringTab = convertWord8ToStringTable tab ""
+            stringTab `shouldBe` [ "\0", "e\0", "ee\0", "eee\0" ]
 
+        --convertWord8ToFunctionTable :: [Word8] -> [ruFunctionTable]
+        it "Convert [Word8] into function table" $ do
+            let tab = [0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xb3, 0xb4, 0xc1, 0xc2, 0xc3, 0xc4]
+            let expected = RuFunctionTable {
+                nameIndex = 0xa1a2a3a4,
+                codeSectionOffset = 0xb1b2b3b4,
+                size = 0xc1c2c3c4
+            }
+            let finalTab = tab ++ tab
+            let fun = convertWord8ToFunctionTable finalTab
+            fun `shouldBe` [ expected, expected ] 
