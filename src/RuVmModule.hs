@@ -35,32 +35,43 @@ defaultRuVmVariables = RuVmVariables {
 }
 
 
-ruVmVariablesSetVariableInCurrentScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables
+ruVmVariablesGetBiggestId :: RuVmVariables -> Word32
+ruVmVariablesGetBiggestId variabless
+    | length stack == 0 = 0
+    | length stack == 1 = fromIntegral (length (head stack))
+    | otherwise         = fromIntegral (length (head stack) + length (last stack))
+    where
+        stack = (variableStack variabless)
+
+
+ruVmVariablesSetVariableInCurrentScope :: RuVmVariables -> RuVariable -> RuVmVariables
 ruVmVariablesSetVariableInCurrentScope variabless newVar
-    | length stack == 0                       = Just variabless { variableStack = [ [newVar] ] }      --Stack vide -> new tab
-    | (isNothing globalSearchResult) == False = Nothing --Variable id déjà présent dans la stack globale 
-    | length stack == 1                       = Just variabless { variableStack = [ globalStack ++ [newVar] ] }  --1 seul stack (globale) -> ajout variable
-    | (isNothing scopeSearchResult) == False  = Nothing --Variable id déjà présent dans la première stack (fonction)
-    | otherwise                               = Just variabless { variableStack = ( [(scopeStack ++ [newVar])] ++ middleStacks ++ [globalStack] ) }
+    | length stack == 0                       = variabless { variableStack = [ [newVar] ] }      --Stack vide -> new tab
+    | length stack == 1                       = variabless { variableStack = [ globalStack ++ [newVarId] ] }  --1 seul stack (globale) -> ajout variable
+    | otherwise                               = variabless { variableStack = ( [(scopeStack ++ [newVarId])] ++ middleStacks ++ [globalStack] ) }
     where
         stack = (variableStack variabless)
         scopeStack = head stack
-        scopeSearchResult = ruVmVariablesGetVariableInCurrentScope variabless (ruVariableId newVar)
         globalStack = last stack
-        globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless (ruVariableId newVar)
         middleStacks = (init. tail) stack
+        newId = ruVmVariablesGetBiggestId variabless
+        newVarId = newVar {
+            ruVariableId = newId
+        }
 
+{-- Disabled due to variable id conflict when assigning a global variable when fun stack is already filled
 ruVmVariablesSetVariableInGlobalScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables
 ruVmVariablesSetVariableInGlobalScope variabless newVar
     | length stack == 0                       = Just variabless { variableStack = [ [newVar] ] } --pas de tab
     | (isNothing globalSearchResult) == False = Nothing --déjà présente
     | length stack == 1                       = Just variabless { variableStack = [ globalStack ++ [newVar] ] }
     | otherwise                               = Just variabless { variableStack = ( firstStacks ++ [(globalStack ++ [newVar])] ) } 
-    where 
+    where
         stack = (variableStack variabless)
         globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless (ruVariableId newVar)
         globalStack = last stack
         firstStacks = init stack
+--}
     
 ruVmVariablesGetVariableInCurrentScope :: RuVmVariables -> Word32 -> Maybe RuVariable
 ruVmVariablesGetVariableInCurrentScope variabless idd

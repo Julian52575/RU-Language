@@ -237,22 +237,20 @@ spec = do
             let newVar = RuVariable {
                 ruVariableValue = Str "Hello World",
                 ruVariableType = ruVariableTypeStr,
-                ruVariableId = 1,
+                ruVariableId = 0,
                 ruMutable = True
             }
-            case ruVmVariablesSetVariableInCurrentScope baseVariables newVar of
-                Nothing -> False `shouldBe` True
-                Just variablesResult -> do
-                    variableStack variablesResult `shouldBe` [ [newVar] ]
+            let variablesResult = ruVmVariablesSetVariableInCurrentScope baseVariables newVar
+            variableStack variablesResult `shouldBe` [ [newVar] ]
         it "Add variable to function scope" $ do
             let oldVar = RuVariable {
                 ruVariableValue = Int64 84,
                 ruVariableType = ruVariableTypeInt,
-                ruVariableId = 84,
+                ruVariableId = 0,
                 ruMutable = False
             }
             let baseVariables = RuVmVariables {
-                variableStack = [ [oldVar], [oldVar, oldVar], [oldVar, oldVar, oldVar] ],
+                variableStack = [ [oldVar, oldVar, oldVar], [],  [] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
                 argumentVariables = [],
@@ -261,81 +259,63 @@ spec = do
             let newVar = RuVariable {
                 ruVariableValue = Int64 42,
                 ruVariableType = ruVariableTypeInt,
-                ruVariableId = 42,
+                ruVariableId = 0xff,
                 ruMutable = True
             }
-            case ruVmVariablesSetVariableInCurrentScope baseVariables newVar of
-                Nothing -> False `shouldBe` True
-                Just variablesResult -> do
-                    variableStack variablesResult `shouldBe` [ [oldVar, newVar], [oldVar, oldVar], [oldVar, oldVar, oldVar] ]
-        it "Doesn't set variable when duplicate id in function scope" $ do
-            let var = RuVariable {
-                ruVariableValue = Str "Hello World",
-                ruVariableType = ruVariableTypeStr,
-                ruVariableId = 1,
-                ruMutable = True
+            let expected = newVar {
+                ruVariableId = 0x3
             }
-            let baseVariables = RuVmVariables {
-                variableStack = [ [var], [] ],
-                tmpVariable = defaultRuVariable,
-                returnVariable = defaultRuVariable,
-                argumentVariables = [],
-                carry = False
-            }
-            ruVmVariablesSetVariableInCurrentScope baseVariables var `shouldBe` Nothing
-        it "Doesn't set variable when duplicate id in global scope" $ do
-            let var = RuVariable {
-                ruVariableValue = Str "Hello World",
-                ruVariableType = ruVariableTypeStr,
-                ruVariableId = 1,
-                ruMutable = True
-            }
-            let baseVariables = RuVmVariables {
-                variableStack = [ [var] ],
-                tmpVariable = defaultRuVariable,
-                returnVariable = defaultRuVariable,
-                argumentVariables = [],
-                carry = False
-            }
-            ruVmVariablesSetVariableInCurrentScope baseVariables var `shouldBe` Nothing
-        it "Doesn't add variable to function scope when duplicate id in global scope" $ do
-            let var = RuVariable {
+            let variablesResult = ruVmVariablesSetVariableInCurrentScope baseVariables newVar
+            variableStack variablesResult `shouldBe` [ [oldVar, oldVar, oldVar, expected], [], [] ]
+        it "Duplicate id with other scope" $ do
+            let var0 = RuVariable {
                 ruVariableValue = Int64 42,
                 ruVariableType = ruVariableTypeInt,
-                ruVariableId = 42,
+                ruVariableId = 0x00,
                 ruMutable = True
             }
+            let var1 = var0 {
+                ruVariableId = 0x01
+            }
+            let var2 = var0 {
+                ruVariableId = 0x02
+            }
             let baseVariables = RuVmVariables {
-                variableStack = [ [], [var] ],
+                variableStack = [ [var0], [var0, var1, var2], [] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
                 argumentVariables = [],
                 carry = False
             }
-            ruVmVariablesSetVariableInCurrentScope baseVariables var `shouldBe` Nothing
-        it "Add variable to function scope when duplicate id in other scope" $ do
-            let var = RuVariable {
+            let variablesResult = ruVmVariablesSetVariableInCurrentScope baseVariables var0
+            variableStack variablesResult `shouldBe` [ [var0, var1], [var0, var1, var2], [] ]
+        it "Increase id with global scope" $ do
+            let var0 = RuVariable {
                 ruVariableValue = Int64 42,
                 ruVariableType = ruVariableTypeInt,
-                ruVariableId = 42,
+                ruVariableId = 0x00,
                 ruMutable = True
             }
+            let var1 = var0 {
+                ruVariableId = 0x01
+            }
+            let var2 = var0 {
+                ruVariableId = 0x02
+            }
             let baseVariables = RuVmVariables {
-                variableStack = [ [], [var], [] ],
+                variableStack = [ [var1], [var1, var2], [var0] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
                 argumentVariables = [],
                 carry = False
             }
-            case ruVmVariablesSetVariableInCurrentScope baseVariables var of
-                Nothing -> False `shouldBe` True
-                Just variablesResult -> do
-                    variableStack variablesResult `shouldBe` [ [var], [var], [] ]
+            let variablesResult = ruVmVariablesSetVariableInCurrentScope baseVariables var0
+            variableStack variablesResult `shouldBe` [ [var1, var2], [var1, var2], [var0] ]
         it "Doesn't change other fields" $ do
             let newVar = RuVariable {
                 ruVariableValue = Str "Hello World",
                 ruVariableType = ruVariableTypeStr,
-                ruVariableId = 1,
+                ruVariableId = 0,
                 ruMutable = True
             }
             let baseVariables = RuVmVariables {
@@ -345,17 +325,16 @@ spec = do
                 argumentVariables = [[newVar]],
                 carry = True
             }
-            case ruVmVariablesSetVariableInCurrentScope baseVariables newVar of
-                Nothing -> False `shouldBe` True
-                Just variablesResult -> do
-                    variableStack variablesResult `shouldBe` [ [newVar], [] ]
-                    tmpVariable variablesResult `shouldBe` tmpVariable baseVariables
-                    returnVariable variablesResult `shouldBe` returnVariable baseVariables
-                    argumentVariables variablesResult `shouldBe` argumentVariables baseVariables
-                    carry variablesResult `shouldBe` carry baseVariables
+            let variablesResult = ruVmVariablesSetVariableInCurrentScope baseVariables newVar
+            variableStack variablesResult `shouldBe` [ [newVar], [] ]
+            tmpVariable variablesResult `shouldBe` tmpVariable baseVariables
+            returnVariable variablesResult `shouldBe` returnVariable baseVariables
+            argumentVariables variablesResult `shouldBe` argumentVariables baseVariables
+            carry variablesResult `shouldBe` carry baseVariables
 
 
---ruVmVariablesSetVariableInGlobalScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables --TODO
+{-- ruVmVariablesSetVariableInGlobalScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables
+ - Disabled, see function in VmModule
     describe "ruVmVariablesSetVariableInGlobalScope" $ do
         it "Add variable to global scope instead of function scope" $ do
             let baseVariables = RuVmVariables {
@@ -430,6 +409,7 @@ spec = do
                     returnVariable variablesResult `shouldBe` returnVariable baseVariables
                     argumentVariables variablesResult `shouldBe` argumentVariables baseVariables
                     carry variablesResult `shouldBe` carry baseVariables
+--}
 
 --ruVmVariablesGetVariable :: RuVmVariables -> Word8 -> Maybe RuVariable
     describe "ruVmVariablesGetVariable" $ do
