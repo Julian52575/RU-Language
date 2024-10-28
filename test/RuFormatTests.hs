@@ -15,6 +15,12 @@ spec = do
             (word82ToWord16 0xab 0xcd) `shouldBe` 0xabcd
         it "Combine 4 Word8 into a Word32" $ do
             (word84ToWord32 0x89 0xab 0xcd 0xef) `shouldBe` 0x89abcdef
+        it "Convert lengthy [Word8] into a Word32" $ do
+            case word8ArrayToWord32 [0x89, 0xab, 0xcd, 0xef, 0xFF] of
+                Nothing -> False `shouldBe` True
+                Just i -> i `shouldBe` 0x89abcdef
+        it "Handle too short [Word8]" $ do
+            word8ArrayToWord32 [0x89, 0xab, 0xcd] `shouldBe` Nothing
     describe "RuFileNameToRuFormat" $ do
         it "Read a RuFormat from a file" $ do
             ruFormatResult <- fileNameToRuFormat "test/test.ru"

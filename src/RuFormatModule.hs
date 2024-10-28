@@ -27,6 +27,10 @@ word84ToWord32 a b c d = (x `shiftL` 24) + (y `shiftL` 16) + (z `shiftL` 8) + v
     z = fromIntegral c
     v = fromIntegral d
 
+word8ArrayToWord32 :: [Word8] -> Maybe Word32
+word8ArrayToWord32 (a:b:c:d:_) = Just (word84ToWord32 a b c d)
+word8ArrayToWord32 _ = Nothing
+
 data RuHeader = RuHeader {
     fileSize :: Word32,
     fileVersion :: Word8,
