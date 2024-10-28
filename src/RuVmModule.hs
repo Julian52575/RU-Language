@@ -191,7 +191,6 @@ checkVmState :: RuVmInfo -> RuVmState -> Maybe RuException
 checkVmState info state = checkVmStateCodeOffset info state
 
 
-
 ruFormatToRuVmState :: RuFormat -> Either RuException RuVmState
 ruFormatToRuVmState format = do
     let codeOffsetInt = fromIntegral (codeOffset (ruHeader format))
@@ -213,6 +212,14 @@ data RuVmInfo = RuVmInfo {
     --vmState :: RuVmState -- Separate to ensure only VmState is updated ?
 } deriving (Eq, Show)
 
+
+ruVmInfoGetStringFromStringTable :: RuVmInfo -> Word32 -> Maybe String
+ruVmInfoGetStringFromStringTable info i
+    | iInt >= length tab = Nothing
+    | otherwise       = Just (tab !! iInt)
+    where
+        iInt = fromIntegral i
+        tab = stringTable info
 
 {-- Assume RuFormat is valid
  --}

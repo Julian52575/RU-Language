@@ -800,3 +800,18 @@ spec = do
                 toPrint = []
             }
             ruVmStateReadOperand state `shouldBe` Left (ruExceptionUnknowVariable 0x01)
+    
+--ruVmInfoGetStringFromStringTable :: RuVmInfo -> Word32 -> Maybe String
+    describe "ruVmInfoGetStringFromStringTable" $ do
+        let info = RuVmInfo {
+                stringTable = [ "\0", "a", "b" ],
+                functionTable = [],
+                code = [],
+                codeSize = 0x00,
+                dumpMode = True
+        }
+        it "Get string" $ do
+            ruVmInfoGetStringFromStringTable info 1 `shouldBe` Just "a"
+        it "Doesn't get out of bound string" $ do
+            ruVmInfoGetStringFromStringTable info 3 `shouldBe` Nothing
+            
