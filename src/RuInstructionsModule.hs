@@ -114,8 +114,8 @@ ruInstructionFunctionCreateVar vminfo state = do
         let newState = state { variables = newVariables }
         Right newState
 
-ruInstructionGetTmpVariableFromBytes :: [Word8] -> [Word8] -> RuOperand -> RuVmInfo -> RuVmState -> Maybe RuVariable
-ruInstructionGetTmpVariableFromBytes operand1 operand2 codingOperand info state
+ruInstructionGetRuVariableFromBytes :: [Word8] -> [Word8] -> RuOperand -> RuVmInfo -> RuVmState -> Maybe RuVariable
+ruInstructionGetRuVariableFromBytes operand1 operand2 codingOperand info state
     | operand1 !! 3 == ruVariableTypeInt && codingOperand == RuOperandConstant = Just defaultRuVariable { ruVariableType = 0x01, ruVariableValue = Int32 (getWord32FromOperand operand2) }
     | operand1 !! 3 == ruVariableTypeStr && codingOperand == RuOperandConstant = Just defaultRuVariable { ruVariableType = 0x02, ruVariableValue = Str (case ruVmInfoGetStringFromStringTable info (getWord32FromOperand operand2) of
         Nothing -> ""
@@ -145,8 +145,8 @@ ruInstructionFunctionSetTmpVar vminfo state = do
         let codingOperand = codingByteToRuOperand (codingByte !! 0)
         let operand1 = take 4 (drop 3 ccode)
         let operand2 = take 4 (drop 7 ccode)
-        let var = ruInstructionGetTmpVariableFromBytes operand1 operand2 (codingOperand !! 1) vminfo state
-        if var == Nothing then Left $ ruExceptionUnknowOpcode (ccode !! 2) (ccode !! 3)
+        let var = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) vminfo state
+        if var == Nothing then Left $ ruExceptionIncompleteInstruction
         else do
             let newVariables = (variables state) { tmpVariable = fromJust var }
             let newState = state { variables = newVariables }

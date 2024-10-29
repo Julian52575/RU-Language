@@ -142,3 +142,16 @@ spec = do
                     err `shouldBe` ruExceptionIncompleteInstruction
                 Right resultState -> do
                     False `shouldBe` True --Fail
+        
+        it "SetTmpVar with id" $ do
+            let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var]]}
+            let state = baseState { variables = vmVar, workerCode = [0x01, 0x01, 0xb0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00] }
+            case ruInstructionFunctionSetTmpVar baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { tmpVariable = var }
+                    resultState `shouldBe` state { variables = vmVarr }
+        
