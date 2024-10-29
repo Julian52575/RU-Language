@@ -68,7 +68,9 @@ compileExprToTmp _ _ _ = []
 
 -- get a list of opcode from an stmt
 compileStmt :: Stmt -> Scope -> Compile -> [OpCode]
-compileStmt (LetStmt name _ expr) scope comp = compileExpr expr scope comp
+compileStmt (LetStmt name _ expr) scope comp = compileExpr expr scope comp ++
+    [OpSetVar (getIndexFromStrTable (vars scope) name) (CbConst 0xB0 0x00 (length $ vars scope))] ++
+    [OpUnsetVar (length $ vars scope)]
 compileStmt (ExprStmt expr) scope comp = compileExpr expr scope comp
 compileStmt (BlockStmt stmts) scope comp = concatMap (\stmt -> compileStmt stmt scope comp) stmts
 compileStmt (ReturnStmt (Just expr)) scope comp =
