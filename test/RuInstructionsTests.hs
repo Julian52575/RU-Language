@@ -8,6 +8,7 @@ import RuVmModule
 import RuInstructionsModule
 import RuInstructionsHelperModule
 import RuVariableModule
+import RuExceptionModule
 
 {--
  data RuVmState = RuVmState {
@@ -105,3 +106,11 @@ spec = do
                     let var = RuVariable { ruVariableValue = Str "lol", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
                     let vmVar = defaultRuVmVariables { variableStack = [[var]] }
                     resultState `shouldBe` state { variables = vmVar }
+        it "CreateVar with too few operands" $ do
+            let state = baseState { workerCode = [0x01, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00] }
+            case ruInstructionFunctionCreateVar baseInfo (state) of
+                Left err -> do
+                    err `shouldBe` ruExceptionIncompleteInstruction
+                Right resultState -> do
+                    False `shouldBe` True --Fail
+        
