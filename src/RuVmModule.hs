@@ -21,6 +21,10 @@ findIndex p xs z=
     [] -> Nothing
     e:_ -> Just e
 
+
+replaceTab :: [a] -> Int -> a -> [a]
+replaceTab tab i value = take i tab ++ [value] ++ drop (i + 1) tab
+
 {-- RuVmVariables
  --}
 data RuVmVariables = RuVmVariables {
@@ -65,17 +69,18 @@ ruVmVariablesUpdateVariable variabless idd value
                     ruVariableValue = value,
                     ruVariableType = ruVariableValueGetVariableType value
                 }
-                let newArray = replaceFun relevantArray relevantVarIndex upVar
-                let newStack = replaceFun (variableStack variabless) relevantArrayIndex newArray
+                let newArray = replaceTab relevantArray relevantVarIndex upVar
+                let newStack = replaceTab (variableStack variabless) relevantArrayIndex newArray
                 Right variabless {
                     variableStack = newStack
                 }
     where
         globalScopeIndex = (length (variableStack variabless) - 1) 
         globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless idd
-        replaceFun tab i value = take i tab ++ [value] ++ drop (i + 1) tab
 
 
+{-- Variable Setter
+ --}
 ruVmVariablesSetVariableInCurrentScope :: RuVmVariables -> RuVariable -> RuVmVariables
 ruVmVariablesSetVariableInCurrentScope variabless newVar
     | length stack == 0                       = variabless { variableStack = [ [newVar] ] }      --Stack vide -> new tab
@@ -104,7 +109,9 @@ ruVmVariablesSetVariableInGlobalScope variabless newVar
         globalStack = last stack
         firstStacks = init stack
 --}
-    
+
+{-- Helper function to get Variable
+ --}
 ruVmVariablesGetVariableInCurrentScope :: RuVmVariables -> Word32 -> Maybe RuVariable
 ruVmVariablesGetVariableInCurrentScope variabless idd
     | length stack == 0 = Nothing --Rien à trouver
@@ -131,6 +138,29 @@ ruVmVariablesGetVariable variabless idd
     where
         globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless idd
         scopeSearchResult = ruVmVariablesGetVariableInCurrentScope variabless idd
+
+{-- Helper functions for arguments
+ --}
+ruVmVariablesSetArgument :: RuVmVariables -> Word32 -> RuVariable -> RuVmVariables
+ruVmVariablesSetArgument variabless numero var
+    | length (variableStack variabless) == 0       = variabless { argumentVariables = [ [upVar] ] }
+    | otherwise = case index of
+        Nothing -> variabless {
+                    argumentVariables = ([[upVar]] ++ otherStack)
+                } --variable doesn't exist
+        Just index -> do
+            let newCurrentStack = replaceTab currentStack index upVar
+            variabless {
+                argumentVariables = ([newCurrentStack] ++ otherStack)
+            }
+    where
+        upVar = var {
+            ruVariableId = numero
+        }
+        stack = argumentVariables variabless
+        currentStack = head stack
+        otherStack = tail stack
+        index = findIndex ruVariableHasId currentStack numero
 
 {-- VmState
  --}

@@ -892,3 +892,34 @@ spec = do
                     False `shouldBe` True
                 Right variablessResult -> do
                     variableStack variablessResult `shouldBe` [ [var2, newVar1, var0] ]
+
+--ruVmVariablesSetArgument :: RuVmVariables -> Word32 -> RuVariable -> RuVmVariables
+    describe "ruVmVariablesSetArgument" $ do
+        let var0 = defaultRuVariable {
+            ruVariableValue = Int32 0xFF,
+            ruVariableType = ruVariableTypeInt
+        }
+        let var1 = var0 {
+            ruVariableId = 0x01
+        }
+        it "Create an argument" $ do
+            let variabless = defaultRuVmVariables {
+                argumentVariables = [ [] ]
+            }
+            let expected = variabless {
+                argumentVariables = [ [var1] ]
+            }
+            ruVmVariablesSetArgument variabless 0x1 var1 `shouldBe` expected
+        it "Updates an argument" $ do
+            let upVar = var1 {
+                ruVariableValue = Str "Hello World",
+                ruVariableType = ruVariableTypeStr
+            }
+            let variabless = defaultRuVmVariables {
+                argumentVariables = [ [var1] ]
+            }
+            let expected = variabless {
+                argumentVariables = [ [upVar] ]
+            }
+            ruVmVariablesSetArgument variabless 0x01 upVar `shouldBe` expected
+
