@@ -151,3 +151,40 @@ ruInstructionFunctionSetTmpVar vminfo state = do
             let newVariables = (variables state) { tmpVariable = fromJust var }
             let newState = state { variables = newVariables }
             Right newState
+
+ruInstructionSetVar :: RuInstruction
+ruInstructionSetVar = RuInstruction {
+    ruInstructionPrefix = 0x01,
+    ruInstructionInfix = 0x01,
+    ruInstructionName = "SETVAR",
+    ruInstructionFunction = ruInstructionFunctionSetVar,
+    fixedSize = 0
+}
+
+ruInstructionGetValueFromBytes :: [Word8] -> RuOperand -> RuVmState -> RuVariableValue
+ruInstructionGetValueFromBytes operand codingOperand state
+    | codingOperand == RuOperandConstant = Int32 (getWord32FromOperand operand)
+    | codingOperand == RuOperandVariableId = case ruVmVariablesGetVariableInCurrentScope (variables state) (getWord32FromOperand operand) of
+        Just var -> ruVariableValue var
+        Nothing -> Na
+    | otherwise = Na
+
+ruInstructionFunctionSetVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionSetVar _ state = do
+    let ccode = workerCode state
+    let ccodeOffset = workerCodeOffset state
+    let ccodeSize = length ccode
+    if ccodeSize < 11 then Left ruExceptionIncompleteInstruction
+    else do
+        let codingByte = take 1 (drop 2 ccode)
+        let codingOperand = codingByteToRuOperand (codingByte !! 0)
+        let operand1 = take 4 (drop 3 ccode)
+        let operand2 = take 4 (drop 7 ccode)
+        let value = ruInstructionGetValueFromBytes operand2 (codingOperand !! 1) state
+
+        let var = ruVmVariablesUpdateVariable (variables state) (getWord32FromOperand operand1) value
+        case var of
+            Left err -> Left err
+            Right newVariables -> do
+                let newState = state { variables = newVariables }
+                Right newState

@@ -146,7 +146,7 @@ spec = do
         it "SetTmpVar with id" $ do
             let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
             let vmVar = defaultRuVmVariables { variableStack = [[var]]}
-            let state = baseState { variables = vmVar, workerCode = [0x01, 0x01, 0xb0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00] }
+            let state = baseState { variables = vmVar, workerCode = [0x01, 0x02, 0xb0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00] }
             case ruInstructionFunctionSetTmpVar baseInfo (state) of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
@@ -154,4 +154,14 @@ spec = do
                 Right resultState -> do
                     let vmVarr = vmVar { tmpVariable = var }
                     resultState `shouldBe` state { variables = vmVarr }
-        
+        it "SetVar" $ do
+            let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var]]}
+            let state = baseState { variables = vmVar, workerCode = [0x01, 0x01, 0xa0 ,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04] }
+            case ruInstructionFunctionSetVar baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { variableStack = [[var { ruVariableValue = Int32 4 }]] }
+                    resultState `shouldBe` state { variables = vmVarr }
