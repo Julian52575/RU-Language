@@ -22,11 +22,11 @@ swapElementsAt a b list = list1 ++ [list !! b] ++ list2 ++ [list !! a] ++ list3
 swapMainFunction :: Compile -> [[OpCode]] -> (Compile, [[OpCode]])
 swapMainFunction comp [] = (comp, [])
 swapMainFunction comp (x:[]) = (comp, [x])
-swapMainFunction comp opcodes = do
+swapMainFunction comp opcodes =
     let mainIndex = (getFunctionIndex "main" comp)
-    let swapedOpCode = swapElementsAt 0 mainIndex opcodes
-    let functionList = swapElementsAt 0 mainIndex (functionTable comp)
-    ((Compile (stringTable comp) (functionList) (globalScope comp)), swapedOpCode)
+        swapedOpCode = swapElementsAt 0 mainIndex opcodes
+        functionList = swapElementsAt 0 mainIndex (functionTable comp)
+    in ((Compile (stringTable comp) (functionList) (globalScope comp)), swapedOpCode)
 
 isMain :: [Function] -> Bool
 isMain [] = False
@@ -48,4 +48,6 @@ test ast = do
     let headerByteString = headerToByteString header
     let codeByteString = B.pack $ opCodeToByteString $ globalCompiled ++ (concat compiled')
 
+    print $ globalCompiled
+    print $ compiled'
     B.writeFile "out.bin" $ B.append headerByteString codeByteString

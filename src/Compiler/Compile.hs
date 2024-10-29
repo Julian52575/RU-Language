@@ -6,12 +6,13 @@ module Compiler.Compile (
     compileGlobal
 ) where
 
-import Compiler.Type (Scope(..), OpCode(..), Compile(..), CodingByte(..))
+import Compiler.Type (Scope(..), OpCode(..), Compile(..), CodingByte(..), Function(..))
 import Parser.AST (Stmt(..), Expr(..))
-import Compiler.CreateVar (getCreateVar, getFunctionVar)
+import Compiler.CreateVar (getCreateVar, getFunctionVar, getIndexFromStrTable)
 import Compiler.Function (unsetFuncVar, getFunctionIndex)
 import Compiler.CodingByte (getCodingByte)
 import Compiler.Header (opListCountByte)
+import Compiler.BinArith (compileBinArith)
 
 -- Create a scope from a list of variable names
 getScopeFromList :: [(OpCode, String)] -> String -> Int -> Scope
@@ -35,10 +36,10 @@ setFunctionArgs exprs scope strTable = setFunctionArgs' exprs scope strTable 0
         in opCode : setFunctionArgs' xs scop strTbl (index + 1)
 
 compileCall :: Expr -> Scope -> Compile -> [OpCode]
-compileCall (FuncCall (Var name) args) fScope comp = do
+compileCall (FuncCall (Var name) args) fScope comp =
     let setArgs = setFunctionArgs args fScope (stringTable comp)
-    let funcIndex = getFunctionIndex name comp
-    setArgs ++ [OpCall funcIndex]
+        funcIndex = getFunctionIndex name comp
+    in setArgs ++ [OpCall funcIndex]
 compileCall _ _ _ = []
 
 compilePrint :: [Expr] -> Scope -> Compile -> String -> [OpCode]
@@ -51,31 +52,55 @@ compileExpr :: Expr -> Scope -> Compile -> [OpCode]
 compileExpr (FuncCall (Var "print") args) scope comp = compilePrint args scope comp "print"
 compileExpr (FuncCall (Var "printLn") args) scope comp = compilePrint args scope comp "printLn"
 compileExpr (FuncCall name args) scope comp = compileCall (FuncCall name args) scope comp
+compileExpr (BinArith op e1 e2) scope comp = compileBinArith (BinArith op e1 e2) scope comp (length $ vars scope) 0
+
+compileExpr (Assign (Var x) (LitInt int)) scope _ = [OpSetVar (getIndexFromStrTable (vars scope) x) (CbConst 0xA0 0x01 int)]
+compileExpr (Assign (Var x) (LitString str)) scope comp = [OpSetVar (getIndexFromStrTable (vars scope) x) (CbConst 0xA0 0x01 (getIndexFromStrTable (stringTable comp) str))]
+
 compileExpr _ _ _ = []
+
+-- get a list of opcode from an expr and set the result to the tmp register
+compileExprToTmp :: Expr -> Scope -> Compile -> [OpCode]
+compileExprToTmp (LitInt int) _ _ = [OpSetTmp 0x01 (CbConst 0xA0 0x01 int)]
+compileExprToTmp (LitString str) _ comp = [OpSetTmp 0x02 (CbConst 0xA0 0x01 (getIndexFromStrTable (stringTable comp) str))]
+compileExprToTmp (Var x) scope _ = [OpSetTmp 0x00 (CbConst 0xB0 0x00 (getIndexFromStrTable (vars scope) x ))]
+compileExprToTmp _ _ _ = []
 
 -- get a list of opcode from an stmt
 compileStmt :: Stmt -> Scope -> Compile -> [OpCode]
+compileStmt (LetStmt name _ expr) scope comp = compileExpr expr scope comp
 compileStmt (ExprStmt expr) scope comp = compileExpr expr scope comp
 compileStmt (BlockStmt stmts) scope comp = concatMap (\stmt -> compileStmt stmt scope comp) stmts
+compileStmt (ReturnStmt (Just expr)) scope comp =
+    let exprOpCode = compileExprToTmp expr scope comp
+    in exprOpCode ++ [OpSetReturn 0x01 (CbConst 0xA0 0x01 0xffffffff)]
 compileStmt _ _ _ = []
 
 -- get a list of opcode from a function
 compileFunction :: Stmt -> Compile -> [OpCode]
-compileFunction (FuncDeclStmt name args retType (Just body)) comp = do
+compileFunction (FuncDeclStmt name args retType (Just body)) comp =
     let createVars = getFunctionVar (FuncDeclStmt name args retType (Just body)) ++ getCreateVar [body] (stringTable comp)
-    let fScope = addScope (globalScope comp) (getScopeFromList createVars name 0)
-    let opcode = map fst createVars
-    let unsetVars = unsetFuncVar (length args) (length $ vars $ globalScope comp)
-    let bodyOpCode = compileStmt body fScope comp
-    opcode ++ unsetVars ++ bodyOpCode ++ [OpReturn]
+        fScope = addScope (globalScope comp) (getScopeFromList createVars name 0)
+        opcode = map fst createVars
+        unsetVars = unsetFuncVar (length args) (length $ vars $ globalScope comp)
+        bodyOpCode = compileStmt body fScope comp
+    in opcode ++ unsetVars ++ bodyOpCode ++ [OpReturn]
 compileFunction _ _ = []
 
+-- return 0 if main returns an int, 1 otherwise
+getMainReturnType :: [Function] -> Int
+getMainReturnType [] = 1
+getMainReturnType (x:xs) = if fName x == "main" then 0 else getMainReturnType xs
+
 compileGlobal :: Stmt -> Compile -> Bool -> [OpCode]
-compileGlobal stmts comp isMain = do
+compileGlobal stmts comp isMain =
     let createVars = getCreateVar [stmts] (stringTable comp)
-    let opcode = map fst createVars
-    let bodyOpCode = compileStmt stmts (globalScope comp) comp
-    opcode ++ bodyOpCode ++ (if isMain then [OpCall 0] else []) ++ [OpSetReturn (CbConst 0x02 0x01 0x00)] ++ [OpReturn]
+        opcode = map fst createVars
+        bodyOpCode = compileStmt stmts (globalScope comp) comp
+        opCodeReturn = if getMainReturnType (functionTable comp) == 0
+                   then [OpUnsetReturn 0xffffffff, OpSetReturn 0x01 (CbConst 0xB0 0x01 0xffffffff)]
+                   else [OpSetReturn 0x01 (CbConst 0xA0 0x01 0x00)]
+    in opcode ++ bodyOpCode ++ (if isMain then [OpCall 0] else []) ++ opCodeReturn ++ [OpReturn]
 
 compile :: [Stmt] -> Compile -> [[OpCode]]
 compile [] _ = []

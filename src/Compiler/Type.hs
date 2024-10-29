@@ -27,14 +27,14 @@ data OpCode = OpNoop
     | OpSetArg Int CodingByte
     | OpSetTmp Int CodingByte
     | OpUnsetArg Int Int
-    | OpSetReturn CodingByte
+    | OpSetReturn Int CodingByte
     | OpUnsetReturn Int
+    | OpUnsetVar Int
     | OpReturn
     | OpCall Int
     | OpJump Int
     | OpJumpCarry Int
     | OpJumpNotCarry Int
-    | OpIfCarry Int
     | OpAdd CodingByte CodingByte
     | OpSub CodingByte CodingByte
     | OpDiv CodingByte CodingByte
