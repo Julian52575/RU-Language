@@ -7,6 +7,7 @@ import RuExceptionModule
 import RuVmModule
 import RuVariableModule
 import RuFormatModule
+import RuOperandModule
 
 data RuInstruction = RuInstruction {
     ruInstructionPrefix :: Word8,
@@ -112,3 +113,41 @@ ruInstructionFunctionCreateVar vminfo state = do
         let newVariables = ruVmVariablesSetVariableInCurrentScope (variables state) var
         let newState = state { variables = newVariables }
         Right newState
+
+ruInstructionGetTmpVariableFromBytes :: [Word8] -> [Word8] -> RuOperand -> RuVmInfo -> RuVmState -> Maybe RuVariable
+ruInstructionGetTmpVariableFromBytes operand1 operand2 codingOperand info state
+    | operand1 !! 3 == ruVariableTypeInt && codingOperand == RuOperandConstant = Just defaultRuVariable { ruVariableType = 0x01, ruVariableValue = Int32 (getWord32FromOperand operand2) }
+    | operand1 !! 3 == ruVariableTypeStr && codingOperand == RuOperandConstant = Just defaultRuVariable { ruVariableType = 0x02, ruVariableValue = Str (case ruVmInfoGetStringFromStringTable info (getWord32FromOperand operand2) of
+        Nothing -> ""
+        Just str -> str) }
+    -- | RuOperand !! 1 == 0b11 = var
+    | otherwise = var
+        where
+            var = ruVmVariablesGetVariableInCurrentScope (variables state) (getWord32FromOperand operand2)
+
+ruInstructionSetTmpVar :: RuInstruction
+ruInstructionSetTmpVar = RuInstruction {
+    ruInstructionPrefix = 0x01,
+    ruInstructionInfix = 0x02,
+    ruInstructionName = "SETTMPVAR",
+    ruInstructionFunction = ruInstructionFunctionSetTmpVar,
+    fixedSize = 0
+}
+
+ruInstructionFunctionSetTmpVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionSetTmpVar vminfo state = do
+    let ccode = workerCode state
+    let ccodeOffset = workerCodeOffset state
+    let ccodeSize = length ccode
+    if ccodeSize < 11 then Left ruExceptionIncompleteInstruction
+    else do
+        let codingByte = take 1 (drop 2 ccode)
+        let codingOperand = codingByteToRuOperand (codingByte !! 0)
+        let operand1 = take 4 (drop 3 ccode)
+        let operand2 = take 4 (drop 7 ccode)
+        let var = ruInstructionGetTmpVariableFromBytes operand1 operand2 (codingOperand !! 1) vminfo state
+        if var == Nothing then Left $ ruExceptionUnknowOpcode (ccode !! 2) (ccode !! 3)
+        else do
+            let newVariables = (variables state) { tmpVariable = fromJust var }
+            let newState = state { variables = newVariables }
+            Right newState

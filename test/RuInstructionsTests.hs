@@ -113,4 +113,32 @@ spec = do
                     err `shouldBe` ruExceptionIncompleteInstruction
                 Right resultState -> do
                     False `shouldBe` True --Fail
+        it "SetTmpVarInt" $ do
+            let state = baseState { workerCode = [0x01, 0x02, 0xa0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x2a] }
+            case ruInstructionFunctionSetTmpVar baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+                    let vmVar = defaultRuVmVariables { tmpVariable = var }
+                    resultState `shouldBe` state { variables = vmVar }
         
+        it "SetTmpVarStr" $ do
+            let state = baseState { workerCode = [0x01, 0x02, 0xa0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionSetTmpVar baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let var = RuVariable { ruVariableValue = Str "lol", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
+                    let vmVar = defaultRuVmVariables { tmpVariable = var }
+                    resultState `shouldBe` state { variables = vmVar }
+
+        it "SetTmpVar with too few operands" $ do
+            let state = baseState { workerCode = [0x01, 0x02, 0xa0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00] }
+            case ruInstructionFunctionSetTmpVar baseInfo (state) of
+                Left err -> do
+                    err `shouldBe` ruExceptionIncompleteInstruction
+                Right resultState -> do
+                    False `shouldBe` True --Fail
