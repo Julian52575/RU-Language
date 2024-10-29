@@ -39,7 +39,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       -  run_tests
-      -  run-benchmark
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4

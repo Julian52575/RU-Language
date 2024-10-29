@@ -11,6 +11,11 @@ data RuVariableValue =
     Str String
     deriving (Eq, Show)
 
+ruVariableValueGetVariableType :: RuVariableValue -> Word8
+ruVariableValueGetVariableType (Int64 _) = ruVariableTypeInt
+ruVariableValueGetVariableType (Str _) = ruVariableTypeStr
+ruVariableValueGetVariableType _ = 0x00
+
 data RuVariable = RuVariable {
     ruVariableValue :: RuVariableValue,
     ruVariableType :: Word8,
