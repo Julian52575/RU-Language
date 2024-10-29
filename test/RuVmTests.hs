@@ -818,7 +818,7 @@ spec = do
 --ruVmVariablesUpdateVariable :: RuVmVariables -> Word32 -> RuVariableValue -> Either RuException RuVmVariables
     describe "ruVmVariablesUpdateVariable" $ do
         let var0 = defaultRuVariable {
-            ruVariableValue = Int64 0x84,
+            ruVariableValue = Int32 0x84,
             ruVariableType = ruVariableTypeInt,
             ruVariableId = 0x00,
             ruMutable = True

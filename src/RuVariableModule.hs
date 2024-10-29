@@ -12,7 +12,7 @@ data RuVariableValue =
     deriving (Eq, Show)
 
 ruVariableValueGetVariableType :: RuVariableValue -> Word8
-ruVariableValueGetVariableType (Int64 _) = ruVariableTypeInt
+ruVariableValueGetVariableType (Int32 _) = ruVariableTypeInt
 ruVariableValueGetVariableType (Str _) = ruVariableTypeStr
 ruVariableValueGetVariableType _ = 0x00
 
