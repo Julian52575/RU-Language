@@ -935,6 +935,41 @@ spec = do
             }
             ruVmVariablesSetArgument variabless 0x01 upVar `shouldBe` expected           
 
+--ruVmVariablesRemoveArgument :: RuVmVariables -> Word32 -> RuVmVariables
+    describe "ruVmVariablesRemoveArgument" $ do
+        let arg0 = defaultRuVariable {
+            ruVariableValue = Int32 0xFF,
+            ruVariableType = ruVariableTypeInt,
+            ruVariableId = 0x00
+        }
+        let arg1 = arg0 {
+            ruVariableId = 0x01
+        }
+        let arg2 = arg0 {
+            ruVariableId = 0x02
+        }
+        let variabless = defaultRuVmVariables {
+            variableStack = [ [arg0, arg1, arg2] ],
+            argumentVariables = [ [arg2], [arg1, arg0], [arg1, arg0] ]
+        }
+        it "Remove argument" $ do
+            let expected = variabless {
+                argumentVariables = [ [], [arg1, arg0], [arg1, arg0] ]
+            }
+            ruVmVariablesRemoveArgument variabless 0x02 `shouldBe` expected
+        it "Doesn't remove argument from other scope" $ do
+            ruVmVariablesRemoveArgument variabless 0x01 `shouldBe` variabless
+        it "Doesn't remove argument from multiple scope" $ do
+            let variabless2 = variabless {
+                argumentVariables = [ [arg1, arg0], [arg1, arg0], [arg1, arg0] ]
+            }
+            let expected = variabless2 {
+                argumentVariables = [ [arg0], [arg1, arg0], [arg1, arg0] ]
+            }
+            ruVmVariablesRemoveArgument variabless2 0x01 `shouldBe` expected
+        it "Does nothign when unknow arg" $ do
+            ruVmVariablesRemoveArgument variabless 0xff `shouldBe` variabless
+
 --ruVmVariablesGetVariableIndex :: RuVmVariables -> Word32 -> Maybe (Int, Int)
     describe "ruVmVariablesGetVariableIndex" $ do
         let var0 = defaultRuVariable {

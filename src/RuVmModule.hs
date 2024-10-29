@@ -174,7 +174,7 @@ ruVmVariablesRemoveVariable variabless idd =
  --}
 ruVmVariablesSetArgument :: RuVmVariables -> Word32 -> RuVariable -> RuVmVariables
 ruVmVariablesSetArgument variabless numero var
-    | length (variableStack variabless) == 0       = variabless { argumentVariables = [ [upVar] ] }
+    | length (variableStack variabless) == 0 = variabless { argumentVariables = [ [upVar] ] }
     | otherwise = case index of
         Nothing -> variabless {
                     argumentVariables = ([[upVar]] ++ otherStack)
@@ -192,6 +192,20 @@ ruVmVariablesSetArgument variabless numero var
         currentStack = head stack
         otherStack = tail stack
         index = findIndex ruVariableHasId currentStack numero
+
+
+ruVmVariablesRemoveArgument :: RuVmVariables -> Word32 -> RuVmVariables
+ruVmVariablesRemoveArgument variabless numero
+    | length (variableStack variabless) == 0 = variabless
+    | otherwise = case findIndex ruVariableHasId currentStack numero of
+        Nothing -> variabless
+        Just index -> do
+            let newStack = removeTab currentStack index
+            variabless {
+                argumentVariables = replaceTab (argumentVariables variabless) index newStack
+            }
+    where
+        currentStack = (argumentVariables variabless) !! 0
 
 {-- VmState
  --}
