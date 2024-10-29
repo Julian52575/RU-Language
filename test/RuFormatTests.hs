@@ -110,3 +110,39 @@ spec = do
             let finalTab = tab ++ tab
             let fun = convertWord8ToFunctionTable finalTab
             fun `shouldBe` [ expected, expected ] 
+--ruFunctionTableGetFunctionFromCodeOffset :: [RuFunctionTable] -> Word32 -> Maybe RuFunctionTable
+    describe "ruFunctionTableGetFunctionFromCodeOffset" $ do
+        let fun1 = RuFunctionTable {
+                nameIndex = 0x00,
+                codeSectionOffset = 00,
+                size = 19
+        }
+        let fun2 = RuFunctionTable {
+                nameIndex = 0x00,
+                codeSectionOffset = 20,
+                size = 9
+        }
+        let fun3 = RuFunctionTable {
+                nameIndex = 0x00,
+                codeSectionOffset = 30,
+                size = 255
+        }
+        let funTab = [ fun1, fun2, fun3 ]
+        it "Get function1" $ do
+            case ruFunctionTableGetFunctionFromCodeOffset funTab (19) of
+                Nothing -> True `shouldBe` False
+                Just fun -> fun `shouldBe` fun1
+        it "Get function2 from start" $ do
+            case ruFunctionTableGetFunctionFromCodeOffset funTab (20) of
+                Nothing -> True `shouldBe` False
+                Just fun -> fun `shouldBe` fun2
+        it "Get function2 from end" $ do
+            case ruFunctionTableGetFunctionFromCodeOffset funTab (20 + 9) of
+                Nothing -> True `shouldBe` False
+                Just fun -> fun `shouldBe` fun2
+        it "Get function3" $ do
+              case ruFunctionTableGetFunctionFromCodeOffset funTab (30) of
+                Nothing -> True `shouldBe` False
+                Just fun -> fun `shouldBe` fun3
+        it "Doesn't get out of bound" $ do
+            ruFunctionTableGetFunctionFromCodeOffset funTab 0xFFFF `shouldBe` Nothing

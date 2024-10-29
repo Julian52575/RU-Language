@@ -56,6 +56,15 @@ data RuFunctionTable = RuFunctionTable {
     size :: Word32
 } deriving (Eq, Show)
 
+ruFunctionTableGetFunctionFromCodeOffset :: [RuFunctionTable] -> Word32 -> Maybe RuFunctionTable --TODO
+ruFunctionTableGetFunctionFromCodeOffset (fun:next) offset
+    | start <= offset && offset <= end = Just fun
+    | otherwise           = ruFunctionTableGetFunctionFromCodeOffset next offset
+    where
+        start = codeSectionOffset fun
+        end = start + (size fun)
+ruFunctionTableGetFunctionFromCodeOffset _ _ = Nothing
+
 printRuFunctionTable :: [String] -> RuFunctionTable -> IO ()
 printRuFunctionTable str fun = do
     if (fromIntegral (nameIndex fun)) >= (length str)

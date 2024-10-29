@@ -218,6 +218,8 @@ data RuVmState = RuVmState {
     toPrint :: String
 } deriving (Eq, Show)
 
+{-- Read operand
+ --}
 ruVmStateReadWord8 :: RuVmState -> RuOperand -> Either RuException RuVariable
 ruVmStateReadWord8 _ RuOperandUnused = Left ruExceptionInvalidCodingByte
 ruVmStateReadWord8 _ RuOperandNone = Right defaultRuVariable
@@ -271,8 +273,6 @@ ruVmStateParseOperand state (currentOp:nextOp)      = do
             Right var2 -> Right ([var1] ++ var2)
 
 
-{-- Call this function instead of ruVmStateReadOperand
- --}
 ruVmStateReadOperand :: RuVmState -> Either RuException [RuVariable]
 ruVmStateReadOperand state
     | length ccode == 0                = Left ruExceptionIncompleteInstruction
@@ -288,7 +288,14 @@ ruVmStateReadOperand state
             workerCodeOffset = ((workerCodeOffset state) + 1)
         }
 
+{-- Helper function for code displacement
+ --}
+ruVmStateJump :: RuVmInfo -> RuVmState -> Word32 -> Either RuException RuVmState --TODO
+ruVmStateJump info state offset = Left (RuException "TODO")
 
+
+{-- VmState error handling
+ --}
 checkVmStateCodeOffset :: RuVmInfo -> RuVmState -> Maybe RuException
 checkVmStateCodeOffset info state
     | workerCodeOffset state > codeSize info = Just ruExceptionInvalidProgramCounter
