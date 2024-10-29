@@ -814,4 +814,81 @@ spec = do
             ruVmInfoGetStringFromStringTable info 1 `shouldBe` Just "a"
         it "Doesn't get out of bound string" $ do
             ruVmInfoGetStringFromStringTable info 3 `shouldBe` Nothing
-            
+
+--ruVmVariablesUpdateVariable :: RuVmVariables -> Word32 -> RuVariableValue -> Either RuException RuVmVariables
+    describe "ruVmVariablesUpdateVariable" $ do
+        let var0 = defaultRuVariable {
+            ruVariableValue = Int64 0x84,
+            ruVariableType = ruVariableTypeInt,
+            ruVariableId = 0x00,
+            ruMutable = True
+        }
+        let var1 = defaultRuVariable {
+            ruVariableId = 0x01
+        }
+        let var2 = defaultRuVariable {
+            ruVariableId = 0x02
+        }
+        let newValue = Str "Hello World"
+        let newVar1 = var1 {
+            ruVariableValue = Str "Hello World",
+            ruVariableType = ruVariableTypeStr,
+            ruMutable = True
+        }
+        it "Update variable in global scope" $ do
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [], [var0, var1] ]
+            }
+            case ruVmVariablesUpdateVariable variabless 0x01 newValue of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right variablessResult -> do
+                    variableStack variablessResult `shouldBe` [ [], [var0, newVar1] ]
+
+        it "Doesn't update unknow var" $ do
+            isLeft (ruVmVariablesUpdateVariable defaultRuVmVariables 0xFF newValue) `shouldBe` True
+
+        it "Update variable in function scope" $ do
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [var1], [], [var0] ]
+            }
+            case ruVmVariablesUpdateVariable variabless 0x01 newValue of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right variablessResult -> do
+                    variableStack variablessResult `shouldBe` [ [newVar1], [], [var0] ]
+
+        it "Doesn't update other var" $ do
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [var1, var2], [], [var0] ]
+            }
+            case ruVmVariablesUpdateVariable variabless 0x01 newValue of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right variablessResult -> do
+                    variableStack variablessResult `shouldBe` [ [newVar1, var2], [], [var0] ]
+        
+        it "Doesn't update other scope" $ do
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [var1], [var1], [var1], [var1], [var0] ]
+            }
+            case ruVmVariablesUpdateVariable variabless 0x01 newValue of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right variablessResult -> do
+                    variableStack variablessResult `shouldBe` [ [newVar1], [var1], [var1], [var1], [var0] ]
+
+        it "Update variable in single scope" $ do
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [var2, var1, var0] ]
+            }
+            case ruVmVariablesUpdateVariable variabless 0x01 newValue of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right variablessResult -> do
+                    variableStack variablessResult `shouldBe` [ [var2, newVar1, var0] ]

@@ -14,6 +14,12 @@ import RuVariableModule
 import RuFormatModule as RF
 import RuExceptionModule
 
+-- https://stackoverflow.com/questions/36406553/haskell-get-the-index-of-the-first-occurrence-in-a-list-of-strings
+findIndex :: (a -> b -> Bool) -> [a] -> b -> Maybe Int
+findIndex p xs z=
+  case [ i | (x, i) <- zip xs [0..], p x z ] of
+    [] -> Nothing
+    e:_ -> Just e
 
 {-- RuVmVariables
  --}
@@ -42,6 +48,32 @@ ruVmVariablesGetBiggestId variabless
     | otherwise         = fromIntegral (length (head stack) + length (last stack))
     where
         stack = (variableStack variabless)
+
+
+{-- Update Var
+ --}
+ruVmVariablesUpdateVariable :: RuVmVariables -> Word32 -> RuVariableValue -> Either RuException RuVmVariables
+ruVmVariablesUpdateVariable variabless idd value
+    | ruVmVariablesGetVariable variabless idd   == Nothing   = Left (ruExceptionUnknowVariable idd)
+    | otherwise = do
+        let relevantArrayIndex = if globalSearchResult /= Nothing then globalScopeIndex else 0
+        let relevantArray = (variableStack variabless) !! relevantArrayIndex
+        case findIndex ruVariableHasId relevantArray idd of
+            Nothing -> Left (ruExceptionUnknowVariable idd)
+            Just relevantVarIndex -> do
+                let upVar = (relevantArray !! relevantVarIndex) {
+                    ruVariableValue = value,
+                    ruVariableType = ruVariableValueGetVariableType value
+                }
+                let newArray = replaceFun relevantArray relevantVarIndex upVar
+                let newStack = replaceFun (variableStack variabless) relevantArrayIndex newArray
+                Right variabless {
+                    variableStack = newStack
+                }
+    where
+        globalScopeIndex = (length (variableStack variabless) - 1) 
+        globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless idd
+        replaceFun tab i value = take i tab ++ [value] ++ drop (i + 1) tab
 
 
 ruVmVariablesSetVariableInCurrentScope :: RuVmVariables -> RuVariable -> RuVmVariables
