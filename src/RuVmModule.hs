@@ -117,7 +117,7 @@ ruVmStateReadWord8 _ RuOperandNone = Right defaultRuVariable
 ruVmStateReadWord8 state RuOperandConstant
     | length tab < 4      = Left ruExceptionIncompleteInstruction
     | otherwise           = Right RuVariable {
-                                ruVariableValue = Int64 valueInt,
+                                ruVariableValue = Int32 valueInt,
                                 ruVariableType = ruVariableTypeInt,
                                 ruVariableId = 0x00,
                                 ruMutable = False

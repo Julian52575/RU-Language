@@ -7,6 +7,7 @@ import Data.Either
 import RuVmModule
 import RuInstructionsModule
 import RuInstructionsHelperModule
+import RuVariableModule
 
 {--
  data RuVmState = RuVmState {
@@ -83,4 +84,24 @@ spec = do
                     False `shouldBe` True --Fail
                 Right resultState -> do
                     resultState `shouldBe` baseState { toPrint = "0\n" }
-    
+    describe "Vars" $ do
+        it "CreateVar with int" $ do
+            let state = baseState { workerCode = [0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x2a] }
+            case ruInstructionFunctionCreateVar baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+                    let vmVar = defaultRuVmVariables { variableStack = [[var]] }
+                    resultState `shouldBe` state { variables = vmVar }
+        it "CreateVar with str" $ do
+            let state = baseState { workerCode = [0x01, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionCreateVar baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let var = RuVariable { ruVariableValue = Str "lol", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
+                    let vmVar = defaultRuVmVariables { variableStack = [[var]] }
+                    resultState `shouldBe` state { variables = vmVar }

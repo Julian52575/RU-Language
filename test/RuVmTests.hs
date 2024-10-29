@@ -244,7 +244,7 @@ spec = do
             variableStack variablesResult `shouldBe` [ [newVar] ]
         it "Add variable to function scope" $ do
             let oldVar = RuVariable {
-                ruVariableValue = Int64 84,
+                ruVariableValue = Int32 84,
                 ruVariableType = ruVariableTypeInt,
                 ruVariableId = 0,
                 ruMutable = False
@@ -257,7 +257,7 @@ spec = do
                 carry = False
             }
             let newVar = RuVariable {
-                ruVariableValue = Int64 42,
+                ruVariableValue = Int32 42,
                 ruVariableType = ruVariableTypeInt,
                 ruVariableId = 0xff,
                 ruMutable = True
@@ -269,7 +269,7 @@ spec = do
             variableStack variablesResult `shouldBe` [ [oldVar, oldVar, oldVar, expected], [], [] ]
         it "Duplicate id with other scope" $ do
             let var0 = RuVariable {
-                ruVariableValue = Int64 42,
+                ruVariableValue = Int32 42,
                 ruVariableType = ruVariableTypeInt,
                 ruVariableId = 0x00,
                 ruMutable = True
@@ -291,7 +291,7 @@ spec = do
             variableStack variablesResult `shouldBe` [ [var0, var1], [var0, var1, var2], [] ]
         it "Increase id with global scope" $ do
             let var0 = RuVariable {
-                ruVariableValue = Int64 42,
+                ruVariableValue = Int32 42,
                 ruVariableType = ruVariableTypeInt,
                 ruVariableId = 0x00,
                 ruMutable = True
@@ -497,7 +497,7 @@ spec = do
                 toPrint = []
             }
             let expected = RuVariable {
-                            ruVariableValue = Int64 0x12345678,
+                            ruVariableValue = Int32 0x12345678,
                             ruVariableType = ruVariableTypeInt,
                             ruVariableId = 0x00,
                             ruMutable = False
@@ -585,19 +585,19 @@ spec = do
     describe "ruVmStateReadOperand" $ do
         it "Read 4 RuOperandConstant" $ do
             let expected1 = RuVariable {
-                ruVariableValue = Int64 0x11111111,
+                ruVariableValue = Int32 0x11111111,
                 ruVariableType = ruVariableTypeInt,
                 ruVariableId = 0x00,
                 ruMutable = False
             }
             let expected2 = expected1 {
-                ruVariableValue = Int64 0x22222222
+                ruVariableValue = Int32 0x22222222
             }
             let expected3 = expected1 {
-                ruVariableValue = Int64 0x33333333
+                ruVariableValue = Int32 0x33333333
             }
             let expected4 = expected1 {
-                ruVariableValue = Int64 0x44444444
+                ruVariableValue = Int32 0x44444444
             }
             let state = RuVmState {
                 variables = defaultRuVmVariables,
@@ -614,21 +614,21 @@ spec = do
                 Right list -> list `shouldBe` [expected1, expected2, expected3, expected4]
         it "Read 4 RuOperandVariableId" $ do
             let expected1 = RuVariable {
-                ruVariableValue = Int64 0x11111111,
+                ruVariableValue = Int32 0x11111111,
                 ruVariableType = ruVariableTypeInt,
                 ruVariableId = 0x01,
                 ruMutable = False
             }
             let expected2 = expected1 {
-                ruVariableValue = Int64 0x22222222,
+                ruVariableValue = Int32 0x22222222,
                 ruVariableId = 0x02
             }
             let expected3 = expected1 {
-                ruVariableValue = Int64 0x33333333,
+                ruVariableValue = Int32 0x33333333,
                 ruVariableId = 0x03
             }
             let expected4 = expected1 {
-                ruVariableValue = Int64 0x44444444,
+                ruVariableValue = Int32 0x44444444,
                 ruVariableId = 0x04
             }
             let state = RuVmState {
@@ -664,21 +664,21 @@ spec = do
                 Right list -> list `shouldBe` []
         it "Read only 1 RuOperandVariableId" $ do
             let expected1 = RuVariable {
-                ruVariableValue = Int64 0x11111111,
+                ruVariableValue = Int32 0x11111111,
                 ruVariableType = ruVariableTypeInt,
                 ruVariableId = 0x01,
                 ruMutable = False
             }
             let expected2 = expected1 {
-                ruVariableValue = Int64 0x22222222,
+                ruVariableValue = Int32 0x22222222,
                 ruVariableId = 0x02
             }
             let expected3 = expected1 {
-                ruVariableValue = Int64 0x33333333,
+                ruVariableValue = Int32 0x33333333,
                 ruVariableId = 0x03
             }
             let expected4 = expected1 {
-                ruVariableValue = Int64 0x44444444,
+                ruVariableValue = Int32 0x44444444,
                 ruVariableId = 0x04
             }
             let state = RuVmState {
@@ -698,21 +698,21 @@ spec = do
                 Right list -> list `shouldBe` [expected1]
         it "Read only 2 RuOperandVariableId" $ do
             let expected1 = RuVariable {
-                ruVariableValue = Int64 0x11111111,
+                ruVariableValue = Int32 0x11111111,
                 ruVariableType = ruVariableTypeInt,
                 ruVariableId = 0x01,
                 ruMutable = False
             }
             let expected2 = expected1 {
-                ruVariableValue = Int64 0x22222222,
+                ruVariableValue = Int32 0x22222222,
                 ruVariableId = 0x02
             }
             let expected3 = expected1 {
-                ruVariableValue = Int64 0x33333333,
+                ruVariableValue = Int32 0x33333333,
                 ruVariableId = 0x03
             }
             let expected4 = expected1 {
-                ruVariableValue = Int64 0x44444444,
+                ruVariableValue = Int32 0x44444444,
                 ruVariableId = 0x04
             }
             let state = RuVmState {
@@ -732,21 +732,21 @@ spec = do
                 Right list -> list `shouldBe` [expected1, expected2]
         it "Read only 3 RuOperandVariableId" $ do
             let expected1 = RuVariable {
-                ruVariableValue = Int64 0x11111111,
+                ruVariableValue = Int32 0x11111111,
                 ruVariableType = ruVariableTypeInt,
                 ruVariableId = 0x01,
                 ruMutable = False
             }
             let expected2 = expected1 {
-                ruVariableValue = Int64 0x22222222,
+                ruVariableValue = Int32 0x22222222,
                 ruVariableId = 0x02
             }
             let expected3 = expected1 {
-                ruVariableValue = Int64 0x33333333,
+                ruVariableValue = Int32 0x33333333,
                 ruVariableId = 0x03
             }
             let expected4 = expected1 {
-                ruVariableValue = Int64 0x44444444,
+                ruVariableValue = Int32 0x44444444,
                 ruVariableId = 0x04
             }
             let state = RuVmState {

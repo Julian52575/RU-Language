@@ -3,11 +3,11 @@ module RuVariableModule where
 import Data.Maybe
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
-import Data.Word (Word8, Word16, Word32, Word64)
+import Data.Word (Word8, Word16, Word32)
 
 data RuVariableValue =
     Na |
-    Int64 Word64 |
+    Int32 Word32 |
     Str String
     deriving (Eq, Show)
 

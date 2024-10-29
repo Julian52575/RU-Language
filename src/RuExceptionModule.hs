@@ -41,3 +41,6 @@ ruExceptionInvalidCodingByte = RuException "Invalid codingByte using 0x01 bit pa
 
 ruExceptionUnknowVariable :: Word32 -> RuException
 ruExceptionUnknowVariable idd = RuException ("Unknow variable id: " ++ showHex idd "??")
+
+ruExceptionVariableAlreadyExists :: Word32 -> RuException
+ruExceptionVariableAlreadyExists idd = RuException ("Variable id already exists: " ++ showHex idd "??")
