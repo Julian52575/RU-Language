@@ -25,6 +25,9 @@ findIndex p xs z=
 replaceTab :: [a] -> Int -> a -> [a]
 replaceTab tab i value = take i tab ++ [value] ++ drop (i + 1) tab
 
+removeTab :: [a] -> Int -> [a]
+removeTab tab i = take i tab ++ drop (i + 1) tab
+
 {-- RuVmVariables
  --}
 data RuVmVariables = RuVmVariables {
@@ -139,6 +142,34 @@ ruVmVariablesGetVariable variabless idd
         globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless idd
         scopeSearchResult = ruVmVariablesGetVariableInCurrentScope variabless idd
 
+ruVmVariablesGetVariableIndex :: RuVmVariables -> Word32 -> Maybe (Int, Int)
+ruVmVariablesGetVariableIndex variabless idd
+    | scopeSearchResult  /= Nothing = Just (0, (fromMaybe fromMaybeError findIndexInScope))
+    | globalSearchResult /= Nothing = Just (globalScopeIndex, (fromMaybe fromMaybeError findIndexInGlobal))
+    | otherwise = Nothing
+    where
+        fromMaybeError = error "fromMaybe error"
+        globalScopeIndex = (length (variableStack variabless) - 1)
+        globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless idd
+        findIndexInGlobal = findIndex ruVariableHasId ((variableStack variabless) !! globalScopeIndex) idd
+        scopeSearchResult = ruVmVariablesGetVariableInCurrentScope variabless idd
+        findIndexInScope = findIndex ruVariableHasId ((variableStack variabless) !! 0) idd
+
+{-- Remove Variable
+ --}
+ruVmVariablesRemoveVariable :: RuVmVariables -> Word32 -> RuVmVariables
+ruVmVariablesRemoveVariable variabless idd =
+    case ruVmVariablesGetVariableIndex variabless idd of
+        Nothing -> variabless
+        Just (y, x) -> do
+            let relevantArray = stack !! y
+            let upArray = removeTab relevantArray x
+            variabless {
+                variableStack = replaceTab stack y upArray
+            }
+    where
+        stack = variableStack variabless
+
 {-- Helper functions for arguments
  --}
 ruVmVariablesSetArgument :: RuVmVariables -> Word32 -> RuVariable -> RuVmVariables
@@ -173,7 +204,7 @@ data RuVmState = RuVmState {
     toPrint :: String
 } deriving (Eq, Show)
 
-ruVmStateReadWord8 :: RuVmState -> RuOperand -> Either RuException RuVariable --TODO
+ruVmStateReadWord8 :: RuVmState -> RuOperand -> Either RuException RuVariable
 ruVmStateReadWord8 _ RuOperandUnused = Left ruExceptionInvalidCodingByte
 ruVmStateReadWord8 _ RuOperandNone = Right defaultRuVariable
 ruVmStateReadWord8 state RuOperandConstant

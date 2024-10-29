@@ -910,7 +910,7 @@ spec = do
                 argumentVariables = [ [var1] ]
             }
             ruVmVariablesSetArgument variabless 0x1 var1 `shouldBe` expected
-        it "Updates an argument" $ do
+        it "Update an argument" $ do
             let upVar = var1 {
                 ruVariableValue = Str "Hello World",
                 ruVariableType = ruVariableTypeStr
@@ -922,4 +922,87 @@ spec = do
                 argumentVariables = [ [upVar] ]
             }
             ruVmVariablesSetArgument variabless 0x01 upVar `shouldBe` expected
+        it "Create an argument in current scope" $ do
+            let upVar = var1 {
+                ruVariableValue = Str "Hello World",
+                ruVariableType = ruVariableTypeStr
+            }
+            let variabless = defaultRuVmVariables {
+                argumentVariables = [ [], [var1], [var1], [var1] ]
+            }
+            let expected = variabless {
+                argumentVariables = [ [upVar], [var1], [var1], [var1] ]
+            }
+            ruVmVariablesSetArgument variabless 0x01 upVar `shouldBe` expected           
 
+--ruVmVariablesGetVariableIndex :: RuVmVariables -> Word32 -> Maybe (Int, Int)
+    describe "ruVmVariablesGetVariableIndex" $ do
+        let var0 = defaultRuVariable {
+            ruVariableValue = Int32 0x00,
+            ruVariableType = ruVariableTypeInt,
+            ruVariableId = 0x00,
+            ruMutable = True
+        }
+        let var1 = var0 {
+            ruVariableValue = Int32 0x01,
+            ruVariableId = 0x01
+        }
+        let var2 = var1 {
+            ruVariableValue = Int32 0x02,
+            ruVariableId = 0x02
+        }
+        let osef = defaultRuVariable {
+            ruVariableId = 0xff
+        }
+        let variabless = defaultRuVmVariables {
+            variableStack = [ [osef, osef, osef, var1], [var2], [osef, var0, osef] ]
+        }
+        it "Get variable in function scope" $ do
+            case ruVmVariablesGetVariableIndex variabless 0x01 of
+                Nothing -> False `shouldBe` True
+                Just xy -> xy `shouldBe` (0, 3)
+        it "Get variable in global scope" $ do
+            case ruVmVariablesGetVariableIndex variabless 0x00 of
+                Nothing -> False `shouldBe` True
+                Just xy -> xy `shouldBe` (2, 1)
+        it "Doesn't get variable in other scope" $ do
+            ruVmVariablesGetVariableIndex variabless 0x02 `shouldBe` Nothing
+
+--ruVmVariablesRemoveVariable :: RuVmVariables -> Word32 -> RuVmVariables
+    describe "ruVmVariablesRemoveVariable" $ do
+        let var0 = defaultRuVariable {
+            ruVariableValue = Int32 0x00,
+            ruVariableType = ruVariableTypeInt,
+            ruVariableId = 0x00,
+            ruMutable = True
+        }
+        let var1 = var0 {
+            ruVariableValue = Int32 0x01,
+            ruVariableId = 0x01
+        }
+        let var2 = var1 {
+            ruVariableValue = Int32 0x02,
+            ruVariableId = 0x02
+        }  
+        it "Remove the variable in function scope" $ do
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [var0, var1], [var2] ]
+            }            
+            let expected = [ [var0], [var2] ]
+            variableStack (ruVmVariablesRemoveVariable variabless 0x01) `shouldBe` expected
+        it "Remove the variable in global scope" $ do
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [var0, var2], [var1] ]
+            }            
+            let expected = [ [var0, var2], [] ]
+            variableStack (ruVmVariablesRemoveVariable variabless 0x01) `shouldBe` expected
+        it "Does nothing when unknow variable" $ do
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [var1, var2], [var0] ]
+            }
+            ruVmVariablesRemoveVariable variabless 0xff `shouldBe` variabless
+        it "Doesn't remove variable from other scope" $ do
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [var1], [var2], [var0] ]
+            }
+            ruVmVariablesRemoveVariable variabless 0x02 `shouldBe` variabless
