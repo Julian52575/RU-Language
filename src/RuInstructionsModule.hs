@@ -295,6 +295,9 @@ ruInstructionDoOperation "DIV" var1 var2 = case (ruVariableValue var1, ruVariabl
 ruInstructionDoOperation "MUL" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
     (Int32 value1, Int32 value2) -> Just (Int32 (value1 * value2))
     _ -> Nothing
+ruInstructionDoOperation "MOD" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> if value2 == 0 then Nothing else Just (Int32 (value1 `mod` value2))
+    _ -> Nothing
 
 ruInstructionOperator :: String -> RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionOperator operation info state = do
@@ -326,6 +329,10 @@ ruInstructionDoComparaison :: String -> RuVariable -> RuVariable -> Maybe Bool
 ruInstructionDoComparaison "EQ?" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
     (Int32 value1, Int32 value2) -> Just (if value1 == value2 then True else False)
     (Str value1, Str value2) -> Just (if value1 == value2 then True else False)
+    _ -> Nothing
+ruInstructionDoComparaison "NEQ?" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> Just (if value1 /= value2 then True else False)
+    (Str value1, Str value2) -> Just (if value1 /= value2 then True else False)
     _ -> Nothing
 
 ruInstructionComparator :: String -> RuVmInfo -> RuVmState -> Either RuException RuVmState
@@ -397,12 +404,12 @@ ruInstructionFunctionDiv info state = do
             let codingByte = take 1 ccode
             let ruOp = codingByteToRuOperand (ccode !! 0)
             let var = ruInstructionGetRuVariableFromBytes operand3 operand4 (ruOp !! 3) info state
-            if var == Nothing then Left ruExceptionDivByZero
+            if var == Nothing then Left ruExceptionInvalidOperation
             else do
                 case ruVariableValue (fromJust var) of
                     Int32 value -> if value == 0 then Left ruExceptionDivByZero
                                    else result
-                    _ -> Left ruExceptionDivByZero
+                    _ -> Left ruExceptionInvalidOperation
 
 
 ruInstructionMul :: RuInstruction
@@ -422,9 +429,28 @@ ruInstructionMod = RuInstruction {
     ruInstructionPrefix = 0x03,
     ruInstructionInfix = 0x06,
     ruInstructionName = "MOD",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionMod,
     fixedSize = 0
 }
+
+ruInstructionFunctionMod :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionMod info state = do
+    let result = ruInstructionOperator "MOD" info state
+    case result of
+        Right _ -> result
+        Left _ -> do
+            let ccode = workerCode state
+            let operand3 = take 4 (drop 9 ccode)
+            let operand4 = take 4 (drop 13 ccode)
+            let codingByte = take 1 ccode
+            let ruOp = codingByteToRuOperand (ccode !! 0)
+            let var = ruInstructionGetRuVariableFromBytes operand3 operand4 (ruOp !! 3) info state
+            if var == Nothing then Left ruExceptionInvalidOperation
+            else do
+                case ruVariableValue (fromJust var) of
+                    Int32 value -> if value == 0 then Left ruExceptionDivByZero
+                                   else result
+                    _ -> Left ruExceptionInvalidOperation
 
 ruInstructionEq :: RuInstruction
 ruInstructionEq = RuInstruction {
@@ -446,6 +472,9 @@ ruInstructionNeq = RuInstruction {
     ruInstructionFunction = ruInstructionFunctionNoop,
     fixedSize = 0
 }
+
+ruInstructionFunctionNeq :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionNeq info state = ruInstructionComparator "NEQ?" info state
 
 ruInstructionLesser :: RuInstruction
 ruInstructionLesser = RuInstruction {

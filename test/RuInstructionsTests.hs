@@ -284,3 +284,27 @@ spec = do
                 Right resultState -> do
                     let vmVarr = vmVar { carry = False }
                     resultState `shouldBe` state { variables = vmVarr }
+        it "NotEqual int true" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 43, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionNeq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = True }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "NotEqual int false" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionNeq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = False }
+                    resultState `shouldBe` state { variables = vmVarr }
