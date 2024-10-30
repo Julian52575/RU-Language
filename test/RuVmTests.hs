@@ -904,7 +904,8 @@ spec = do
         }
         it "Create an argument" $ do
             let variabless = defaultRuVmVariables {
-                argumentVariables = [ [] ]
+                argumentVariables = [ ],
+                variableStack = []
             }
             let expected = variabless {
                 argumentVariables = [ [var1] ]

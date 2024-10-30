@@ -175,7 +175,7 @@ ruVmVariablesRemoveVariable variabless idd =
  --}
 ruVmVariablesSetArgument :: RuVmVariables -> Word32 -> RuVariable -> RuVmVariables
 ruVmVariablesSetArgument variabless numero var
-    | length (variableStack variabless) == 0 = variabless { argumentVariables = [ [upVar] ] }
+    | length stack == 0 = variabless { argumentVariables = [ [upVar] ] }
     | otherwise = case iindex of
         Nothing -> variabless {
                     argumentVariables = ([[upVar]] ++ otherStack)
