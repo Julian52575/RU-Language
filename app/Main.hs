@@ -7,6 +7,9 @@ import Data.Word
 import Data.Either
 import Data.Maybe
 
+import Control.Monad.Trans.Except
+import Control.Monad.IO.Class (liftIO)
+
 import RuFormatModule
 import RuVmModule
 import RuOperandModule
@@ -14,71 +17,56 @@ import RuVariableModule
 import RuExceptionModule
 import RuInstructionsHelperModule
 
+data Argument = Argument {
+    dump :: Bool,
+    fileName :: Maybe String
+} deriving (Eq, Show)
 
-{-- Move Pc to the new instruction if previous instruction didn't
-getNextPcState :: Word8 -> Word8 -> RuVmState -> RuVmState -> RuVmState
-getNextPcState pre inf oldState newState
-    | (oldPc /= newPc)  = newState
-    | otherwise         = newState { workerCodeOffset = (newPc + (previousInstructionSize - 2)) }
-    where
-        oldPc = workerCodeOffset oldState
-        newPc = workerCodeOffset newState
-        previousInstructionSize = getInstructionSize pre inf oldState
+defaultArgument = Argument {
+    dump = False,
+    fileName = Nothing
+}
 
-{-- Execute chaque instruction et met à jour le PC / workerCode pour chaque 
- --}
-runInstructions :: RuVmInfo -> RuVmState -> Either RuException RuVmState
-runInstructions info state
-    | (isLeft updatedPcResult == True)     = updatedPcResult
-    | (length (workerCode movedState) < 2) = Left ruExceptionIncompleteInstruction
-    | (isNothing maybeFunction == True)    = Left (ruExceptionUnknowOpcode prefix iinfix)
-    | (isLeft functionResult == True)      = functionResult
-    | otherwise = runInstructions info nextState
-    where
-    updatedPcResult = ruVmStateUpdateWorkerCodeToPc info state
-    updatedPcState = (fromRight (error "fromRight error") updatedPcResult)
-    prefix = (workerCode updatedPcState !! 0)
-    iinfix = (workerCode updatedPcState !! 1)
-    movedState = updatedPcState {
-        workerCode = drop 2 (workerCode updatedPcState)
-    }
-    maybeFunction = getInstructionFunction prefix iinfix
-    function = fromMaybe (error "Unknow Instruction") maybeFunction
-    instructionOperandSize = getInstructionSize prefix iinfix
-    functionResult = function info movedState
-    functionResultState = fromRight (error "fromRight error") functionResult
-    nextState = functionResultState
- --}
-
-{-- Appelle runInstructions et gère le retour
- --}
-runRuVm :: RuVmInfo -> Either RuException RuVariable
-runRuVm info = Left (RuException "ToDo") --TODO
-
-
-{-- objdump for ru
- --}
+ruVmLoop :: RuVmInfo -> RuVariable
+ruVmLoop info = defaultRuVariable
 
 {-- --}
 usage :: String
 usage = "Usage:\t./ru_vm [--dump] filename"
 
+parseArgument :: [String] -> Argument -> Argument
+parseArgument ("--dump":next) arg = parseArgument next (arg {dump = True})
+parseArgument (file:next) arg = parseArgument next (arg {fileName = Just file})
+parseArgument _ arg = arg
+
+printRuFormatIfArg :: RuFormat -> Argument -> IO ()
+printRuFormatIfArg format arg
+    | dump arg == True = printRuFormat format
+    | otherwise        = return () 
+
+argumentToRuVmInfo :: [String] -> IO (Either RuException RuVmInfo)
+argumentToRuVmInfo str = runExceptT $ do
+    let arg = parseArgument str defaultArgument
+    case fileName arg of
+        Nothing -> throwE (RuException "No file provided.")
+        Just file -> do
+            result <- liftIO $ fileNameToRuFormat file
+            case result of
+                Left err -> throwE err
+                Right format -> do
+                    let info = ruFormatToRuVmInfo format
+                    liftIO $ printRuFormatIfArg format arg
+                    return info {
+                        dumpMode = (dump arg)
+                    }
+
 runMain :: IO ()
 runMain = do
     args <- getArgs
-    case args of
-        ["--usage"] -> do
-            putStrLn usage
-        ["--dump", filename] -> do
-            result <- fileNameToRuFormat filename 
-            case result of
-                Left (RuException exception) -> putStrLn exception
-                Right format -> printRuFormat format
-        [filename] -> do
-            putStrLn filename --TODO
-        _ -> do
-            putStrLn "No arguments provided."
-
+    result <- argumentToRuVmInfo args
+    case result of
+        Left err -> putStrLn ("Encountered exception: " ++ show err)
+        Right info -> printRuVariable (ruVmLoop info)
 
 
 handler :: IOException -> IO ()
