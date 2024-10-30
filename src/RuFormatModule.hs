@@ -42,13 +42,13 @@ data RuHeader = RuHeader {
 } deriving(Eq, Show)
 
 printRuHeader :: RuHeader -> IO ()
-printRuHeader head =
-    putStrLn ("File version:\t" ++ (show (fileVersion head))) >>
-    putStrLn ("Function count:\t" ++ (show (functionTableCount head))) >>
-    putStrLn ("Strtab offset:\t" ++ (show (strTableOffset head))) >>
-    putStrLn ("String count:\t" ++ (show (strTableCount head))) >>
-    putStrLn ("Code offset:\t" ++ (show (codeOffset head))) >>
-    putStrLn ("Entrypoint offset:\t" ++ (show (entrypointOffset head)))
+printRuHeader hhead =
+    putStrLn ("File version:\t" ++ (show (fileVersion hhead))) >>
+    putStrLn ("Function count:\t" ++ (show (functionTableCount hhead))) >>
+    putStrLn ("Strtab offset:\t" ++ (show (strTableOffset hhead))) >>
+    putStrLn ("String count:\t" ++ (show (strTableCount hhead))) >>
+    putStrLn ("Code offset:\t" ++ (show (codeOffset hhead))) >>
+    putStrLn ("Entrypoint offset:\t" ++ (show (entrypointOffset hhead)))
 
 data RuFunctionTable = RuFunctionTable {
     nameIndex :: Word32,
@@ -66,6 +66,7 @@ ruFunctionTableGetFunctionFromCodeOffset (fun:next) offset
 ruFunctionTableGetFunctionFromCodeOffset _ _ = Nothing
 
 printRuFunctionTable :: [String] -> RuFunctionTable -> IO ()
+printRuFunctionTable [] _ = putStrLn []
 printRuFunctionTable str fun = do
     if (fromIntegral (nameIndex fun)) >= (length str)
     then error "Function has an Out of Bound name index"
@@ -75,7 +76,6 @@ printRuFunctionTable str fun = do
         putStrLn ("-Function\t'" ++ name ++ "':")
         putStrLn ("Offset:\t" ++ (show (codeSectionOffset fun)))
         putStrLn ("Size:\t" ++ (show (size fun)))
-printRuFunctionTable [] _ = putStrLn []
 
 printRuFunctionTableArray :: [String] -> [RuFunctionTable] -> IO ()
 printRuFunctionTableArray str (current:next) =
@@ -279,4 +279,4 @@ fileNameToRuFormat fileName = runExceptT $ do
 --     else return $ (fromRight defaultRuFormat result)
 --
 ruFormatIsValid :: RuFormat -> Either RuException RuFormat
-ruFormatIsValid format = Left ruExceptionGenericFileError --TODO
+ruFormatIsValid _ = Left ruExceptionGenericFileError --TODO

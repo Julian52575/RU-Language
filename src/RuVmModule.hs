@@ -176,12 +176,12 @@ ruVmVariablesRemoveVariable variabless idd =
 ruVmVariablesSetArgument :: RuVmVariables -> Word32 -> RuVariable -> RuVmVariables
 ruVmVariablesSetArgument variabless numero var
     | length (variableStack variabless) == 0 = variabless { argumentVariables = [ [upVar] ] }
-    | otherwise = case index of
+    | otherwise = case iindex of
         Nothing -> variabless {
                     argumentVariables = ([[upVar]] ++ otherStack)
                 } --variable doesn't exist
-        Just index -> do
-            let newCurrentStack = replaceTab currentStack index upVar
+        Just index2 -> do
+            let newCurrentStack = replaceTab currentStack index2 upVar
             variabless {
                 argumentVariables = ([newCurrentStack] ++ otherStack)
             }
@@ -192,7 +192,7 @@ ruVmVariablesSetArgument variabless numero var
         stack = argumentVariables variabless
         currentStack = head stack
         otherStack = tail stack
-        index = findIndex ruVariableHasId currentStack numero
+        iindex = findIndex ruVariableHasId currentStack numero
 
 
 ruVmVariablesRemoveArgument :: RuVmVariables -> Word32 -> RuVmVariables
@@ -200,10 +200,10 @@ ruVmVariablesRemoveArgument variabless numero
     | length (variableStack variabless) == 0 = variabless
     | otherwise = case findIndex ruVariableHasId currentStack numero of
         Nothing -> variabless
-        Just index -> do
-            let newStack = removeTab currentStack index
+        Just iindex -> do
+            let newStack = removeTab currentStack iindex
             variabless {
-                argumentVariables = replaceTab (argumentVariables variabless) index newStack
+                argumentVariables = replaceTab (argumentVariables variabless) iindex newStack
             }
     where
         currentStack = (argumentVariables variabless) !! 0
@@ -293,7 +293,7 @@ ruVmStateReadOperand state
  --}
 word32ToInt32 :: Word32 -> Int32
 word32ToInt32 w
-  | w > 0x7FFFFFFF = fromIntegral w - 0x100000000
+  | w > 0x7FFFFFFF = fromIntegral w - 0x0fffffff
   | otherwise      = fromIntegral w
 
 int32ToWord32 :: Int32 -> Word32
@@ -319,7 +319,6 @@ ruVmStateJump info state offset
             workerCodeOffset = newOffset,
             workerCode = drop (fromIntegral newOffset) (code info)
         }
-ruVmStateJump _ _ _ = Left (RuException "ruVmStateJump pattern error")
 
 
 {-- Scope management
