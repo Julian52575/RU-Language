@@ -334,6 +334,23 @@ ruInstructionDoComparaison "NEQ?" var1 var2 = case (ruVariableValue var1, ruVari
     (Int32 value1, Int32 value2) -> Just (if value1 /= value2 then True else False)
     (Str value1, Str value2) -> Just (if value1 /= value2 then True else False)
     _ -> Nothing
+ruInstructionDoComparaison "LESSER?" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> Just (if value1 < value2 then True else False)
+    (Str value1, Str value2) -> Just (if value1 < value2 then True else False)
+    _ -> Nothing
+ruInstructionDoComparaison "LESSEREQ?" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> Just (if value1 <= value2 then True else False)
+    (Str value1, Str value2) -> Just (if value1 <= value2 then True else False)
+    _ -> Nothing
+ruInstructionDoComparaison "GREATER?" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> Just (if value1 > value2 then True else False)
+    (Str value1, Str value2) -> Just (if value1 > value2 then True else False)
+    _ -> Nothing
+ruInstructionDoComparaison "GREATEREQ?" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> Just (if value1 >= value2 then True else False)
+    (Str value1, Str value2) -> Just (if value1 >= value2 then True else False)
+    _ -> Nothing
+ruInstructionDoComparaison _ _ _ = Nothing
 
 ruInstructionComparator :: String -> RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionComparator comparaison info state = do
@@ -469,7 +486,7 @@ ruInstructionNeq = RuInstruction {
     ruInstructionPrefix = 0x03,
     ruInstructionInfix = 0x05,
     ruInstructionName = "NEQ?",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionNeq,
     fixedSize = 0
 }
 
@@ -481,27 +498,36 @@ ruInstructionLesser = RuInstruction {
     ruInstructionPrefix = 0x03,
     ruInstructionInfix = 0x07,
     ruInstructionName = "LESSER?",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionLesser,
     fixedSize = 0
 }
+
+ruInstructionFunctionLesser :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionLesser info state = ruInstructionComparator "LESSER?" info state
 
 ruInstructionLesserEq :: RuInstruction
 ruInstructionLesserEq = RuInstruction {
     ruInstructionPrefix = 0x03,
     ruInstructionInfix = 0x08,
     ruInstructionName = "LESSEREQ?",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionLesserEq,
     fixedSize = 0
 }
+
+ruInstructionFunctionLesserEq :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionLesserEq info state = ruInstructionComparator "LESSEREQ?" info state
 
 ruInstructionGreater :: RuInstruction
 ruInstructionGreater = RuInstruction {
     ruInstructionPrefix = 0x03,
     ruInstructionInfix = 0x09,
     ruInstructionName = "GREATER?",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionGreater,
     fixedSize = 0
 }
+
+ruInstructionFunctionGreater :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionGreater info state = ruInstructionComparator "GREATER?" info state
 
 ruInstructionGreaterEq :: RuInstruction
 ruInstructionGreaterEq = RuInstruction {
@@ -511,3 +537,6 @@ ruInstructionGreaterEq = RuInstruction {
     ruInstructionFunction = ruInstructionFunctionNoop,
     fixedSize = 0
 }
+
+ruInstructionFunctionGreaterEq :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionGreaterEq info state = ruInstructionComparator "GREATEREQ?" info state
