@@ -6,13 +6,12 @@ module Compiler.Compile (
     compileGlobal
 ) where
 
-import Compiler.Type (Scope(..), OpCode(..), Compile(..), CodingByte(..), Function(..))
+import Compiler.Type (Scope(..), OpCode(..), Compile(..), CodingByte(..))
 import Parser.Type (Type(..))
 import Parser.AST (Stmt(..), Expr(..))
 import Compiler.CreateVar (getCreateVar, getFunctionVar, getIndexFromStrTable)
 import Compiler.Function (unsetFuncVar, getFunctionIndex)
 import Compiler.CodingByte (getCodingByte)
-import Compiler.Header (opListCountByte)
 import Compiler.BinArith (compileBinArith)
 
 -- Create a scope from a list of variable names
@@ -44,9 +43,9 @@ compileCall (FuncCall (Var name) args) fScope comp =
 compileCall _ _ _ = []
 
 compilePrint :: [Expr] -> Scope -> Compile -> String -> [OpCode]
-compilePrint args scope comp print =
+compilePrint args scope comp prt =
     let codingBytes = map (\arg -> getCodingByte arg scope (stringTable comp)) args
-    in if print == "print" then map OpPrint codingBytes else map OpPrintLn codingBytes
+    in if prt == "print" then map OpPrint codingBytes else map OpPrintLn codingBytes
 
 -- get a list of opcode from an expr
 compileExpr :: Expr -> Scope -> Compile -> [OpCode]
@@ -65,6 +64,10 @@ compileExprToTmp :: Expr -> Scope -> Compile -> [OpCode]
 compileExprToTmp (LitInt int) _ _ = [OpSetTmp 0x01 (CbConst 0xA0 0x01 int)]
 compileExprToTmp (LitString str) _ comp = [OpSetTmp 0x02 (CbConst 0xA0 0x01 (getIndexFromStrTable (stringTable comp) str))]
 compileExprToTmp (Var x) scope _ = [OpSetTmp 0x00 (CbConst 0xB0 0x00 (getIndexFromStrTable (vars scope) x ))]
+compileExprToTmp (BinArith op e1 e2) scope comp =
+    [OpCreateVar 0x01 0x00] ++
+    compileExpr (BinArith op e1 e2) scope comp ++
+    [OpSetTmp 0x01 (CbConst 0xB0 0x01 (length $ vars scope))]
 compileExprToTmp _ _ _ = []
 
 isConst :: Expr -> Bool
@@ -77,15 +80,21 @@ isConst _ = False
 -- get a list of opcode from an stmt
 compileStmt :: Stmt -> Scope -> Compile -> [OpCode]
 compileStmt (LetStmt name _ expr) scope comp = if isConst expr == False
-    then compileExpr expr scope comp ++
+    then [OpCreateVar 0x01 0x00] ++
+        compileExpr expr scope comp ++
         [OpSetVar (getIndexFromStrTable (vars scope) name) (CbConst 0xB0 0x00 (length $ vars scope))] ++
         [OpUnsetVar (length $ vars scope)]
     else []
+
 compileStmt (ExprStmt expr) scope comp = compileExpr expr scope comp
+
 compileStmt (BlockStmt stmts) scope comp = concatMap (\stmt -> compileStmt stmt scope comp) stmts
+
 compileStmt (ReturnStmt (Just expr)) scope comp =
     let exprOpCode = compileExprToTmp expr scope comp
     in exprOpCode ++ [OpSetReturn 0x01 (CbConst 0xA0 0x01 0xffffffff)]
+
+-- compileStmt (IfStmt expr)
 compileStmt _ _ _ = []
 
 -- get a list of opcode from a function
@@ -103,7 +112,7 @@ compileFunction _ _ = []
 getMainReturnType :: [Stmt] -> Int
 getMainReturnType [] = 1
 getMainReturnType (FuncDeclStmt name _ retType _ : xs) = if name == "main" && retType == TInt then 0 else getMainReturnType xs
-getMainReturnType (BlockStmt stmts:xs) = getMainReturnType stmts
+getMainReturnType (BlockStmt stmts:_) = getMainReturnType stmts
 getMainReturnType (_:xs) = getMainReturnType xs
 
 compileGlobal :: Stmt -> Compile -> Bool -> [OpCode]

@@ -49,6 +49,10 @@ opCodeToByte (OpMul cb1 cb2) = 0x03 : [0x03] ++ codingByteToByte cb1 ++ codingBy
 opCodeToByte (OpEq cb1 cb2) = 0x03 : [0x04] ++ codingByteToByte cb1 ++ codingByteToByte cb2
 opCodeToByte (OpNeq cb1 cb2) = 0x03 : [0x05] ++ codingByteToByte cb1 ++ codingByteToByte cb2
 opCodeToByte (OpMod cb1 cb2) = 0x03 : [0x06] ++ codingByteToByte cb1 ++ codingByteToByte cb2
+opCodeToByte (OpLesser cb1 cb2) = 0x03 : [0x07] ++ codingByteToByte cb1 ++ codingByteToByte cb2
+opCodeToByte (OpLesserEq cb1 cb2) = 0x03 : [0x08] ++ codingByteToByte cb1 ++ codingByteToByte cb2
+opCodeToByte (OpGreater cb1 cb2) = 0x03 : [0x09] ++ codingByteToByte cb1 ++ codingByteToByte cb2
+opCodeToByte (OpGreaterEq cb1 cb2) = 0x03 : [0x10] ++ codingByteToByte cb1 ++ codingByteToByte cb2
 
 opCountCodingByte :: CodingByte -> Int
 opCountCodingByte (CbConst _ _ _) = 12
@@ -78,6 +82,10 @@ opCountByte (OpMul cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
 opCountByte (OpEq cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
 opCountByte (OpNeq cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
 opCountByte (OpMod cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
+opCountByte (OpLesser cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
+opCountByte (OpLesserEq cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
+opCountByte (OpGreater cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
+opCountByte (OpGreaterEq cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
 
 opListCountByte :: [OpCode] -> Int
 opListCountByte = sum . map opCountByte

@@ -42,6 +42,10 @@ data OpCode = OpNoop
     | OpEq CodingByte CodingByte
     | OpNeq CodingByte CodingByte
     | OpMod CodingByte CodingByte
+    | OpLesser CodingByte CodingByte
+    | OpLesserEq CodingByte CodingByte
+    | OpGreater CodingByte CodingByte
+    | OpGreaterEq CodingByte CodingByte
     deriving (Show, Eq)
 
 data Function = Function {
