@@ -2,6 +2,7 @@ module RuVmModule where
 
 import qualified Data.ByteString as BS
 import Data.Word (Word8, Word32)
+import Data.Int
 import Data.Char
 import Data.Either
 import Data.Maybe
@@ -290,8 +291,35 @@ ruVmStateReadOperand state
 
 {-- Helper function for code displacement
  --}
+word32ToInt32 :: Word32 -> Int32
+word32ToInt32 w
+  | w > 0x7FFFFFFF = fromIntegral w - 0x100000000
+  | otherwise      = fromIntegral w
+
+int32ToWord32 :: Int32 -> Word32
+int32ToWord32 i = fromIntegral i
+
+    -- Comment on gère les négatifs avec word32 ? On converti en Word32
 ruVmStateJump :: RuVmInfo -> RuVmState -> Word32 -> Either RuException RuVmState --TODO
-ruVmStateJump info state offset = Left (RuException "TODO")
+ruVmStateJump info state offset
+    | fromIntegral newOffset > length (code info)    = Left ruExceptionJumpOutOfBound --En dehors du code
+    | currentFunSearchResult == Nothing = do
+        if funSearchResult == Nothing
+            then Right updatedState -- c'est OK
+            else Left ruExceptionJumpOutOfScope --Pas la même scope
+    | funSearchResult == Nothing        = Left ruExceptionJumpOutOfBound
+    | otherwise                         = Right updatedState
+    where
+        newOffsetInt = (word32ToInt32 (workerCodeOffset state)) + (word32ToInt32 offset)
+        newOffset = int32ToWord32 newOffsetInt
+        tab = functionTable info
+        funSearchResult = ruFunctionTableGetFunctionFromCodeOffset tab newOffset
+        currentFunSearchResult = ruFunctionTableGetFunctionFromCodeOffset tab (workerCodeOffset state)
+        updatedState = state {
+            workerCodeOffset = newOffset,
+            workerCode = drop (fromIntegral newOffset) (code info)
+        }
+ruVmStateJump _ _ _ = Left (RuException "ruVmStateJump pattern error")
 
 
 {-- VmState error handling

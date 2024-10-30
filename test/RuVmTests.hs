@@ -1041,3 +1041,102 @@ spec = do
                 variableStack = [ [var1], [var2], [var0] ]
             }
             ruVmVariablesRemoveVariable variabless 0x02 `shouldBe` variabless
+
+--ruVmStateJump :: RuVmInfo -> RuVmState -> Word32 -> Either RuException RuVmState
+    describe "ruVmStateJump" $ do
+        let createVar = [0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0xFF, 0xFF, 0xFF, 0xFF]
+        let returnIns = [0x02, 0x00]
+        let createVarSize = fromIntegral (length createVar)
+        let globalCode = createVar ++ createVar
+        let globalCodeSize = fromIntegral (length globalCode)
+        let funCode = createVar ++ returnIns
+        let funSize = fromIntegral (length funCode)
+        let codeTab = globalCode ++ funCode ++ funCode ++ funCode
+        --
+        let fun1 = RuFunctionTable {
+            nameIndex = 1,
+            codeSectionOffset = globalCodeSize,
+            size = funSize
+        }
+        let fun2 = fun1 {
+            codeSectionOffset = (codeSectionOffset fun1) + (size fun1)
+        }
+        let fun3 = fun2 {
+            codeSectionOffset = (codeSectionOffset fun2) + (size fun2)
+        }
+        let info = RuVmInfo {
+            stringTable = [ "\0", "fun1\0", "fun2\0", "fun3\0" ],
+            functionTable = [fun1] ++ [fun2] ++ [fun3],
+            code = codeTab,
+            codeSize = fromIntegral (length codeTab),
+            dumpMode = False
+        }
+        let state = RuVmState {
+            variables = defaultRuVmVariables,
+            workerCodeOffset = 0x00,
+            workerCode = code info,
+            conditionalMode = False,
+            scopeDeep = 0x00,
+            toPrint = []
+        }
+        it "Move forward in global scope" $ do
+            case ruVmStateJump info state createVarSize of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right newState -> do
+                    workerCodeOffset newState `shouldBe` fromIntegral createVarSize
+                    workerCode newState `shouldBe` (createVar ++ funCode ++ funCode ++ funCode)
+                    take 2 (workerCode newState) `shouldBe` [0x01, 0x00]
+        it "Move forward in function scope" $ do
+            let fun2State = state {
+                workerCode = drop (fromIntegral (codeSectionOffset fun2)) (workerCode state),
+                workerCodeOffset = codeSectionOffset fun2
+            }
+            workerCode fun2State `shouldBe` (funCode ++ funCode)
+            case ruVmStateJump info fun2State createVarSize of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right newState -> do
+                    workerCodeOffset newState `shouldBe` ((workerCodeOffset fun2State) + createVarSize)
+                    workerCode newState `shouldBe` (returnIns ++ funCode)
+                    take 2 (workerCode newState) `shouldBe` returnIns
+        it "Move backward" $ do
+            case ruVmStateJump info state createVarSize of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right movedState -> do
+                    let neg = ( (fromIntegral createVarSize) * (-1))
+                    case ruVmStateJump info movedState neg of
+                        Left err -> do
+                            putStrLn ("Encountered exception: " ++ (show err) ++ (show neg) )
+                            False `shouldBe` True
+                        Right newState -> newState `shouldBe` state
+        it "Move backward in function scope" $ do
+            let fun2State = state {
+                workerCode = drop (fromIntegral (codeSectionOffset fun2)) (workerCode state),
+                workerCodeOffset = codeSectionOffset fun2
+            }
+            workerCode fun2State `shouldBe` (funCode ++ funCode)
+            case ruVmStateJump info fun2State createVarSize of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right movedState -> do
+                    let neg = ( (fromIntegral createVarSize) * (-1))
+                    case ruVmStateJump info movedState neg of
+                        Left err -> do
+                            putStrLn ("Encountered exception: " ++ (show err))
+                            False `shouldBe` True
+                        Right newState -> newState `shouldBe` fun2State
+        it "Doesn't jump to another scope" $ do
+            case ruVmStateJump info state (createVarSize * 2) of
+                Left err -> err `shouldBe` ruExceptionJumpOutOfScope
+                Right _ -> False `shouldBe` True
+        it "Doesn't jump out of bound" $ do
+            case ruVmStateJump info state 2147483647 of
+                Left err -> err `shouldBe` ruExceptionJumpOutOfBound
+                Right _ -> False `shouldBe` True
+

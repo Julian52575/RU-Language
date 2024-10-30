@@ -44,3 +44,9 @@ ruExceptionUnknowVariable idd = RuException ("Unknow variable id: " ++ showHex i
 
 ruExceptionVariableAlreadyExists :: Word32 -> RuException
 ruExceptionVariableAlreadyExists idd = RuException ("Variable id already exists: " ++ showHex idd "??")
+
+ruExceptionJumpOutOfScope :: RuException
+ruExceptionJumpOutOfScope = RuException ("Trying to jump outside of current scope.")
+
+ruExceptionJumpOutOfBound :: RuException
+ruExceptionJumpOutOfBound = RuException ("Trying to jump outside of code.")
