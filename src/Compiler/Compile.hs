@@ -8,11 +8,13 @@ module Compiler.Compile (
 
 import Compiler.Type (Scope(..), OpCode(..), Compile(..), CodingByte(..))
 import Parser.Type (Type(..))
-import Parser.AST (Stmt(..), Expr(..))
+import Parser.AST (Stmt(..), Expr(..), CompOp(..))
 import Compiler.CreateVar (getCreateVar, getFunctionVar, getIndexFromStrTable)
 import Compiler.Function (unsetFuncVar, getFunctionIndex)
 import Compiler.CodingByte (getCodingByte)
-import Compiler.BinArith (compileBinArith)
+import Compiler.BinArith (compileBinArith, opCodeFromExpr)
+import Compiler.Header (opListCountByte)
+import Data.Either()
 
 -- Create a scope from a list of variable names
 getScopeFromList :: [(OpCode, String)] -> String -> Int -> Scope
@@ -77,6 +79,19 @@ isConst (LitBool _) = True
 isConst (Var _) = True
 isConst _ = False
 
+doBinComp :: CompOp -> Expr -> Expr -> Scope -> Compile -> [OpCode]
+doBinComp op e1 e2 scope comp =
+    case op of
+        Equal -> [OpEq (opCodeFromExpr (Left e1) scope comp 0) (opCodeFromExpr (Left e2) scope comp 0)]
+        NotEqual -> [OpNeq (opCodeFromExpr (Left e1) scope comp 0) (opCodeFromExpr (Left e2) scope comp 0)]
+        LessThan -> [OpLesser (opCodeFromExpr (Left e1) scope comp 0) (opCodeFromExpr (Left e2) scope comp 0)]
+        LessEqual -> [OpLesserEq (opCodeFromExpr (Left e1) scope comp 0) (opCodeFromExpr (Left e2) scope comp 0)]
+        GreaterThan -> [OpGreater (opCodeFromExpr (Left e1) scope comp 0) (opCodeFromExpr (Left e2) scope comp 0)]
+        GreaterEqual -> [OpGreaterEq (opCodeFromExpr (Left e1) scope comp 0) (opCodeFromExpr (Left e2) scope comp 0)]
+
+compileBinComp :: Expr -> Scope -> Compile -> [OpCode]
+compileBinComp (BinComp op e1 e2) scope comp = doBinComp op e1 e2 scope comp
+
 -- get a list of opcode from an stmt
 compileStmt :: Stmt -> Scope -> Compile -> [OpCode]
 compileStmt (LetStmt name _ expr) scope comp = if isConst expr == False
@@ -94,7 +109,18 @@ compileStmt (ReturnStmt (Just expr)) scope comp =
     let exprOpCode = compileExprToTmp expr scope comp
     in exprOpCode ++ [OpSetReturn 0x01 (CbConst 0xA0 0x01 0xffffffff)]
 
--- compileStmt (IfStmt expr)
+compileStmt (IfStmt e1 s1 (Just s2)) scope comp =
+    let trueStmt = compileStmt s1 scope comp
+    in compileBinComp e1 scope comp ++
+        [OpJump (opListCountByte trueStmt)] ++
+        trueStmt ++
+        compileStmt s2 scope comp
+compileStmt (IfStmt e1 s1 Nothing) scope comp =
+    let trueStmt = compileStmt s1 scope comp
+    in compileBinComp e1 scope comp ++
+        [OpJump (opListCountByte trueStmt)] ++
+        trueStmt
+
 compileStmt _ _ _ = []
 
 -- get a list of opcode from a function

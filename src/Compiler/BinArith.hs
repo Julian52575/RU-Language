@@ -1,5 +1,6 @@
 module Compiler.BinArith (
-    compileBinArith
+    compileBinArith,
+    opCodeFromExpr
 ) where
 
 import Parser.AST
@@ -10,7 +11,7 @@ import Compiler.CreateVar (getIndexFromStrTable)
 opCodeFromExpr :: Either Expr Int -> Scope -> Compile -> Int -> CodingByte
 opCodeFromExpr (Left (LitInt int)) _ _ _ = CbConst 0xA0 0x01 int
 opCodeFromExpr (Left (LitString str)) _ comp _ = CbConst 0xA0 0x01 (getIndexFromStrTable (stringTable comp) str)
-opCodeFromExpr (Left (Var x)) scope _ _ = CbConst 0xB0 0x00 (getIndexFromStrTable (vars scope) x)
+opCodeFromExpr (Left (Var x)) scope _ _ = CbConst 0xB0 0x01 (getIndexFromStrTable (vars scope) x)
 opCodeFromExpr (Right int) _ _ _ = CbConst 0xB0 0x01 int
 opCodeFromExpr _ _ _ _ = CbConst 0x00 0x00 0x00
 
