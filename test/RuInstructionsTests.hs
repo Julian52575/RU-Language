@@ -202,3 +202,205 @@ spec = do
                 Right resultState -> do
                     let vmVarr = vmVar { returnVariable = RuVariable { ruVariableValue = Int32 0, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True } }
                     resultState `shouldBe` state { variables = vmVarr }
+        it "div int" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 2, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbd, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionDiv baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { returnVariable = RuVariable { ruVariableValue = Int32 21, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True } }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "div by 0" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 0, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionDiv baseInfo (state) of
+                Left err -> do
+                    err `shouldBe` ruExceptionDivByZero
+                Right resultState -> do
+                    False `shouldBe` True --Fail
+        it "Mul int" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 2, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionMul baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { returnVariable = RuVariable { ruVariableValue = Int32 84, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True } }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "Equal int true" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionEq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = True }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "Equal int false" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 43, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionEq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = False }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "Equal str true" $ do
+            let var1 = RuVariable { ruVariableValue = Str "lol", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Str "lol", ruVariableType = ruVariableTypeStr, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionEq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = True }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "Equal str false" $ do
+            let var1 = RuVariable { ruVariableValue = Str "lol", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Str "lol2", ruVariableType = ruVariableTypeStr, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionEq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = False }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "NotEqual int true" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 43, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionNeq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = True }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "NotEqual int false" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionNeq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = False }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "Lesser int" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 43, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionLesser baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = True }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "Lesser str" $ do
+            let var1 = RuVariable { ruVariableValue = Str "lol", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Str "lol2", ruVariableType = ruVariableTypeStr, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionLesser baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = True }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "Greater int" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 43, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionGreater baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = False }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "Greater str" $ do
+            let var1 = RuVariable { ruVariableValue = Str "lol", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Str "lol2", ruVariableType = ruVariableTypeStr, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionGreater baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = False }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "LesserEqual int" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 43, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionLesserEq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = True }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "LesserEqual str" $ do
+            let var1 = RuVariable { ruVariableValue = Str "lol", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Str "lol2", ruVariableType = ruVariableTypeStr, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionLesserEq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = True }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "GreaterEqual int" $ do
+            let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Int32 43, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionGreaterEq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = False }
+                    resultState `shouldBe` state { variables = vmVarr }
+        it "GreaterEqual str" $ do
+            let var1 = RuVariable { ruVariableValue = Str "lol", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
+            let var2 = RuVariable { ruVariableValue = Str "lol2", ruVariableType = ruVariableTypeStr, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var1, var2]]}
+            let state = baseState { variables = vmVar, workerCode = [0xbb, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionGreaterEq baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = vmVar { carry = False }
+                    resultState `shouldBe` state { variables = vmVarr }
