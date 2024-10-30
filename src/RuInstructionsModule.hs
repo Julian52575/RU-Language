@@ -289,7 +289,12 @@ ruInstructionDoOperation "ADD" var1 var2 = case (ruVariableValue var1, ruVariabl
 ruInstructionDoOperation "SUB" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
     (Int32 value1, Int32 value2) -> Just (Int32 (value1 - value2))
     _ -> Nothing
-
+ruInstructionDoOperation "DIV" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> if value2 == 0 then Nothing else Just (Int32 (value1 `div` value2))
+    _ -> Nothing
+ruInstructionDoOperation "MUL" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> Just (Int32 (value1 * value2))
+    _ -> Nothing
 
 ruInstructionOperator :: String -> RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionOperator operation info state = do
@@ -315,6 +320,36 @@ ruInstructionOperator operation info state = do
                 let variabless = variables state
                 let newVariables = variabless { returnVariable = var }
                 let newState = state { variables = newVariables }
+                Right newState
+
+ruInstructionDoComparaison :: String -> RuVariable -> RuVariable -> Maybe Bool
+ruInstructionDoComparaison "EQ?" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> Just (if value1 == value2 then True else False)
+    (Str value1, Str value2) -> Just (if value1 == value2 then True else False)
+    _ -> Nothing
+
+ruInstructionComparator :: String -> RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionComparator comparaison info state = do
+    let ccode = workerCode state
+    let ccodeOffset = workerCodeOffset state
+    let ccodeSize = length ccode
+    if ccodeSize < 17 then Left ruExceptionIncompleteInstruction
+    else do
+        let codingByte = take 1 ccode
+        let codingOperand = codingByteToRuOperand (codingByte !! 0)
+        let operand1 = take 4 (drop 1 ccode)
+        let operand2 = take 4 (drop 5 ccode)
+        let operand3 = take 4 (drop 9 ccode)
+        let operand4 = take 4 (drop 13 ccode)
+        let var1 = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) info state
+        let var2 = ruInstructionGetRuVariableFromBytes operand3 operand4 (codingOperand !! 3) info state
+        if var1 == Nothing || var2 == Nothing then Left ruExceptionInvalidOperation
+        else do
+            let result = ruInstructionDoComparaison comparaison (fromJust var1) (fromJust var2)
+            if result == Nothing then Left ruExceptionInvalidOperation
+            else do
+                let variabless = variables state
+                let newState = state { variables = variabless {carry = fromJust result } }
                 Right newState
 
 ruInstructionAdd :: RuInstruction
@@ -346,18 +381,41 @@ ruInstructionDiv = RuInstruction {
     ruInstructionPrefix = 0x03,
     ruInstructionInfix = 0x02,
     ruInstructionName = "DIV",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionDiv,
     fixedSize = 0
 }
+
+ruInstructionFunctionDiv :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionDiv info state = do
+    let result = ruInstructionOperator "DIV" info state
+    case result of
+        Right _ -> result
+        Left _ -> do
+            let ccode = workerCode state
+            let operand3 = take 4 (drop 9 ccode)
+            let operand4 = take 4 (drop 13 ccode)
+            let codingByte = take 1 ccode
+            let ruOp = codingByteToRuOperand (ccode !! 0)
+            let var = ruInstructionGetRuVariableFromBytes operand3 operand4 (ruOp !! 3) info state
+            if var == Nothing then Left ruExceptionDivByZero
+            else do
+                case ruVariableValue (fromJust var) of
+                    Int32 value -> if value == 0 then Left ruExceptionDivByZero
+                                   else result
+                    _ -> Left ruExceptionDivByZero
+
 
 ruInstructionMul :: RuInstruction
 ruInstructionMul = RuInstruction {
     ruInstructionPrefix = 0x03,
     ruInstructionInfix = 0x03,
     ruInstructionName = "MUL",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionMul,
     fixedSize = 0
 }
+
+ruInstructionFunctionMul :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionMul info state = ruInstructionOperator "MUL" info state
 
 ruInstructionMod :: RuInstruction
 ruInstructionMod = RuInstruction {
@@ -373,9 +431,12 @@ ruInstructionEq = RuInstruction {
     ruInstructionPrefix = 0x03,
     ruInstructionInfix = 0x04,
     ruInstructionName = "EQ?",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionEq,
     fixedSize = 0
 }
+
+ruInstructionFunctionEq :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionEq info state = ruInstructionComparator "EQ?" info state
 
 ruInstructionNeq :: RuInstruction
 ruInstructionNeq = RuInstruction {

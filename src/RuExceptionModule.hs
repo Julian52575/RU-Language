@@ -53,3 +53,6 @@ ruExceptionJumpOutOfBound = RuException ("Trying to jump outside of code.")
 
 ruExceptionInvalidOperation :: RuException
 ruExceptionInvalidOperation = RuException ("Invalid operation.")
+
+ruExceptionDivByZero :: RuException
+ruExceptionDivByZero = RuException ("Division by zero.")
