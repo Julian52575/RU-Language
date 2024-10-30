@@ -9,10 +9,13 @@ import RuFormatModule
 import RuVmModule
 import RuOperandModule
 {--
- - data RuVmState = RuVmState {
-    variableStack :: [RuVariable],
+data RuVmState = RuVmState {
+    variables :: RuVmVariables, 
     workerCodeOffset :: Word32, -- similar to PC
-    workerCode :: [Word8]
+    workerCode :: [Word8],
+    conditionalMode :: Bool,
+    scopeDeep :: Int,
+    toPrint :: String
 } deriving (Eq, Show)
 
 data RuVm = RuVm {
@@ -22,38 +25,97 @@ data RuVm = RuVm {
     codeSize :: Word32,
     ruVmState :: RuVmState
 } deriving (Eq, Show)
+
+data RuFunctionTable = RuFunctionTable {
+    nameIndex :: Word32,
+    codeSectionOffset :: Word32,
+    size :: Word32
+} deriving (Eq, Show)
+
+data RuHeader = RuHeader {
+    fileSize :: Word32,
+    fileVersion :: Word8,
+    functionTableCount :: Word32,
+    strTableOffset :: Word32,
+    strTableCount :: Word32,
+    codeOffset :: Word32,
+    entrypointOffset :: Word32
+} deriving(Eq, Show)
+
+data RuFormat = RuFormat {
+    ruHeader :: RuHeader,
+    ruFunctionTable :: [Word8],
+    strTab :: [Word8],
+    codeSection :: [Word8]
+} deriving (Eq, Show)
 --}
 
 spec :: Spec
 spec = do
-    describe "Convert RuFormat to RuVmState" $ do
+    describe "initRuVmState" $ do
+        let createVar = [0x01, 0x00, 0xB0, 0x00, 0x00, 0x00, 0x01, 0xFF, 0XFF, 0XFF, 0XFF]
+        let createVarSize = length createVar
+        --
+        let codeTab = createVar ++ createVar ++ createVar ++ createVar
+        let fun1 = RuFunctionTable {
+            nameIndex = 0xffffffff, --osef
+            codeSectionOffset = fromIntegral createVarSize, --Commence au 2ème createVar
+            size = 0xff00ff00 --osef
+        }
         let header = RuHeader {
-            fileSize = 0x00,
-            fileVersion = 0x01,
-            functionTableCount = 0x01,
-            strTableOffset = 0x42,
-            strTableCount = 0x01,
-            codeOffset = 0x42,
-            entrypointOffset = 0x02
+            fileSize = 0xff, --osef
+            fileVersion = 0x01, --osef
+            functionTableCount = 0xff, --osef
+            strTableOffset = 0xff, --osef
+            strTableCount = 0xff, --osef
+            codeOffset = 0xff, --osef
+            entrypointOffset = 0x00 --you're cool
         }
-        let funTab = [ 0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22, 0x33, 0x33, 0x33, 0x33]
-        let strTabl = [ 0x00, 0x65, 0x00]
-        let codeSec = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a]
         let format = RuFormat {
-                ruHeader = header,
-                ruFunctionTable = funTab,
-                strTab = strTabl,
-                codeSection = codeSec
+            ruHeader = header, --
+            ruFunctionTable = [], --osef
+            strTab = [], --osef
+            codeSection = codeTab
         }
-        let result = ruFormatToRuVmState format
-        let state = fromRight (error "fromRight error" ) result
-        it "Convert RuFormat to RuVmState" $ do
-            isLeft result `shouldBe` False
-        it "Parse entrypointOffset" $ do
-            workerCodeOffset state `shouldBe` codeOffset (ruHeader format)
-        it "Parse code" $ do
-            let codeOffsetInt = fromIntegral (codeOffset (ruHeader format))
-            workerCode state `shouldBe` drop codeOffsetInt (codeSection format)
+        let info = RuVmInfo {
+            stringTable = ["\0", "a\0"],
+            functionTable = [fun1],
+            code = codeTab,
+            codeSize = (fromIntegral (length codeTab)),
+            dumpMode = False
+        }
+        it "Basic convertion" $ do
+            let expected = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [ [] ],
+                    argumentVariables = [ [] ]
+                },
+                workerCode = drop (fromIntegral (entrypointOffset header)) codeTab,
+                workerCodeOffset = (entrypointOffset header),
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            ruVmStateInit format info `shouldBe` expected
+        it "Entrypoint offset match function start" $ do
+            let header2 = header {
+                entrypointOffset = codeSectionOffset fun1
+            }
+            let format2 = format {
+                ruHeader = header2
+            }
+            let expected = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [ [], [] ],
+                    argumentVariables = [ [], [] ]
+                },
+                workerCode = drop (fromIntegral (entrypointOffset header2)) codeTab,
+                workerCodeOffset = entrypointOffset header2,
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            ruVmStateInit format2 info `shouldBe` expected --scopeDeep 0 with 2 array of variables
 
     describe "Convert RuFormat to RuVmInfo" $ do
         let funSectionBase = [0xa1, 0xa2, 0xa3, 0xa4, 0xb1, 0xb2, 0xb3, 0xb4, 0xc1, 0xc2, 0xc3, 0xc4]

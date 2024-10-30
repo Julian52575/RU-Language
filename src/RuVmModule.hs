@@ -362,14 +362,25 @@ checkVmStateCodeOffset info state
 checkVmState :: RuVmInfo -> RuVmState -> Maybe RuException
 checkVmState info state = checkVmStateCodeOffset info state
 
+isEntrypointOffsetStartOfFunction :: [RuFunctionTable] -> Word32 -> Bool
+isEntrypointOffsetStartOfFunction [] _ = False
+isEntrypointOffsetStartOfFunction (current:next) offset
+    | codeSectionOffset current == offset = True
+    | otherwise                           = isEntrypointOffsetStartOfFunction next offset
 
-ruFormatToRuVmState :: RuFormat -> Either RuException RuVmState
-ruFormatToRuVmState format = do
-    let codeOffsetInt = fromIntegral (codeOffset (ruHeader format))
-    Right RuVmState {
-        variables = defaultRuVmVariables,
-        workerCodeOffset = codeOffset (ruHeader format),
-        workerCode = drop codeOffsetInt (codeSection format),
+ruVmStateInit :: RuFormat -> RuVmInfo -> RuVmState
+ruVmStateInit format info = do
+    let isStartOfFunction = isEntrypointOffsetStartOfFunction (functionTable info) (entrypointOffset (ruHeader format))
+    let startingVariablesArray = case isStartOfFunction of
+                        True -> [ [], [] ]
+                        False -> [ [] ]
+    RuVmState {
+        variables = defaultRuVmVariables {
+            variableStack = startingVariablesArray,
+            argumentVariables = startingVariablesArray
+        },
+        workerCodeOffset = entrypointOffset (ruHeader format),
+        workerCode = drop (fromIntegral (entrypointOffset (ruHeader format))) (codeSection format),
         conditionalMode = False,
         scopeDeep = 0,
         toPrint = []
