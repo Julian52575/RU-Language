@@ -1,5 +1,4 @@
 module Compiler.Function (
-    Function(..),
     getFunctionTable,
     unsetFuncVar,
     getFunctionIndex

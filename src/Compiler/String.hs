@@ -12,6 +12,7 @@ getFunctions (_ : xs) = getFunctions xs
 getFunctions [] = []
 
 argsToString :: [(String, Type, Maybe Expr)] -> [String]
+argsToString ((var, _, Just e1) : xs) = var : findExprString e1 ++ argsToString xs
 argsToString ((var, _, _) : xs) = var : argsToString xs
 argsToString [] = []
 
@@ -71,6 +72,8 @@ findString (ForClassicStmt Nothing e1 (Just e2) stmts : xs) = findExprString e1 
 findString (ForClassicStmt (Just stmt) e1 Nothing stmts : xs) = findString [stmt] ++ findExprString e1 ++ findString stmts ++ findString xs
 
 findString (WhileStmt ex stmts : xs) = findExprString ex ++ findString stmts ++ findString xs
+
+findString (DoWhileStmt stmts e1 : xs) = findString stmts ++ findExprString e1 ++ findString xs
 
 findString (MatchStmt ex patterns : xs) = findExprString ex ++ findMatchString patterns ++ findString xs
 

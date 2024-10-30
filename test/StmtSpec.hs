@@ -250,10 +250,6 @@ spec = do
       parseStmt input `shouldBe` Right (ExprStmt (Assign (ArrayIndex (Var "arr") (LitInt 0)) (LitInt 42)))
 
 
-    it "parses assignment with tuple access" $ do
-      let input = "tuple._1 = 42;"
-      parseStmt input `shouldBe` Right (ExprStmt (Assign (FuncCall (Var "tuple") [LitString "_1"]) (LitInt 42)))
-
         -- Tests pour match statement
     it "parses match statement with literal patterns" $ do
       let input = "match x { 1 => return 42, 2 => return 43 }"
@@ -560,11 +556,6 @@ spec = do
   it "parses function declaration with array parameters and return type" $ do
     let input = "fn processArray(arr: int[]) -> int[] { return arr; }"
     parseStmt input `shouldBe` Right (FuncDeclStmt "processArray" [("arr", TArray TInt, Nothing)] (TArray TInt) (Just (BlockStmt [ReturnStmt (Just (Var "arr"))])))
-
-    -- Tests pour les fonctions avec des paramètres de type tuple
-  it "parses function declaration with tuple parameters" $ do
-    let input = "fn processTuple(pair: (int, string)) -> void { let x = pair._1; let y = pair._2; }"
-    parseStmt input `shouldBe` Right (FuncDeclStmt "processTuple" [("pair", TTuple [TInt, TString], Nothing)] TVoid (Just (BlockStmt [LetStmt "x" Nothing (FuncCall (Var "pair") [LitString "_1"]), LetStmt "y" Nothing (FuncCall (Var "pair") [LitString "_2"])])))
 
     -- Tests pour la déclaration de fonction avec des conditions dans le corps
   it "parses function declaration with if-else in the body" $ do

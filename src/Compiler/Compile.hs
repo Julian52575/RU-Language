@@ -1,9 +1,9 @@
 module Compiler.Compile (
-    -- compileStmt
     compile,
     getScopeFromList,
     compileStmt,
-    compileGlobal
+    compileGlobal,
+    compileFunction
 ) where
 
 import Compiler.Type (Scope(..), OpCode(..), Compile(..), CodingByte(..))
@@ -90,6 +90,8 @@ doBinComp op e1 e2 scope comp =
         GreaterEqual -> [OpGreaterEq (opCodeFromExpr (Left e1) scope comp 0) (opCodeFromExpr (Left e2) scope comp 0)]
 
 compileBinComp :: Expr -> Scope -> Compile -> [OpCode]
+compileBinComp (LitBool True) _ _ = [OpEq (CbConst 0xA0 0x01 0x01) (CbConst 0xA0 0x01 0x01)]
+compileBinComp (LitBool False) _ _ = [OpEq (CbConst 0xA0 0x01 0x00) (CbConst 0xA0 0x01 0x01)]
 compileBinComp (BinComp op e1 e2) scope comp = doBinComp op e1 e2 scope comp
 
 -- get a list of opcode from an stmt
