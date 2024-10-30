@@ -188,3 +188,63 @@ ruInstructionFunctionSetVar _ state = do
             Right newVariables -> do
                 let newState = state { variables = newVariables }
                 Right newState
+
+ruInstructionDoOperation :: String -> RuVariable -> RuVariable -> Maybe RuVariableValue
+ruInstructionDoOperation "ADD" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> Just (Int32 (value1 + value2))
+    (Str value1, Str value2) -> Just (Str (value1 ++ value2))
+    _ -> Nothing
+ruInstructionDoOperation "SUB" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
+    (Int32 value1, Int32 value2) -> Just (Int32 (value1 - value2))
+    _ -> Nothing
+
+
+ruInstructionOperator :: String -> RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionOperator operation info state = do
+    let ccode = workerCode state
+    let ccodeOffset = workerCodeOffset state
+    let ccodeSize = length ccode
+    if ccodeSize < 17 then Left ruExceptionIncompleteInstruction
+    else do
+        let codingByte = take 1 ccode
+        let codingOperand = codingByteToRuOperand (codingByte !! 0)
+        let operand1 = take 4 (drop 1 ccode)
+        let operand2 = take 4 (drop 5 ccode)
+        let operand3 = take 4 (drop 9 ccode)
+        let operand4 = take 4 (drop 13 ccode)
+        let var1 = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) info state
+        let var2 = ruInstructionGetRuVariableFromBytes operand3 operand4 (codingOperand !! 3) info state
+        if var1 == Nothing || var2 == Nothing then Left ruExceptionInvalidOperation
+        else do
+            let result = ruInstructionDoOperation operation (fromJust var1) (fromJust var2)
+            if result == Nothing || (fromJust result) == Na then Left ruExceptionInvalidOperation
+            else do
+                let var = defaultRuVariable { ruVariableType = (ruVariableType (fromJust var1)), ruVariableValue = fromJust result }
+                let variabless = variables state
+                let newVariables = variabless { returnVariable = var }
+                let newState = state { variables = newVariables }
+                Right newState
+
+ruInstructionAdd :: RuInstruction
+ruInstructionAdd = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x00,
+    ruInstructionName = "ADD",
+    ruInstructionFunction = ruInstructionFunctionAdd,
+    fixedSize = 0
+}
+
+ruInstructionFunctionAdd :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionAdd info state = ruInstructionOperator "ADD" info state
+
+ruInstructionSub :: RuInstruction
+ruInstructionSub = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x01,
+    ruInstructionName = "SUB",
+    ruInstructionFunction = ruInstructionFunctionSub,
+    fixedSize = 0
+}
+
+ruInstructionFunctionSub :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionSub info state = ruInstructionOperator "SUB" info state

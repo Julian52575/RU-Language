@@ -50,3 +50,6 @@ ruExceptionJumpOutOfScope = RuException ("Trying to jump outside of current scop
 
 ruExceptionJumpOutOfBound :: RuException
 ruExceptionJumpOutOfBound = RuException ("Trying to jump outside of code.")
+
+ruExceptionInvalidOperation :: RuException
+ruExceptionInvalidOperation = RuException ("Invalid operation.")
