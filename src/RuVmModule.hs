@@ -200,10 +200,10 @@ ruVmVariablesRemoveArgument variabless numero
     | length (variableStack variabless) == 0 = variabless
     | otherwise = case findIndex ruVariableHasId currentStack numero of
         Nothing -> variabless
-        Just iindex -> do
-            let newStack = removeTab currentStack iindex
+        Just index -> do
+            let newStack = removeTab currentStack index
             variabless {
-                argumentVariables = replaceTab (argumentVariables variabless) iindex newStack
+                argumentVariables = replaceTab (argumentVariables variabless) index newStack
             }
     where
         currentStack = (argumentVariables variabless) !! 0
@@ -227,7 +227,7 @@ ruVmStateReadWord8 _ RuOperandNone = Right defaultRuVariable
 ruVmStateReadWord8 state RuOperandConstant
     | length tab < 4      = Left ruExceptionIncompleteInstruction
     | otherwise           = Right RuVariable {
-                                ruVariableValue = Int32 valueInt,
+                                ruVariableValue = Int32 value32bit,
                                 ruVariableType = ruVariableTypeInt,
                                 ruVariableId = 0x00,
                                 ruMutable = False
@@ -239,7 +239,6 @@ ruVmStateReadWord8 state RuOperandConstant
         c = tab !! 2
         d = tab !! 3
         value32bit = word84ToWord32 a b c d
-        valueInt = fromIntegral value32bit
 ruVmStateReadWord8 state RuOperandVariableId
     | length tab < 4      = Left ruExceptionIncompleteInstruction
     | otherwise           = case searchResult of
@@ -292,9 +291,9 @@ ruVmStateReadOperand state
 {-- Helper function for code displacement
  --}
 word32ToInt32 :: Word32 -> Int32
-word32ToInt32 w
-  | w > 0x7FFFFFFF = fromIntegral w - 0x0fffffff
-  | otherwise      = fromIntegral w
+word32ToInt32 w = fromIntegral w
+--  | w > 0x7FFFFFFF = fromIntegral w - 0x100000000
+--  | otherwise      = fromIntegral w
 
 int32ToWord32 :: Int32 -> Word32
 int32ToWord32 i = fromIntegral i

@@ -1085,7 +1085,7 @@ spec = do
                     putStrLn ("Encountered exception: " ++ (show err))
                     False `shouldBe` True
                 Right newState -> do
-                    workerCodeOffset newState `shouldBe` fromIntegral createVarSize
+                    workerCodeOffset newState `shouldBe` createVarSize
                     workerCode newState `shouldBe` (createVar ++ funCode ++ funCode ++ funCode)
                     take 2 (workerCode newState) `shouldBe` [0x01, 0x00]
         it "Move forward in function scope" $ do
@@ -1108,7 +1108,7 @@ spec = do
                     putStrLn ("Encountered exception: " ++ (show err))
                     False `shouldBe` True
                 Right movedState -> do
-                    let neg = ( (fromIntegral createVarSize) * (-1))
+                    let neg = fromIntegral ( (word32ToInt32 createVarSize) * (-1))
                     case ruVmStateJump info movedState neg of
                         Left err -> do
                             putStrLn ("Encountered exception: " ++ (show err) ++ (show neg) )
@@ -1125,7 +1125,7 @@ spec = do
                     putStrLn ("Encountered exception: " ++ (show err))
                     False `shouldBe` True
                 Right movedState -> do
-                    let neg = ( (fromIntegral createVarSize) * (-1))
+                    let neg = fromIntegral ( (word32ToInt32 createVarSize) * (-1))
                     case ruVmStateJump info movedState neg of
                         Left err -> do
                             putStrLn ("Encountered exception: " ++ (show err))
