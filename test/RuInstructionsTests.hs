@@ -404,3 +404,15 @@ spec = do
                 Right resultState -> do
                     let vmVarr = vmVar { carry = False }
                     resultState `shouldBe` state { variables = vmVarr }
+    describe "Args" $ do
+        it "SetArg" $ do
+            let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var]]}
+            let state = baseState { variables = vmVar, workerCode = [0xac, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00] }
+            case ruInstructionFunctionSetArg baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = defaultRuVmVariables { argumentVariables = [[var]] }
+                    resultState `shouldBe` state { variables = vmVarr }

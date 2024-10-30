@@ -198,6 +198,26 @@ ruInstructionSetArg = RuInstruction {
     fixedSize = 0
 }
 
+ruInstructionFunctionSetArg :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionSetArg info state = do
+    let ccode = workerCode state
+    let ccodeOffset = workerCodeOffset state
+    let ccodeSize = length ccode
+    if ccodeSize < 13 then Left ruExceptionIncompleteInstruction
+    else do
+        let codingByte = take 1 ccode
+        let codingOperand = codingByteToRuOperand (codingByte !! 0)
+        let operand1 = take 4 (drop 1 ccode)
+        let operand2 = take 4 (drop 5 ccode)
+        let operand3 = take 4 (drop 9 ccode)
+        let value = ruInstructionGetValueFromBytes operand3 (codingOperand !! 2) state
+        let var1 = defaultRuVariable { ruVariableType = (operand2 !! 3), ruVariableValue = value }
+
+        -- let var = ruVmVariablesUpdateVariable (variables state) (getWord32FromOperand operand1) value
+        let var = ruVmVariablesSetArgument (variables state) (getWord32FromOperand operand1) var1
+        let newState = state { variables = var }
+        Right newState
+
 ruInstructionUnsetArg :: RuInstruction
 ruInstructionUnsetArg = RuInstruction {
     ruInstructionPrefix = 0x01,
