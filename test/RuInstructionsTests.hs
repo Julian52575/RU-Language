@@ -87,7 +87,7 @@ spec = do
                     resultState `shouldBe` baseState { toPrint = "0\n" }
     describe "Vars" $ do
         it "CreateVar with int" $ do
-            let state = baseState { workerCode = [0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x2a] }
+            let state = baseState { workerCode = [0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x2a] }
             case ruInstructionFunctionCreateVar baseInfo (state) of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
@@ -97,7 +97,7 @@ spec = do
                     let vmVar = defaultRuVmVariables { variableStack = [[var]] }
                     resultState `shouldBe` state { variables = vmVar }
         it "CreateVar with str" $ do
-            let state = baseState { workerCode = [0x01, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01] }
+            let state = baseState { workerCode = [0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01] }
             case ruInstructionFunctionCreateVar baseInfo (state) of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
@@ -107,14 +107,14 @@ spec = do
                     let vmVar = defaultRuVmVariables { variableStack = [[var]] }
                     resultState `shouldBe` state { variables = vmVar }
         it "CreateVar with too few operands" $ do
-            let state = baseState { workerCode = [0x01, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00] }
+            let state = baseState { workerCode = [0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00] }
             case ruInstructionFunctionCreateVar baseInfo (state) of
                 Left err -> do
                     err `shouldBe` ruExceptionIncompleteInstruction
                 Right resultState -> do
                     False `shouldBe` True --Fail
         it "SetTmpVarInt" $ do
-            let state = baseState { workerCode = [0x01, 0x02, 0xa0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x2a] }
+            let state = baseState { workerCode = [0xa0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x2a] }
             case ruInstructionFunctionSetTmpVar baseInfo (state) of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
@@ -125,7 +125,7 @@ spec = do
                     resultState `shouldBe` state { variables = vmVar }
         
         it "SetTmpVarStr" $ do
-            let state = baseState { workerCode = [0x01, 0x02, 0xa0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01] }
+            let state = baseState { workerCode = [0xa0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01] }
             case ruInstructionFunctionSetTmpVar baseInfo (state) of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
@@ -136,7 +136,7 @@ spec = do
                     resultState `shouldBe` state { variables = vmVar }
 
         it "SetTmpVar with too few operands" $ do
-            let state = baseState { workerCode = [0x01, 0x02, 0xa0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00] }
+            let state = baseState { workerCode = [0xa0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00] }
             case ruInstructionFunctionSetTmpVar baseInfo (state) of
                 Left err -> do
                     err `shouldBe` ruExceptionIncompleteInstruction
@@ -146,7 +146,7 @@ spec = do
         it "SetTmpVar with id" $ do
             let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
             let vmVar = defaultRuVmVariables { variableStack = [[var]]}
-            let state = baseState { variables = vmVar, workerCode = [0x01, 0x02, 0xb0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00] }
+            let state = baseState { variables = vmVar, workerCode = [0xb0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00] }
             case ruInstructionFunctionSetTmpVar baseInfo (state) of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
@@ -157,7 +157,7 @@ spec = do
         it "SetVar" $ do
             let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
             let vmVar = defaultRuVmVariables { variableStack = [[var]]}
-            let state = baseState { variables = vmVar, workerCode = [0x01, 0x01, 0xa0 ,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04] }
+            let state = baseState { variables = vmVar, workerCode = [0xa0 ,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04] }
             case ruInstructionFunctionSetVar baseInfo (state) of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)

@@ -93,8 +93,8 @@ getWord32FromOperand operand = do
 
 ruInstructionGetVariableFromCode :: [Word8] -> RuVmInfo -> RuVariable
 ruInstructionGetVariableFromCode ccode info = do
-    let operand1 = take 4 (drop 2 ccode)
-    let operand2 = take 4 (drop 6 ccode)
+    let operand1 = take 4 ccode
+    let operand2 = take 4 (drop 4 ccode)
     let var = defaultRuVariable { ruVariableType = (operand1 !! 3) }
     if operand1 !! 3 == ruVariableTypeInt then var { ruVariableValue = Int32 (getWord32FromOperand operand2) }
     else if operand1 !! 3 == ruVariableTypeStr then var { ruVariableValue = Str (case ruVmInfoGetStringFromStringTable info (getWord32FromOperand operand2) of
@@ -107,7 +107,7 @@ ruInstructionFunctionCreateVar vminfo state = do
     let ccode = workerCode state
     let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
-    if ccodeSize < 10 then Left ruExceptionIncompleteInstruction
+    if ccodeSize < 8 then Left ruExceptionIncompleteInstruction
     else do
         let var = ruInstructionGetVariableFromCode ccode vminfo
         let newVariables = ruVmVariablesSetVariableInCurrentScope (variables state) var
@@ -139,12 +139,12 @@ ruInstructionFunctionSetTmpVar vminfo state = do
     let ccode = workerCode state
     let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
-    if ccodeSize < 11 then Left ruExceptionIncompleteInstruction
+    if ccodeSize < 9 then Left ruExceptionIncompleteInstruction
     else do
-        let codingByte = take 1 (drop 2 ccode)
+        let codingByte = take 1 ccode
         let codingOperand = codingByteToRuOperand (codingByte !! 0)
-        let operand1 = take 4 (drop 3 ccode)
-        let operand2 = take 4 (drop 7 ccode)
+        let operand1 = take 4 (drop 1 ccode)
+        let operand2 = take 4 (drop 5 ccode)
         let var = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) vminfo state
         if var == Nothing then Left $ ruExceptionIncompleteInstruction
         else do
@@ -174,12 +174,12 @@ ruInstructionFunctionSetVar _ state = do
     let ccode = workerCode state
     let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
-    if ccodeSize < 11 then Left ruExceptionIncompleteInstruction
+    if ccodeSize < 9 then Left ruExceptionIncompleteInstruction
     else do
-        let codingByte = take 1 (drop 2 ccode)
+        let codingByte = take 1 ccode
         let codingOperand = codingByteToRuOperand (codingByte !! 0)
-        let operand1 = take 4 (drop 3 ccode)
-        let operand2 = take 4 (drop 7 ccode)
+        let operand1 = take 4 (drop 1 ccode)
+        let operand2 = take 4 (drop 5 ccode)
         let value = ruInstructionGetValueFromBytes operand2 (codingOperand !! 1) state
 
         let var = ruVmVariablesUpdateVariable (variables state) (getWord32FromOperand operand1) value
