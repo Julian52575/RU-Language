@@ -53,6 +53,8 @@ compileBinArith (BinArith op e1 (BinArith op1 ee1 ee2)) scope comp start depth =
         [OpUnsetReturn (start + depth)] ++
         [OpUnsetVar (start + depth + 1)]
 
+
+
 compileBinArith (BinArith op e1 e2) scope comp start depth =
     doBinArith op (Left e1) (Left e2) scope comp ++ [OpUnsetReturn (start + depth)]
 
