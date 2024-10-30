@@ -299,7 +299,7 @@ word32ToInt32 w
 int32ToWord32 :: Int32 -> Word32
 int32ToWord32 i = fromIntegral i
 
-    -- Comment on gère les négatifs avec word32 ? On converti en Word32
+    -- Comment on gère les négatifs avec word32 ? On converti en Int32
 ruVmStateJump :: RuVmInfo -> RuVmState -> Word32 -> Either RuException RuVmState --TODO
 ruVmStateJump info state offset
     | fromIntegral newOffset > length (code info)    = Left ruExceptionJumpOutOfBound --En dehors du code
@@ -320,6 +320,38 @@ ruVmStateJump info state offset
             workerCode = drop (fromIntegral newOffset) (code info)
         }
 ruVmStateJump _ _ _ = Left (RuException "ruVmStateJump pattern error")
+
+
+{-- Scope management
+ --}
+ruVmStateCreateScope :: RuVmState -> RuVmState
+ruVmStateCreateScope state = newState
+    where
+        oldVars = variables state
+        newVariables = oldVars {
+            variableStack = ([[]] ++ (variableStack oldVars)),
+            argumentVariables = ([[]] ++ (argumentVariables oldVars))
+        }
+        newState = state {
+            variables = newVariables,
+            scopeDeep = (scopeDeep state) + 1
+        }
+
+ruVmStateExitScope :: RuVmState -> RuVmState
+ruVmStateExitScope state = do
+    let newStack = if length oldStack > 1 then drop 1 oldStack else [[]]
+    let newArg = if length oldArg > 1 then drop 1 oldArg else [[]]
+    state {
+        variables = oldVars {
+            variableStack = newStack,
+            argumentVariables = newArg
+        },
+        scopeDeep = (scopeDeep state) - 1
+    }
+    where
+        oldVars = variables state
+        oldStack = variableStack oldVars
+        oldArg = argumentVariables oldVars
 
 
 {-- VmState error handling

@@ -1140,3 +1140,98 @@ spec = do
                 Left err -> err `shouldBe` ruExceptionJumpOutOfBound
                 Right _ -> False `shouldBe` True
 
+--ruVmStateCreateNewScope :: RuVmState -> RuVmState
+--ruVmStateExitScope :: RuVmState -> RuVmState
+    describe "ruVmStateCreateNewScope" $ do
+        let var = defaultRuVariable {
+            ruVariableValue = Str "Lol",
+            ruVariableType = ruVariableTypeStr
+        }
+        it "Create the first scope" $ do
+            let baseState = RuVmState {
+                variables = defaultRuVmVariables {
+                    variableStack = [ ],
+                    argumentVariables = []
+                },
+                workerCodeOffset = 0x15,
+                workerCode = [ 0xFF ],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            let expected = baseState {
+                variables = (variables baseState) {
+                    variableStack = [ [] ],
+                    argumentVariables = [ [] ]
+                },
+                scopeDeep = 1
+            }
+            ruVmStateCreateScope baseState `shouldBe` expected
+        it "Create the nth scope" $ do
+            let vars = defaultRuVmVariables {
+                variableStack = [ [var, var], [var] ],
+                argumentVariables = [ [var, var], [var] ]
+            }
+            let baseState = RuVmState {
+                variables = vars,
+                workerCodeOffset = 0x15,
+                workerCode = [ 0xFF ],
+                conditionalMode = False,
+                scopeDeep = 1,
+                toPrint = []
+            }
+            let expected = baseState {
+                variables = (variables baseState) {
+                    variableStack = [ [], [var, var], [var] ],
+                    argumentVariables = [ [], [var, var], [var] ]
+                },
+                scopeDeep = 2
+            }
+            ruVmStateCreateScope baseState `shouldBe` expected
+    describe "ruVmStateExitScope" $ do
+        let var = defaultRuVariable {
+            ruVariableValue = Str "Lol",
+            ruVariableType = ruVariableTypeStr
+        }
+        it "Remove a scope" $ do
+            let vars = defaultRuVmVariables {
+                variableStack = [ [var], [var] ],
+                argumentVariables = [ [var], [var] ]
+            }
+            let baseState = RuVmState {
+                variables = vars,
+                workerCodeOffset = 0x15,
+                workerCode = [ 0xFF ],
+                conditionalMode = False,
+                scopeDeep = 1,
+                toPrint = []
+            }
+            let expected = baseState {
+                variables = (variables baseState) {
+                    variableStack = [ [var] ],
+                    argumentVariables = [ [var] ]
+                },
+                scopeDeep = 0
+            }
+            ruVmStateExitScope baseState `shouldBe` expected
+        it "Empty the only scope" $ do
+            let vars = defaultRuVmVariables {
+                variableStack = [ [var] ],
+                argumentVariables = [ [var] ]
+            }
+            let baseState = RuVmState {
+                variables = vars,
+                workerCodeOffset = 0x15,
+                workerCode = [ 0xFF ],
+                conditionalMode = False,
+                scopeDeep = 0,
+                toPrint = []
+            }
+            let expected = baseState {
+                variables = (variables baseState) {
+                    variableStack = [ [] ],
+                    argumentVariables = [ [] ]
+                },
+                scopeDeep = -1
+            }
+            ruVmStateExitScope baseState `shouldBe` expected
