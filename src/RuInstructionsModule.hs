@@ -534,7 +534,7 @@ ruInstructionGreaterEq = RuInstruction {
     ruInstructionPrefix = 0x03,
     ruInstructionInfix = 0x0a,
     ruInstructionName = "GREATEREQ?",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionGreaterEq,
     fixedSize = 0
 }
 
