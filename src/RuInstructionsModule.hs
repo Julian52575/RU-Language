@@ -189,6 +189,98 @@ ruInstructionFunctionSetVar _ state = do
                 let newState = state { variables = newVariables }
                 Right newState
 
+ruInstructionSetArg :: RuInstruction
+ruInstructionSetArg = RuInstruction {
+    ruInstructionPrefix = 0x01,
+    ruInstructionInfix = 0x03,
+    ruInstructionName = "SETARG",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
+
+ruInstructionUnsetArg :: RuInstruction
+ruInstructionUnsetArg = RuInstruction {
+    ruInstructionPrefix = 0x01,
+    ruInstructionInfix = 0x04,
+    ruInstructionName = "UNSETARG",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 8
+}
+
+ruInstructionSetReturn :: RuInstruction
+ruInstructionSetReturn = RuInstruction {
+    ruInstructionPrefix = 0x01,
+    ruInstructionInfix = 0x05,
+    ruInstructionName = "SETRETURN",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
+
+ruInstructionUnsetReturn :: RuInstruction
+ruInstructionUnsetReturn = RuInstruction {
+    ruInstructionPrefix = 0x01,
+    ruInstructionInfix = 0x06,
+    ruInstructionName = "UNSETRETURN",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 6
+}
+
+ruInstructionDeleteVar :: RuInstruction
+ruInstructionDeleteVar = RuInstruction {
+    ruInstructionPrefix = 0x01,
+    ruInstructionInfix = 0x07,
+    ruInstructionName = "DELETEVAR",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 6
+}
+
+
+
+ruInstructionReturn :: RuInstruction
+ruInstructionReturn = RuInstruction {
+    ruInstructionPrefix = 0x02,
+    ruInstructionInfix = 0x00,
+    ruInstructionName = "RETURN",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 2
+}
+
+ruInstructionCall :: RuInstruction
+ruInstructionCall = RuInstruction {
+    ruInstructionPrefix = 0x02,
+    ruInstructionInfix = 0x01,
+    ruInstructionName = "CALL",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 6
+}
+
+ruInstructionJump :: RuInstruction
+ruInstructionJump = RuInstruction {
+    ruInstructionPrefix = 0x02,
+    ruInstructionInfix = 0x02,
+    ruInstructionName = "JUMP",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 6
+}
+
+ruInstructionJumpCarry :: RuInstruction
+ruInstructionJumpCarry = RuInstruction {
+    ruInstructionPrefix = 0x02,
+    ruInstructionInfix = 0x03,
+    ruInstructionName = "JUMPCARRY",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 6
+}
+
+ruInstructionJumpNotCarry :: RuInstruction
+ruInstructionJumpNotCarry = RuInstruction {
+    ruInstructionPrefix = 0x02,
+    ruInstructionInfix = 0x04,
+    ruInstructionName = "JUMPNOTCARRY",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 6
+}
+
 ruInstructionDoOperation :: String -> RuVariable -> RuVariable -> Maybe RuVariableValue
 ruInstructionDoOperation "ADD" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
     (Int32 value1, Int32 value2) -> Just (Int32 (value1 + value2))
@@ -248,3 +340,84 @@ ruInstructionSub = RuInstruction {
 
 ruInstructionFunctionSub :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionSub info state = ruInstructionOperator "SUB" info state
+
+ruInstructionDiv :: RuInstruction
+ruInstructionDiv = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x02,
+    ruInstructionName = "DIV",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
+
+ruInstructionMul :: RuInstruction
+ruInstructionMul = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x03,
+    ruInstructionName = "MUL",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
+
+ruInstructionMod :: RuInstruction
+ruInstructionMod = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x06,
+    ruInstructionName = "MOD",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
+
+ruInstructionEq :: RuInstruction
+ruInstructionEq = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x04,
+    ruInstructionName = "EQ?",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
+
+ruInstructionNeq :: RuInstruction
+ruInstructionNeq = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x05,
+    ruInstructionName = "NEQ?",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
+
+ruInstructionLesser :: RuInstruction
+ruInstructionLesser = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x07,
+    ruInstructionName = "LESSER?",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
+
+ruInstructionLesserEq :: RuInstruction
+ruInstructionLesserEq = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x08,
+    ruInstructionName = "LESSEREQ?",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
+
+ruInstructionGreater :: RuInstruction
+ruInstructionGreater = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x09,
+    ruInstructionName = "GREATER?",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
+
+ruInstructionGreaterEq :: RuInstruction
+ruInstructionGreaterEq = RuInstruction {
+    ruInstructionPrefix = 0x03,
+    ruInstructionInfix = 0x0a,
+    ruInstructionName = "GREATEREQ?",
+    ruInstructionFunction = ruInstructionFunctionNoop,
+    fixedSize = 0
+}
