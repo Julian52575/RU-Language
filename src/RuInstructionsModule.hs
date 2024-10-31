@@ -194,7 +194,7 @@ ruInstructionSetArg = RuInstruction {
     ruInstructionPrefix = 0x01,
     ruInstructionInfix = 0x03,
     ruInstructionName = "SETARG",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionSetArg,
     fixedSize = 0
 }
 
@@ -232,7 +232,7 @@ ruInstructionSetReturn = RuInstruction {
     ruInstructionPrefix = 0x01,
     ruInstructionInfix = 0x05,
     ruInstructionName = "SETRETURN",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionSetReturn,
     fixedSize = 0
 }
 
