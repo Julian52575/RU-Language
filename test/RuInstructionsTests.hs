@@ -414,5 +414,5 @@ spec = do
                     putStrLn ("Error encountered: " ++ show err)
                     False `shouldBe` True --Fail
                 Right resultState -> do
-                    let vmVarr = defaultRuVmVariables { argumentVariables = [[var]] }
+                    let vmVarr = vmVar { argumentVariables = [[var]] }
                     resultState `shouldBe` state { variables = vmVarr }
