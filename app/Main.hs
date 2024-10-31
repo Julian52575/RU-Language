@@ -97,6 +97,8 @@ printCodeDebug limit (current:next) count group = do
     printCodeDebug (limit - 1) next (count + 1) group
 printCodeDebug _ _ _ _ = return ()
 
+{-- Error handler
+ --}
 printCodeBeforePc :: RuVmInfo -> Word32 -> IO ()
 printCodeBeforePc info pc = do
     printf "0x%08x:\t" (startIndex)
@@ -104,7 +106,6 @@ printCodeBeforePc info pc = do
     where
         startIndex = if pc < 0x10 then 0x00 else pc - 0x10
         len        = if pc < 0x10 then fromIntegral pc else 16
-        
 
 handleException :: RuVmInfo -> RuVmState -> RuException -> IO ()
 handleException info state except = do
@@ -116,12 +117,24 @@ handleException info state except = do
     printf "0x%08x:\t" (pc + 0x10)
     printCodeDebug 16 (take 16 (drop 16 (workerCode state))) 0 0
 
+exitRuVm :: RuVmInfo -> RuVmState -> IO ()
+exitRuVm info state = 
+    case dumpMode info of
+        True -> return ()
+        False -> printRuVariable (returnVariable (variables state)) -- On a finit le travail
+
+{-- Main loop
+ --}
 ruVmLoop :: RuVmInfo -> RuVmState -> IO ()
 ruVmLoop info state
+    | workerCode state == [] =
+        case dumpMode info of
+            True -> exitRuVm info state
+            False -> handleException info state (RuException "Reach end of code without return or call.")
     | toPrint state /= []           = do -- Fait les print et recursif
         putStr (toPrint state)
         ruVmLoop info (state { toPrint = [] })
-    | scopeDeep state == (-1)       = printRuVariable (returnVariable (variables state)) -- On a finit le travail
+    | scopeDeep state == (-1)       = exitRuVm info state
     | length (workerCode state) < 2 = handleException info state ruExceptionIncompleteInstruction
     | otherwise                     =
         case runInstruction info state of
