@@ -26,5 +26,7 @@ parseFromFile path = do
     case result of
         Left err -> putStrLn $ "Parse error:\n" ++ err
         Right ast -> do 
-            putStrLn $ "Successfully parsed AST:\n" ++ show ast
+            -- putStrLn $ "Successfully parsed AST:\n" ++ show ast
+            putStrLn $ "Successfully parsed AST:\n"
             test ast
+            putStrLn "Output written to out.bin"

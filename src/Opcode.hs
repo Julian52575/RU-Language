@@ -48,6 +48,4 @@ test ast = do
     let headerByteString = headerToByteString header
     let codeByteString = B.pack $ opCodeToByteString $ globalCompiled ++ (concat compiled')
 
-    print $ globalCompiled
-    print $ compiled'
     B.writeFile "out.bin" $ B.append headerByteString codeByteString

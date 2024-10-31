@@ -104,13 +104,13 @@ stringTableToHex (x:xs) = stringToHex x ++ stringTableToHex xs
 headerToByteString :: Header -> B.ByteString
 headerToByteString (Header magic checkSum version functionTableCount stringTableOffset stringTableSize codeOffset firstInstructionOffset unused stringTableHex hFunctionTable) =
     let magic' = magic ++ replicate (5 - length magic) 0x00
-        checkSum' = [fromIntegral checkSum, fromIntegral $ shiftR checkSum 8]
-        version' = [fromIntegral version]
-        functionTableCount' = [fromIntegral functionTableCount, fromIntegral $ shiftR functionTableCount 8, fromIntegral $ shiftR functionTableCount 16, fromIntegral $ shiftR functionTableCount 24]
-        stringTableOffset' = [fromIntegral stringTableOffset, fromIntegral $ shiftR stringTableOffset 8, fromIntegral $ shiftR stringTableOffset 16, fromIntegral $ shiftR stringTableOffset 24]
-        stringTableSize' = [fromIntegral stringTableSize, fromIntegral $ shiftR stringTableSize 8, fromIntegral $ shiftR stringTableSize 16, fromIntegral $ shiftR stringTableSize 24]
-        codeOffset' = [fromIntegral codeOffset, fromIntegral $ shiftR codeOffset 8, fromIntegral $ shiftR codeOffset 16, fromIntegral $ shiftR codeOffset 24]
-        firstInstructionOffset' = [fromIntegral firstInstructionOffset, fromIntegral $ shiftR firstInstructionOffset 8, fromIntegral $ shiftR firstInstructionOffset 16, fromIntegral $ shiftR firstInstructionOffset 24]
+        checkSum' = reverse [fromIntegral checkSum, fromIntegral $ shiftR checkSum 8]
+        version' = reverse [fromIntegral version]
+        functionTableCount' = reverse [fromIntegral functionTableCount, fromIntegral $ shiftR functionTableCount 8, fromIntegral $ shiftR functionTableCount 16, fromIntegral $ shiftR functionTableCount 24]
+        stringTableOffset' = reverse [fromIntegral stringTableOffset, fromIntegral $ shiftR stringTableOffset 8, fromIntegral $ shiftR stringTableOffset 16, fromIntegral $ shiftR stringTableOffset 24]
+        stringTableSize' = reverse [fromIntegral stringTableSize, fromIntegral $ shiftR stringTableSize 8, fromIntegral $ shiftR stringTableSize 16, fromIntegral $ shiftR stringTableSize 24]
+        codeOffset' = reverse [fromIntegral codeOffset, fromIntegral $ shiftR codeOffset 8, fromIntegral $ shiftR codeOffset 16, fromIntegral $ shiftR codeOffset 24]
+        firstInstructionOffset' = reverse [fromIntegral firstInstructionOffset, fromIntegral $ shiftR firstInstructionOffset 8, fromIntegral $ shiftR firstInstructionOffset 16, fromIntegral $ shiftR firstInstructionOffset 24]
 
     in B.pack $ magic' ++ checkSum' ++ version' ++ functionTableCount' ++ stringTableOffset' ++ stringTableSize' ++ codeOffset' ++ firstInstructionOffset' ++ unused ++ hFunctionTable ++ stringTableHex
 
@@ -132,8 +132,15 @@ addGlobalOffset :: Int -> [Function] -> [Function]
 addGlobalOffset _ [] = []
 addGlobalOffset offset (Function index name (Just offset') size : xs) = Function index name (Just $ offset + offset') size : addGlobalOffset offset xs
 
+intToWord32ListFunction :: Int -> [Word8]
+intToWord32ListFunction n = [fromIntegral (shiftR n 24), fromIntegral (shiftR n 16), fromIntegral (shiftR n 8), fromIntegral n]
+
 functionToByte :: Function -> [Word8]
-functionToByte (Function index _ offset size) = [fromIntegral index] ++ [fromIntegral $ fromMaybe 0 offset] ++ [fromIntegral $ fromMaybe 0 size]
+functionToByte (Function index _ offset size) =
+    let indexBytes = intToWord32ListFunction index
+        offsetBytes = intToWord32ListFunction $ fromMaybe 0 offset
+        sizeBytes = intToWord32ListFunction $ fromMaybe 0 size
+    in indexBytes ++ offsetBytes ++ sizeBytes
 
 getHeader :: Compile -> [OpCode] -> [[OpCode]] -> Header
 getHeader comp globalOp opcodes =
