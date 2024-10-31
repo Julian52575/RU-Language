@@ -140,6 +140,7 @@ printRuFormat format = do
     printRuFunctionTableArray string funTab
     putStrLn "String Table:"
     mapM_ (putStrLn) string
+    putStrLn "\nCode:"
 
 
 {--
@@ -278,5 +279,4 @@ fileNameToRuFormat fileName = runExceptT $ do
 --     if (isLeft result == True) then throwE (fromLeft ruExceptionGenericFileError result)
 --     else return $ (fromRight defaultRuFormat result)
 --
-ruFormatIsValid :: RuFormat -> Either RuException RuFormat
-ruFormatIsValid _ = Left ruExceptionGenericFileError --TODO
+

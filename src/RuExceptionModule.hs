@@ -1,10 +1,11 @@
 module RuExceptionModule where
 
 import Data.Word
-import Numeric
+import Text.Printf (printf)
 
 newtype RuException = RuException String
     deriving (Eq, Show)
+
 
 ruExceptionInvalidProgramCounter :: RuException
 ruExceptionInvalidProgramCounter = RuException "Invalid program counter"
@@ -30,20 +31,17 @@ ruExceptionBadFunctionTableCount = RuException "Invalid function table count"
 ruExceptionIncompleteInstruction :: RuException
 ruExceptionIncompleteInstruction = RuException "Instruction is incomplete."
 
-ruExceptionUnknowInstruction :: RuException
-ruExceptionUnknowInstruction = RuException "Unknow instruction."
-
-ruExceptionUnknowOpcode :: Word8 -> Word8 -> RuException
-ruExceptionUnknowOpcode p i = RuException ("Unknow opcode 0x" ++ (showHex p "??") ++ (showHex i "??"))
+ruExceptionUnknowInstruction :: Word8 -> Word8-> RuException
+ruExceptionUnknowInstruction p i = RuException ("Unknow instruction 0x" ++ (printf "%02x" p) ++ (printf "-%02x" i) ++ ".")
 
 ruExceptionInvalidCodingByte :: RuException
 ruExceptionInvalidCodingByte = RuException "Invalid codingByte using 0x01 bit pair."
 
 ruExceptionUnknowVariable :: Word32 -> RuException
-ruExceptionUnknowVariable idd = RuException ("Unknow variable id: " ++ showHex idd "??")
+ruExceptionUnknowVariable idd = RuException ("Unknow variable id: " ++ printf "0x%08x" idd)
 
 ruExceptionVariableAlreadyExists :: Word32 -> RuException
-ruExceptionVariableAlreadyExists idd = RuException ("Variable id already exists: " ++ showHex idd "??")
+ruExceptionVariableAlreadyExists idd = RuException ("Variable id already exists: " ++ printf "0x%08x" idd)
 
 ruExceptionJumpOutOfScope :: RuException
 ruExceptionJumpOutOfScope = RuException ("Trying to jump outside of current scope.")

@@ -12,8 +12,10 @@ import RuInstructionsModule
 ruInstructionListPrefix0x00 :: [ RuInstruction ]
 ruInstructionListPrefix0x00 = [ ruInstructionNoop, ruInstructionPrint, ruInstructionPrintLn ]
 
+ruInstructionListPrefix0x01 = [ ruInstructionCreateVar ]
+
 ruInstructionList :: [ [RuInstruction] ]
-ruInstructionList = [ ruInstructionListPrefix0x00 ]
+ruInstructionList = [ ruInstructionListPrefix0x00, ruInstructionListPrefix0x01 ]
 
 {--
  --}

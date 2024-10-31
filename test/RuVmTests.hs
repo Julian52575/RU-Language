@@ -220,7 +220,7 @@ spec = do
             }
             (ruVmVariablesGetVariableInCurrentScope baseVariables 0x01) `shouldBe` Nothing
 
---ruVmVariablesGetVariableInGlobalScope :: RuVmVariables -> Word8 -> Maybe RuVariable --TODO
+--ruVmVariablesGetVariableInGlobalScope :: RuVmVariables -> Word8 -> Maybe RuVariable
     describe "ruVmVariablesGetVariableInGlobalScope" $ do
         it "get existing variable" $ do
             let badVar = RuVariable {

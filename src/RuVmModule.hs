@@ -290,6 +290,7 @@ ruVmStateReadOperand state
 
 {-- Helper function for code displacement
  --}
+
 word32ToInt32 :: Word32 -> Int32
 word32ToInt32 w = fromIntegral w
 --  | w > 0x7FFFFFFF = fromIntegral w - 0x100000000
@@ -416,21 +417,6 @@ ruFormatToRuVmInfo format = RuVmInfo {
 }
     where
         codSiz = (fileSize (ruHeader format)) - (codeOffset (ruHeader format))
-
-{-- Get a RuVm from a fileName
- --}
-fileNameToRuVm :: String -> IO (Either RuException RuVmInfo)
-fileNameToRuVm fileName = runExceptT $ do --lire fichier
-    byteString <- liftIO $ BS.readFile fileName
-    let byteList = BS.unpack byteString
-    let result = RF.fileContentToRuFormat byteList
-    case result of
-        Left err -> throwE err
-        Right format -> do
-            case ruFormatIsValid format of
-                Left err -> throwE err
-                Right validFormat -> return (ruFormatToRuVmInfo validFormat)
-
 
 
 {-- Helper function to update program counter
