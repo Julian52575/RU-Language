@@ -263,6 +263,24 @@ ruInstructionUnsetReturn = RuInstruction {
     fixedSize = 6
 }
 
+ruInstructionFunctionUnsetReturn :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionUnsetReturn info state = do
+    let ccode = workerCode state
+    let ccodeOffset = workerCodeOffset state
+    let ccodeSize = length ccode
+    if ccodeSize < 4 then Left ruExceptionIncompleteInstruction
+    else do
+        let operand = take 4 ccode
+        let varId = getWord32FromOperand operand
+        let returnVar = returnVariable (variables state)
+        let updatedVars = ruVmVariablesUpdateVariable (variables state) varId (ruVariableValue returnVar)
+        case updatedVars of
+            Left err -> Left err
+            Right newVars -> do
+                let newVarss = newVars { returnVariable = defaultRuVariable }
+                let newState = state { variables = newVarss }
+                Right newState
+
 ruInstructionDeleteVar :: RuInstruction
 ruInstructionDeleteVar = RuInstruction {
     ruInstructionPrefix = 0x01,

@@ -438,3 +438,15 @@ spec = do
                 Right resultState -> do
                     let vmVarr = vmVar { returnVariable = var }
                     resultState `shouldBe` state { variables = vmVarr }
+        it "UnSetReturn" $ do
+            let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let retvar = RuVariable { ruVariableValue = Int32 84, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var]], returnVariable = retvar }
+            let state = baseState { variables = vmVar, workerCode = [0x00, 0x00, 0x00, 0x00] }
+            case ruInstructionFunctionUnsetReturn baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = defaultRuVmVariables { variableStack = [[retvar]], returnVariable = defaultRuVariable}
+                    resultState `shouldBe` state { variables = vmVarr }
