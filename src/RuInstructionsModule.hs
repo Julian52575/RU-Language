@@ -236,6 +236,24 @@ ruInstructionSetReturn = RuInstruction {
     fixedSize = 0
 }
 
+ruInstructionFunctionSetReturn :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionSetReturn info state = do
+    let ccode = workerCode state
+    let ccodeOffset = workerCodeOffset state
+    let ccodeSize = length ccode
+    if ccodeSize < 9 then Left ruExceptionIncompleteInstruction
+    else do
+        let codingByte = take 1 ccode
+        let codingOperand = codingByteToRuOperand (codingByte !! 0)
+        let operand1 = take 4 (drop 1 ccode)
+        let operand2 = take 4 (drop 5 ccode)
+        let value = ruInstructionGetValueFromBytes operand2 (codingOperand !! 1) state
+        let var = defaultRuVariable { ruVariableType = (operand1 !! 3), ruVariableValue = value }
+        let variabless = variables state
+        let newVariables = variabless { returnVariable = var }
+        let newState = state { variables = newVariables }
+        Right newState
+
 ruInstructionUnsetReturn :: RuInstruction
 ruInstructionUnsetReturn = RuInstruction {
     ruInstructionPrefix = 0x01,
