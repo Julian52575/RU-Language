@@ -7,25 +7,25 @@ worker(ruFile& ru, instructionFactory& facto)
 {
     ruInstruction worker;
 
-    worker = facto.createVar(RU_VARTYPE_INT, 0x01010101);
+    worker = facto.createVar(RU_VARTYPE_INT, 0xaaaaaaaa);
     ru.addInstruction(worker);
-    worker = facto.createVar(RU_VARTYPE_INT, 0x02020202);
+    worker = facto.createVar(RU_VARTYPE_INT, 0xbbbbbbbb);
     ru.addInstruction(worker);
     //function1
-    worker = facto.createVar(RU_VARTYPE_INT, 0x01010101);
+    worker = facto.createVar(RU_VARTYPE_INT, 0xcccccccc);
     worker.setFunctionStart("function1");
     ru.addInstruction(worker);
-    worker = facto.createVar(RU_VARTYPE_INT, 0x02020202);
+    worker = facto.createVar(RU_VARTYPE_INT, 0xdddddddd);
     ru.addInstruction(worker);
-    worker = facto.createVar(RU_VARTYPE_INT, 0x03030303);
+    worker = facto.createVar(RU_VARTYPE_INT, 0xeeeeeeee);
     ru.addInstruction(worker);
     //function2
-    worker = facto.createVar(RU_VARTYPE_INT, 0x01010101);
+    worker = facto.createVar(RU_VARTYPE_INT, 0xffffffff);
     worker.setFunctionStart("function2");
     ru.addInstruction(worker);
-    worker = facto.createVar(RU_VARTYPE_INT, 0x02020202);
+    worker = facto.createVar(RU_VARTYPE_INT, 0xaaaaaaaa);
     ru.addInstruction(worker);
-    worker = facto.createVar(RU_VARTYPE_INT, 0x000000FF);
+    worker = facto.createVar(RU_VARTYPE_INT, 0xbbbbbbbb);
     ru.addInstruction(worker);
 }
 

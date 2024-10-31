@@ -55,6 +55,6 @@ typedef enum RU_OPERAND {
     RU_OPERAND_VAR_ID = 0b11
 } RU_OPERAND;
 
-#define RU_VARTYPE_INT      (uint8_t) 0X01
-#define RU_VARTYPE_STR      (uint8_t) 0x02
-#define RU_VARTYPE_FUN_PTR  (uint8_t) 0x03
+#define RU_VARTYPE_INT      (uint32_t) 0X01
+#define RU_VARTYPE_STR      (uint32_t) 0x02
+#define RU_VARTYPE_FUN_PTR  (uint32_t) 0x03

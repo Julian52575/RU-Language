@@ -109,7 +109,7 @@ std::string ruInstruction::getFunctionName(void) const
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-ruInstruction instructionFactory::createVar(uint8_t varType, uint32_t operand2)
+ruInstruction instructionFactory::createVar(uint32_t varType, uint32_t operand2)
 {
     ruInstruction result;
 

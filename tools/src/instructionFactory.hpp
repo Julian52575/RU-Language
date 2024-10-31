@@ -41,7 +41,7 @@ class instructionFactory {
         ~instructionFactory() = default;
 
     public:
-        ruInstruction createVar(uint8_t varType, uint32_t operand2);
+        ruInstruction createVar(uint32_t varType, uint32_t operand2);
         ruInstruction add(RU_OPERAND operand1Type, uint32_t operand1,
             RU_OPERAND operator2Type, uint32_t operand2);
     protected:
