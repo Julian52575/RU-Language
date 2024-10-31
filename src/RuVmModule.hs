@@ -82,6 +82,28 @@ ruVmVariablesUpdateVariable variabless idd value
         globalScopeIndex = (length (variableStack variabless) - 1) 
         globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless idd
 
+{-- Delete Var
+ --}
+ruVmVariablesDeleteVariable :: RuVmVariables -> Word32 -> RuVmVariables
+ruVmVariablesDeleteVariable variabless idd
+    | ruVmVariablesGetVariable variabless idd == Nothing = variabless
+    | otherwise = do
+        let relevantArrayIndex = if globalSearchResult /= Nothing then globalScopeIndex else 0
+        let relevantArray = (variableStack variabless) !! relevantArrayIndex
+        case findIndex ruVariableHasId relevantArray idd of
+            Nothing -> variabless
+            Just relevantVarIndex -> do
+                let newArray = removeTab relevantArray relevantVarIndex
+                let newStack = replaceTab (variableStack variabless) relevantArrayIndex newArray
+                variabless {
+                    variableStack = newStack
+                }
+    where
+        globalScopeIndex = (length (variableStack variabless) - 1) 
+        globalSearchResult = ruVmVariablesGetVariableInGlobalScope variabless idd
+
+{-- Get Variable
+ --}
 
 {-- Variable Setter
  --}

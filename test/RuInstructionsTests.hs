@@ -450,3 +450,14 @@ spec = do
                 Right resultState -> do
                     let vmVarr = defaultRuVmVariables { variableStack = [[retvar]], returnVariable = defaultRuVariable}
                     resultState `shouldBe` state { variables = vmVarr }
+        it "Delete var" $ do
+            let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x01, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var]]}
+            let state = baseState { variables = vmVar, workerCode = [0x00, 0x00, 0x00, 0x01] }
+            case ruInstructionFunctionDeleteVar baseInfo (state) of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    let vmVarr = defaultRuVmVariables { variableStack = [[]]}
+                    resultState `shouldBe` state { variables = vmVarr }

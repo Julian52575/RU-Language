@@ -287,10 +287,21 @@ ruInstructionDeleteVar = RuInstruction {
     ruInstructionInfix = 0x07,
     ruInstructionName = "DELETEVAR",
     ruInstructionFunction = ruInstructionFunctionNoop,
-    fixedSize = 6
+    fixedSize = 0
 }
 
-
+ruInstructionFunctionDeleteVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionDeleteVar info state = do
+    let ccode = workerCode state
+    let ccodeOffset = workerCodeOffset state
+    let ccodeSize = length ccode
+    if ccodeSize < 4 then Left ruExceptionIncompleteInstruction
+    else do
+        let operand = take 4 ccode
+        let varId = getWord32FromOperand operand
+        let updatedVars = ruVmVariablesDeleteVariable (variables state) varId
+        let newState = state { variables = updatedVars }
+        Right newState
 
 ruInstructionReturn :: RuInstruction
 ruInstructionReturn = RuInstruction {
