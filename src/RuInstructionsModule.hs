@@ -259,7 +259,7 @@ ruInstructionUnsetReturn = RuInstruction {
     ruInstructionPrefix = 0x01,
     ruInstructionInfix = 0x06,
     ruInstructionName = "UNSETRETURN",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionUnsetReturn,
     fixedSize = 6
 }
 
