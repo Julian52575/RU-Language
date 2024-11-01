@@ -7,6 +7,7 @@ import Data.Word
 import Data.Either
 import Data.Maybe
 import Text.Printf (printf)
+import Numeric
 
 import Control.Monad.Trans.Except
 import Control.Monad.IO.Class (liftIO)
@@ -68,6 +69,9 @@ theColorRed = "\ESC[31m"
 theColorDefault :: String
 theColorDefault = "\ESC[0m"
 
+theColorBlue :: String
+theColorBlue = "\ESC[34m"
+
 
 data Argument = Argument {
     dump :: Bool,
@@ -99,16 +103,30 @@ moveWorkerCodeToNextInstruction ins info state
         currentPc = workerCodeOffset state
 
 -- Ajoute le nom de l'instruction dans le buffer de print
+myShowHex :: Word8 -> String --showHex is GARBAGE
+myShowHex w = printf "%02x" w 
+--
+getInstructionCodeAsString :: [ Word8 ] -> Word32 -> Word32 -> Word32 -> String
+getInstructionCodeAsString (current:next) start count limit
+    | start >= limit = theColorDefault ++ "\n"
+    | otherwise = do
+        let color = if count < 2 then theColorBlue else if count == 2 then theColorDefault else []
+        color ++ myShowHex current ++ " " ++ getInstructionCodeAsString next (start + 1) (count + 1) limit
+--
 printInstruction :: RuInstruction -> RuVmInfo -> RuVmState -> Either RuException RuVmState
 printInstruction ins info state =
-    case moveWorkerCodeToNextInstruction ins info state of
+    case movedResult of
         Left err -> Left err
-        Right state -> Right (state {
-            toPrint = newPrint
-        })
+        Right movedState -> do
+            let newPc = workerCodeOffset movedState
+            let codePrint = getInstructionCodeAsString (workerCode state) startPc 0 newPc
+            Right (movedState {
+                toPrint = (toPrint state) ++ name ++ codePrint
+            })
     where
-        msg = "\t" ++ ruInstructionName ins ++ "\n"
-        newPrint = (toPrint state) ++ msg
+        name = "\t" ++ ruInstructionName ins ++ ":\t"
+        movedResult = moveWorkerCodeToNextInstruction ins info state
+        startPc = workerCodeOffset state
 
 -- Execute la fonction liée à l'instruction
 execInstruction :: RuInstruction -> RuVmInfo -> RuVmState -> Either RuException RuVmState

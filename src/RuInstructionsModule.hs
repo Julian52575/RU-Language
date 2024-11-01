@@ -38,7 +38,7 @@ ruInstructionPrint = RuInstruction {
     ruInstructionInfix = 0x01,
     ruInstructionName = "PRINT",
     ruInstructionFunction = ruInstructionFunctionPrint,
-    fixedSize = 2
+    fixedSize = 0
 }
 
 ruInstructionFunctionPrint :: RuVmInfo -> RuVmState -> Either RuException RuVmState
@@ -60,7 +60,7 @@ ruInstructionPrintLn = RuInstruction {
     ruInstructionInfix = 0x02,
     ruInstructionName = "PRINTLN",
     ruInstructionFunction = ruInstructionFunctionPrintLn,
-    fixedSize = 2
+    fixedSize = 0
 }
 
 ruInstructionFunctionPrintLn :: RuVmInfo -> RuVmState -> Either RuException RuVmState
