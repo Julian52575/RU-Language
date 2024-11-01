@@ -365,6 +365,9 @@ ruInstructionReturn = RuInstruction {
     fixedSize = 2
 }
 
+ruInstructionFunctionReturn :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionReturn _ state = Right (ruVmStateExitScope state)
+
 ruInstructionCall :: RuInstruction
 ruInstructionCall = RuInstruction {
     ruInstructionPrefix = 0x02,
@@ -660,3 +663,4 @@ ruInstructionGreaterEq = RuInstruction {
 
 ruInstructionFunctionGreaterEq :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionGreaterEq info state = ruInstructionComparator "GREATEREQ?" info state
+

@@ -547,6 +547,17 @@ spec = do
                 carry = False
             }
             (ruVmVariablesGetVariable baseVariables 0x01) `shouldBe` Nothing
+        it "Get tmp variable with max index" $ do
+            let variabless = RuVmVariables {
+                variableStack = [ [], [], [] ],
+                tmpVariable = defaultRuVariable {
+                    ruVariableValue = Str "TMP",
+                    ruVariableType = ruVariableTypeStr,
+                    ruVariableId = 0xff
+                }
+            }
+            ruVmVariablesGetVariable variabless 0xffffffff `shouldBe` Just (tmpVariable variabless)
+
 --ruVmStateReadWord8 :: RuVmState -> RuOperand -> Either RuException RuVariable
     describe "ruVmStateReadWord8" $ do
         it "Read constant" $ do

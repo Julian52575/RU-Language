@@ -15,11 +15,11 @@ ruInstructionListPrefix0x00 = [ ruInstructionNoop, ruInstructionPrint, ruInstruc
 
 --Variable management
 ruInstructionListPrefix0x01 :: [ RuInstruction ]
-ruInstructionListPrefix0x01 = [ ruInstructionCreateVar, ruInstructionSetVar, ruInstructionSetTmpVar, ruInstructionUnsetArg, ruInstructionSetReturn, ruInstructionUnsetReturn, ruInstructionDeleteVar ]
+ruInstructionListPrefix0x01 = [ ruInstructionCreateVar, ruInstructionSetVar, ruInstructionSetTmpVar, ruInstructionSetArg, ruInstructionUnsetArg, ruInstructionSetReturn, ruInstructionUnsetReturn, ruInstructionDeleteVar ]
 
 --Control flow
 ruInstructionListPrefix0x02 :: [ RuInstruction ]
-ruInstructionListPrefix0x02 = [ ]
+ruInstructionListPrefix0x02 = [ ruInstructionReturn, ruInstructionCall, ruInstructionJump, ruInstructionJumpCarry, ruInstructionJumpNotCarry ]
 
 --Arithmetic
 ruInstructionListPrefix0x03 :: [ RuInstruction ]

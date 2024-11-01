@@ -160,6 +160,7 @@ ruVmVariablesGetVariableInGlobalScope variabless idd
 
 ruVmVariablesGetVariable :: RuVmVariables -> Word32 -> Maybe RuVariable
 ruVmVariablesGetVariable variabless idd
+    | idd == 0xffffffff                       = Just (tmpVariable variabless)
     | (isNothing globalSearchResult == False) = globalSearchResult
     | (isNothing scopeSearchResult == False)  = scopeSearchResult
     | otherwise                               = Nothing
