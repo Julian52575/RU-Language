@@ -195,7 +195,7 @@ ruInstructionSetVar = RuInstruction {
 ruInstructionGetValueFromBytes :: [Word8] -> RuOperand -> RuVmState -> RuVariableValue
 ruInstructionGetValueFromBytes operand codingOperand state
     | codingOperand == RuOperandConstant = Int32 (getWord32FromOperand operand)
-    | codingOperand == RuOperandVariableId = case ruVmVariablesGetVariableInCurrentScope (variables state) (getWord32FromOperand operand) of
+    | codingOperand == RuOperandVariableId = case ruVmVariablesGetVariable (variables state) (getWord32FromOperand operand) of
         Just var -> ruVariableValue var
         Nothing -> Na
     | otherwise = Na
