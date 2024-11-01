@@ -152,7 +152,7 @@ runInstruction info state =
  --}
 printCodeDebug :: Int -> [Word8] -> Int -> Int -> IO () --00 00 00 00 00 00 00 00 (8x) \t 8x \n
 printCodeDebug (-1) _ _ _ = putStrLn []
-printCodeDebug _ [] _ _ = putStrLn "End of code."
+printCodeDebug _ [] _ _ = putStrLn "."
 printCodeDebug limit tab 8 1 = do
     putStrLn []
     printCodeDebug limit tab 0 0
