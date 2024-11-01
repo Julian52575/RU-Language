@@ -42,15 +42,31 @@ ruInstructionPrint = RuInstruction {
 }
 
 ruInstructionFunctionPrint :: RuVmInfo -> RuVmState -> Either RuException RuVmState
-ruInstructionFunctionPrint _ state = do
+ruInstructionFunctionPrint info state = do
     let ccode = workerCode state
     --let codeOffset = workerCodeOffset state
     let ccodeSize = length ccode
-    if ccodeSize < 3 then Left ruExceptionIncompleteInstruction
+    if ccodeSize < 9 then Left ruExceptionIncompleteInstruction
     else do
-        let operand = ccode !! 2
-        let newState = state { toPrint = show operand }
-        Right newState
+        let codingByte = take 1 ccode
+        let codingOperand = codingByteToRuOperand (codingByte !! 0)
+        let operand1 = take 4 (drop 1 ccode)
+        let operand2 = take 4 (drop 5 ccode)
+        let var = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) info state
+        let id = word84ToWord32 (operand2 !! 0) (operand2 !! 1) (operand2 !! 2) (operand2 !! 3)
+        if var ==  Nothing then Left $ ruExceptionUnknowVariable id
+        else do
+            let value = ruVariableValue (fromJust var)
+            case value of
+                Na ->
+                    let newState = state { toPrint = "Na" }
+                    in Right newState
+                Int32 n ->
+                    let newState = state { toPrint = show n }
+                    in Right newState
+                Str s ->
+                    let newState = state { toPrint = s }
+                    in Right newState
 
 {-- PrintLn
  --}
@@ -64,15 +80,31 @@ ruInstructionPrintLn = RuInstruction {
 }
 
 ruInstructionFunctionPrintLn :: RuVmInfo -> RuVmState -> Either RuException RuVmState
-ruInstructionFunctionPrintLn _ state = do
+ruInstructionFunctionPrintLn info state = do
     let ccode = workerCode state
-    let ccodeOffset = workerCodeOffset state
+    --let codeOffset = workerCodeOffset state
     let ccodeSize = length ccode
-    if ccodeSize < 3 then Left ruExceptionIncompleteInstruction
+    if ccodeSize < 9 then Left ruExceptionIncompleteInstruction
     else do
-        let operand = ccode !! 2
-        let newState = state { toPrint = show operand ++ "\n" }
-        Right newState
+        let codingByte = take 1 ccode
+        let codingOperand = codingByteToRuOperand (codingByte !! 0)
+        let operand1 = take 4 (drop 1 ccode)
+        let operand2 = take 4 (drop 5 ccode)
+        let var = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) info state
+        let id = word84ToWord32 (operand2 !! 0) (operand2 !! 1) (operand2 !! 2) (operand2 !! 3)
+        if var ==  Nothing then Left $ ruExceptionUnknowVariable id
+        else do
+            let value = ruVariableValue (fromJust var)
+            case value of
+                Na ->
+                    let newState = state { toPrint = "Na" ++ "\n" }
+                    in Right newState
+                Int32 n ->
+                    let newState = state { toPrint = show n ++ "\n" }
+                    in Right newState
+                Str s ->
+                    let newState = state { toPrint = s ++ "\n" }
+                    in Right newState
 
 {-- Create var
 --}
