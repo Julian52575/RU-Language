@@ -192,6 +192,14 @@ ruInstructionSetVar = RuInstruction {
     fixedSize = 0
 }
 
+ruInstructionGetValueFromBytes :: [Word8] -> RuOperand -> RuVmState -> RuVariableValue
+ruInstructionGetValueFromBytes operand codingOperand state
+    | codingOperand == RuOperandConstant = Int32 (getWord32FromOperand operand)
+    | codingOperand == RuOperandVariableId = case ruVmVariablesGetVariableInCurrentScope (variables state) (getWord32FromOperand operand) of
+        Just var -> ruVariableValue var
+        Nothing -> Na
+    | otherwise = Na
+
 ruInstructionFunctionSetVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionSetVar info state = do
     let ccode = workerCode state
