@@ -40,9 +40,9 @@ opCodeToByte (OpPrint cb) = 0x00 : [0x01] ++ codingByteToByte cb
 opCodeToByte (OpPrintLn cb) = 0x00 : [0x02] ++ codingByteToByte cb
 
 opCodeToByte (OpCreateVar a b) = 0x01 : [0x00] ++ intToWord32List a ++ intToWord32List b
-opCodeToByte (OpSetVar a cb) = 0x01 : [0x01] ++ intToWord32List a ++ codingByteToByte cb
+opCodeToByte (OpSetVar a cb) = 0x01 : [0x01] ++ addCodingByteToByte (CbConst 0xA0 0x01 a) cb
 opCodeToByte (OpSetTmp a cb) = 0x01 : [0x02] ++ codingByteToByte cb
-opCodeToByte (OpSetArg a cb) = 0x01 : [0x03]  ++ intToWord32List a ++ codingByteToByte cb
+opCodeToByte (OpSetArg a cb) = 0x01 : [0x03]  ++ addCodingByteToByte (CbConst 0xA0 0x01 a) cb
 opCodeToByte (OpUnsetArg a b) = 0x01 : [0x04] ++ intToWord32List a ++ intToWord32List b
 opCodeToByte (OpSetReturn a cb) = 0x01 : [0x05] ++ codingByteToByte cb
 opCodeToByte (OpUnsetReturn a) = 0x01 : [0x06] ++ intToWord32List a
@@ -54,17 +54,17 @@ opCodeToByte (OpJump a) = 0x02 : [0x02] ++ intToWord32List a
 opCodeToByte (OpJumpCarry a) = 0x02 : [0x03] ++ intToWord32List a
 opCodeToByte (OpJumpNotCarry a) = 0x02 : [0x04] ++ intToWord32List a
 
-opCodeToByte (OpAdd cb1 cb2) = 0x03 : [0x00] ++ codingByteToByte cb1 ++ codingByteToByte cb2
-opCodeToByte (OpSub cb1 cb2) = 0x03 : [0x01] ++ codingByteToByte cb1 ++ codingByteToByte cb2
-opCodeToByte (OpDiv cb1 cb2) = 0x03 : [0x02] ++ codingByteToByte cb1 ++ codingByteToByte cb2
-opCodeToByte (OpMul cb1 cb2) = 0x03 : [0x03] ++ codingByteToByte cb1 ++ codingByteToByte cb2
-opCodeToByte (OpEq cb1 cb2) = 0x03 : [0x04] ++ codingByteToByte cb1 ++ codingByteToByte cb2
-opCodeToByte (OpNeq cb1 cb2) = 0x03 : [0x05] ++ codingByteToByte cb1 ++ codingByteToByte cb2
-opCodeToByte (OpMod cb1 cb2) = 0x03 : [0x06] ++ codingByteToByte cb1 ++ codingByteToByte cb2
-opCodeToByte (OpLesser cb1 cb2) = 0x03 : [0x07] ++ codingByteToByte cb1 ++ codingByteToByte cb2
-opCodeToByte (OpLesserEq cb1 cb2) = 0x03 : [0x08] ++ codingByteToByte cb1 ++ codingByteToByte cb2
-opCodeToByte (OpGreater cb1 cb2) = 0x03 : [0x09] ++ codingByteToByte cb1 ++ codingByteToByte cb2
-opCodeToByte (OpGreaterEq cb1 cb2) = 0x03 : [0x10] ++ codingByteToByte cb1 ++ codingByteToByte cb2
+opCodeToByte (OpAdd cb1 cb2) = 0x03 : [0x00] ++ addCodingByteToByte cb1 cb2
+opCodeToByte (OpSub cb1 cb2) = 0x03 : [0x01] ++ addCodingByteToByte cb1 cb2
+opCodeToByte (OpDiv cb1 cb2) = 0x03 : [0x02] ++ addCodingByteToByte cb1 cb2
+opCodeToByte (OpMul cb1 cb2) = 0x03 : [0x03] ++ addCodingByteToByte cb1 cb2
+opCodeToByte (OpEq cb1 cb2) = 0x03 : [0x04] ++ addCodingByteToByte cb1 cb2
+opCodeToByte (OpNeq cb1 cb2) = 0x03 : [0x05] ++ addCodingByteToByte cb1 cb2
+opCodeToByte (OpMod cb1 cb2) = 0x03 : [0x06] ++ addCodingByteToByte cb1 cb2
+opCodeToByte (OpLesser cb1 cb2) = 0x03 : [0x07] ++ addCodingByteToByte cb1 cb2
+opCodeToByte (OpLesserEq cb1 cb2) = 0x03 : [0x08] ++ addCodingByteToByte cb1 cb2
+opCodeToByte (OpGreater cb1 cb2) = 0x03 : [0x09] ++ addCodingByteToByte cb1 cb2
+opCodeToByte (OpGreaterEq cb1 cb2) = 0x03 : [0x10] ++ addCodingByteToByte cb1 cb2
 
 opCountCodingByte :: CodingByte -> Int
 opCountCodingByte (CbConst _ _ _) = 12
