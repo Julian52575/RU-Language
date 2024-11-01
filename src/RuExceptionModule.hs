@@ -60,3 +60,6 @@ ruExceptionUnknowArgument i = RuException ("Unknow argument " ++ printf "0x%08x"
 
 ruExceptionAccessArgumentInFirstScope :: RuException
 ruExceptionAccessArgumentInFirstScope = RuException ("Trying to access argument in first scope.")
+
+ruExceptionUnsetArgumentInIncompatibleType :: RuException
+ruExceptionUnsetArgumentInIncompatibleType = RuException "Trying to unset argument in variable of incompatible type."

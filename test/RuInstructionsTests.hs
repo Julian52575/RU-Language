@@ -428,9 +428,19 @@ spec = do
                     resultState `shouldBe` state { variables = vmVarr }
     describe "Args" $ do
         it "SetArg" $ do
-            let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
-            let vmVar = defaultRuVmVariables { variableStack = [[var]]}
-            let state = baseState { variables = vmVar, workerCode = [0xac, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00] }
+            let var = RuVariable {
+                ruVariableValue = Int32 42,
+                ruVariableType = ruVariableTypeInt,
+                ruVariableId = 0x00,
+                ruMutable = True
+            }
+            let vmVar = defaultRuVmVariables {
+                variableStack = [[var]]
+            }
+            let state = baseState {
+                variables = vmVar,
+                workerCode = [0xac, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00]
+            }
             case ruInstructionFunctionSetArg baseInfo (state) of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
@@ -483,3 +493,124 @@ spec = do
                 Right resultState -> do
                     let vmVarr = defaultRuVmVariables { variableStack = [[]]}
                     resultState `shouldBe` state { variables = vmVarr }
+    describe "Unset Arg" $ do
+        let info = RuVmInfo { --osef
+            stringTable = [ "\0" ],
+            functionTable = [],
+            code = [],
+            codeSize = 0x00,
+            dumpMode = False
+        }
+        let varStr0 = defaultRuVariable {
+            ruVariableValue = Str "osef",
+            ruVariableType = ruVariableTypeStr,
+            ruVariableId = 0x00
+        }
+        let varStr1 = varStr0 {
+            ruVariableId = 0x01
+        }
+        let varInt2 = defaultRuVariable {
+            ruVariableValue = Int32 0xffff,
+            ruVariableType = ruVariableTypeInt,
+            ruVariableId = 0x02
+        }
+        let arg0 = defaultRuVariable {
+            ruVariableValue = Str "Bretzel",
+            ruVariableType = ruVariableTypeStr,
+            ruVariableId = 0x00
+        }
+        let arg1 = defaultRuVariable {
+            ruVariableValue = Str "Lemoncello",
+            ruVariableType = ruVariableTypeStr,
+            ruVariableId = 0x01
+        }
+        let arg2 = defaultRuVariable {
+            ruVariableValue = Str "Prostituées",
+            ruVariableType = ruVariableTypeStr,
+            ruVariableId = 0x02
+        }
+        let variabless = defaultRuVmVariables {
+            variableStack = [ [varStr0, varInt2], [varStr1] ],
+            argumentVariables = [ [arg2], [arg0], [arg2] ]
+        }
+        let commonState = baseState {
+            variables = variabless
+        }
+        it "Unset arg in function scope" $ do
+            --                             varId               argId
+            let ccode = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+            let state = commonState {
+                workerCode = ccode
+            }
+            let expectedVar = defaultRuVariable {
+                ruVariableValue = ruVariableValue arg0,
+                ruVariableType = ruVariableType arg0,
+                ruVariableId = ruVariableId varStr0
+            }
+            let expected = state {
+                variables = variabless {
+                    variableStack = [ [expectedVar, varInt2], [varStr1] ]
+                }
+            }
+            case ruInstructionFunctionUnsetArg info state of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right newState -> newState `shouldBe` expected
+        it "Set arg in global scope" $ do
+            --                          varId                   argId
+            let ccode = [0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00]
+            let state = commonState {
+                workerCode = ccode
+            }
+            let expectedVar = defaultRuVariable {
+                ruVariableValue = ruVariableValue arg0,
+                ruVariableType = ruVariableType arg0,
+                ruVariableId = ruVariableId varStr1
+            }
+            let expected = state {
+                variables = variabless {
+                    variableStack = [ [varStr0, varInt2], [expectedVar] ]
+                }
+            }
+            case ruInstructionFunctionUnsetArg info state of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right newState -> newState `shouldBe` expected
+        it "Doesn't set unknow arg" $ do
+            --                          varId                   argId
+            let ccode = [0x00, 0x00, 0x00, 0x01, 0x99, 0x00, 0x86, 0x74]
+            let state = commonState {
+                workerCode = ccode
+            }
+            ruInstructionFunctionUnsetArg info state `shouldBe` Left (ruExceptionUnknowArgument 0x99008674)
+        it "Doesn't set unknow variable" $ do
+            --                          varId                   argId
+            let ccode = [0x65, 0x87, 0x65, 0x78, 0x00, 0x00, 0x00, 0x00]
+            let state = commonState {
+                workerCode = ccode
+            }
+            ruInstructionFunctionUnsetArg info state `shouldBe` Left (ruExceptionUnknowVariable 0x65876578)
+
+        {--it "Doesn't set variable in other scope" $ do
+            --                          varId                   argId
+            let ccode = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+            let state = commonState {
+                workerCode = ccode
+            }
+            ruInstructionFunctionUnsetArg info state `shouldBe` Left (ruExceptionUnknowArgument 0x00000002)--}
+        it "Doesn't set argument in other scope" $ do
+            --                          varId                   argId
+            let ccode = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02]
+            let state = commonState {
+                workerCode = ccode
+            }
+            ruInstructionFunctionUnsetArg info state `shouldBe` Left (ruExceptionUnknowArgument 0x00000002)
+        {--it "Doesn't set argument to other type" $ do
+            --                          varId                   argId
+            let ccode = [0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00]
+            let state = commonState {
+                workerCode = ccode
+            }
+            ruInstructionFunctionUnsetArg info state `shouldBe` Left (ruExceptionUnsetArgumentInIncompatibleType)--}

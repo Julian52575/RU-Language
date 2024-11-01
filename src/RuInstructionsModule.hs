@@ -255,9 +255,30 @@ ruInstructionUnsetArg = RuInstruction {
     ruInstructionPrefix = 0x01,
     ruInstructionInfix = 0x04,
     ruInstructionName = "UNSETARG",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionUnsetArg,
     fixedSize = 8
 }
+
+--              var Id -> arg Id -> Update var
+ruInstructionFunctionUnsetArg :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionUnsetArg info state
+    | length (workerCode state) < 8 = Left ruExceptionIncompleteInstruction
+    | otherwise =
+        case argSearch of
+            Left err -> Left err
+            Right arg ->
+                case ruVmVariablesUpdateVariable (variables state) op1 (ruVariableValue arg) of
+                    Left err -> Left err
+                    Right vars -> Right (state {
+                        variables = vars
+                    })
+    where
+        op1A = take 4 (workerCode state)
+        op1 = fromMaybe (error "fromMaybe error") (word8ArrayToWord32 op1A)
+        op2A = take 4 (drop 4 (workerCode state))
+        op2 = fromMaybe (error "fromMaybe error") (word8ArrayToWord32 op2A)
+        argSearch = ruVmVariablesGetArgument (variables state) op2
+
 
 ruInstructionSetReturn :: RuInstruction
 ruInstructionSetReturn = RuInstruction {
