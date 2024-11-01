@@ -29,10 +29,10 @@ opCodeToByte (OpPrintLn cb) = 0x00 : [0x02] ++ codingByteToByte cb
 
 opCodeToByte (OpCreateVar a b) = 0x01 : [0x00] ++ intToWord32List a ++ intToWord32List b
 opCodeToByte (OpSetVar a cb) = 0x01 : [0x01] ++ intToWord32List a ++ codingByteToByte cb
-opCodeToByte (OpSetTmp a cb) = 0x01 : [0x02] ++ intToWord32List a ++ codingByteToByte cb
-opCodeToByte (OpSetArg a cb) = 0x01 : [0x03] ++ intToWord32List a ++ codingByteToByte cb
+opCodeToByte (OpSetTmp a cb) = 0x01 : [0x02] ++ codingByteToByte cb
+opCodeToByte (OpSetArg a cb) = 0x01 : [0x03]  ++ intToWord32List a ++ codingByteToByte cb
 opCodeToByte (OpUnsetArg a b) = 0x01 : [0x04] ++ intToWord32List a ++ intToWord32List b
-opCodeToByte (OpSetReturn a cb) = 0x01 : [0x05] ++ intToWord32List a ++ codingByteToByte cb
+opCodeToByte (OpSetReturn a cb) = 0x01 : [0x05] ++ codingByteToByte cb
 opCodeToByte (OpUnsetReturn a) = 0x01 : [0x06] ++ intToWord32List a
 opCodeToByte (OpUnsetVar a) = 0x01 : [0x07] ++ intToWord32List a
 
@@ -64,10 +64,10 @@ opCountByte (OpPrint cb) = 2 + opCountCodingByte cb
 opCountByte (OpPrintLn cb) = 2 + opCountCodingByte cb
 opCountByte (OpCreateVar _ _) = 10
 opCountByte (OpSetVar _ cb) = 6 + opCountCodingByte cb
-opCountByte (OpSetTmp _ cb) = 6 + opCountCodingByte cb
+opCountByte (OpSetTmp _ cb) = 2 + opCountCodingByte cb
 opCountByte (OpSetArg _ cb) = 6 + opCountCodingByte cb
 opCountByte (OpUnsetArg _ _) = 10
-opCountByte (OpSetReturn _ cb) = 6 + opCountCodingByte cb
+opCountByte (OpSetReturn _ cb) = 2 + opCountCodingByte cb
 opCountByte (OpUnsetReturn _) = 6
 opCountByte (OpUnsetVar _) = 6
 opCountByte OpReturn = 2
