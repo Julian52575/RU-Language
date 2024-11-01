@@ -169,7 +169,7 @@ runInstruction info state =
 {-- Debug Print
  --}
 printCodeDebug :: Int -> [Word8] -> Int -> Int -> IO () --00 00 00 00 00 00 00 00 (8x) \t 8x \n
-printCodeDebug (-1) _ _ _ = putStrLn []
+printCodeDebug (0) _ _ _ = putStrLn []
 printCodeDebug _ [] _ _ = putStrLn "."
 printCodeDebug limit tab 8 1 = do
     putStrLn []
@@ -185,8 +185,11 @@ printCodeDebug _ _ _ _ = return ()
 
 printCodeBeforePc :: RuVmInfo -> Word32 -> IO ()
 printCodeBeforePc info pc = do
-    printf "0x%08x:\t" (startIndex2)
-    printCodeDebug len (take 16 (drop ((fromIntegral startIndex2)) (code info))) 0 0
+    if pc > 0x20
+        then do
+            printf "0x%08x:\t" (startIndex2)
+            printCodeDebug len (take 16 (drop ((fromIntegral startIndex2)) (code info))) 0 0
+        else putStr []
     printf "0x%08x:\t" (startIndex1)
     printCodeDebug len (take 16 (drop (fromIntegral startIndex1) (code info))) 0 0
     where
