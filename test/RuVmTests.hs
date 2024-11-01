@@ -1032,7 +1032,43 @@ spec = do
             ruVmVariablesRemoveArgument variabless2 0x01 `shouldBe` expected
         it "Does nothign when unknow arg" $ do
             ruVmVariablesRemoveArgument variabless 0xff `shouldBe` variabless
-
+--ruVmVariablesGetArgument :: RuVmVariables -> Word32 -> Either RuException RuVariable
+    describe "ruVmVariablesGetArgument" $ do
+        let arg0 = defaultRuVariable {
+            ruVariableValue = Int32 0xFF,
+            ruVariableType = ruVariableTypeInt,
+            ruVariableId = 0x00
+        }
+        let arg1 = arg0 {
+            ruVariableValue = Str "Hello",
+            ruVariableType = ruVariableTypeStr,
+            ruVariableId = 0x01
+        }
+        let arg2 = arg0 {
+            ruVariableValue = Str "Dragon Ball Sparking Zero!",
+            ruVariableType = ruVariableTypeStr,
+            ruVariableId = 0x02
+        }
+        let variabless = defaultRuVmVariables {
+            variableStack = [ [arg0] ],
+            argumentVariables = [ [arg0], [arg2], [arg1, arg0] ]
+        }
+        it "Get a variable" $ do
+            case ruVmVariablesGetArgument variabless 0x02 of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right var -> var `shouldBe` arg2
+        it "Doesn't get a variable in another scope" $ do
+            ruVmVariablesGetArgument variabless 0x00 `shouldBe` Left (ruExceptionUnknowArgument 0x00)
+        it "Doesn't get unknow variable" $ do
+            ruVmVariablesGetArgument variabless 0xff `shouldBe` Left (ruExceptionUnknowArgument 0xff)
+        it "Errors out on single argument list" $ do
+            let vars = defaultRuVmVariables {
+                argumentVariables = [ [arg0] ]
+            }
+            ruVmVariablesGetArgument vars 0x00 `shouldBe` Left ruExceptionAccessArgumentInFirstScope
+            
 --ruVmVariablesGetVariableIndex :: RuVmVariables -> Word32 -> Maybe (Int, Int)
     describe "ruVmVariablesGetVariableIndex" $ do
         let var0 = defaultRuVariable {

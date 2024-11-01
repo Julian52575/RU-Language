@@ -232,6 +232,19 @@ ruVmVariablesRemoveArgument variabless numero
     where
         currentStack = (argumentVariables variabless) !! 0
 
+
+ruVmVariablesGetArgument :: RuVmVariables -> Word32 -> Either RuException RuVariable
+ruVmVariablesGetArgument vars numero
+    | length args < 2    = Left ruExceptionAccessArgumentInFirstScope
+    | otherwise         =
+        case searchResult of
+            Nothing -> Left (ruExceptionUnknowArgument numero)
+            Just var -> Right var
+    where
+        args = argumentVariables vars
+        arg = args !! 1
+        searchResult = find (\ruVarParser -> ruVariableHasId ruVarParser numero) arg
+
 {-- VmState
  --}
 data RuVmState = RuVmState {

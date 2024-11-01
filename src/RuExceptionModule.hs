@@ -54,3 +54,9 @@ ruExceptionInvalidOperation = RuException ("Invalid operation.")
 
 ruExceptionDivByZero :: RuException
 ruExceptionDivByZero = RuException ("Division by zero.")
+
+ruExceptionUnknowArgument :: Word32 -> RuException
+ruExceptionUnknowArgument i = RuException ("Unknow argument " ++ printf "0x%08x" i ++ ".")
+
+ruExceptionAccessArgumentInFirstScope :: RuException
+ruExceptionAccessArgumentInFirstScope = RuException ("Trying to access argument in first scope.")
