@@ -1214,7 +1214,8 @@ spec = do
             let baseState = RuVmState {
                 variables = defaultRuVmVariables {
                     variableStack = [ ],
-                    argumentVariables = []
+                    argumentVariables = [],
+                    callOffsets = []
                 },
                 workerCodeOffset = 0x15,
                 workerCode = [ 0xFF ],
@@ -1225,7 +1226,8 @@ spec = do
             let expected = baseState {
                 variables = (variables baseState) {
                     variableStack = [ [] ],
-                    argumentVariables = [ [] ]
+                    argumentVariables = [ [] ],
+                    callOffsets = [ workerCodeOffset baseState ]
                 },
                 scopeDeep = 1
             }
@@ -1233,22 +1235,24 @@ spec = do
         it "Create the nth scope" $ do
             let vars = defaultRuVmVariables {
                 variableStack = [ [var, var], [var] ],
-                argumentVariables = [ [var, var], [var] ]
+                argumentVariables = [ [var, var], [var] ],
+                callOffsets = [0x30, 0x20, 0x10]
             }
             let baseState = RuVmState {
                 variables = vars,
-                workerCodeOffset = 0x15,
+                workerCodeOffset = 0x40,
                 workerCode = [ 0xFF ],
                 conditionalMode = False,
-                scopeDeep = 1,
+                scopeDeep = 2,
                 toPrint = []
             }
             let expected = baseState {
                 variables = (variables baseState) {
                     variableStack = [ [], [var, var], [var] ],
-                    argumentVariables = [ [], [var, var], [var] ]
+                    argumentVariables = [ [], [var, var], [var] ],
+                    callOffsets = [workerCodeOffset baseState, 0x30, 0x20, 0x10]
                 },
-                scopeDeep = 2
+                scopeDeep = (scopeDeep baseState) + 1
             }
             ruVmStateCreateScope baseState `shouldBe` expected
     describe "ruVmStateExitScope" $ do
@@ -1259,7 +1263,8 @@ spec = do
         it "Remove a scope" $ do
             let vars = defaultRuVmVariables {
                 variableStack = [ [var], [var] ],
-                argumentVariables = [ [var], [var] ]
+                argumentVariables = [ [var], [var] ],
+                callOffsets = [0xab]
             }
             let baseState = RuVmState {
                 variables = vars,
@@ -1272,15 +1277,18 @@ spec = do
             let expected = baseState {
                 variables = (variables baseState) {
                     variableStack = [ [var] ],
-                    argumentVariables = [ [var] ]
+                    argumentVariables = [ [var] ],
+                    callOffsets = []
                 },
+                workerCodeOffset = 0xab,
                 scopeDeep = 0
             }
             ruVmStateExitScope baseState `shouldBe` expected
         it "Empty the only scope" $ do
             let vars = defaultRuVmVariables {
                 variableStack = [ [var] ],
-                argumentVariables = [ [var] ]
+                argumentVariables = [ [var] ],
+                callOffsets = []
             }
             let baseState = RuVmState {
                 variables = vars,
@@ -1293,7 +1301,8 @@ spec = do
             let expected = baseState {
                 variables = (variables baseState) {
                     variableStack = [ [] ],
-                    argumentVariables = [ [] ]
+                    argumentVariables = [ [] ],
+                    callOffsets = []
                 },
                 scopeDeep = -1
             }

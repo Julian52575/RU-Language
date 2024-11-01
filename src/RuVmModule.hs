@@ -36,7 +36,8 @@ data RuVmVariables = RuVmVariables {
     tmpVariable :: RuVariable,
     returnVariable :: RuVariable,
     argumentVariables :: [[RuVariable]],
-    carry :: Bool
+    carry :: Bool,
+    callOffsets :: [Word32]
 } deriving (Eq, Show)
 
 defaultRuVmVariables :: RuVmVariables
@@ -45,7 +46,8 @@ defaultRuVmVariables = RuVmVariables {
     tmpVariable = defaultRuVariable,
     returnVariable = defaultRuVariable,
     argumentVariables = [],
-    carry = False
+    carry = False,
+    callOffsets = []
 }
 
 
@@ -322,7 +324,7 @@ int32ToWord32 :: Int32 -> Word32
 int32ToWord32 i = fromIntegral i
 
     -- Comment on gère les négatifs avec word32 ? On converti en Int32
-ruVmStateJump :: RuVmInfo -> RuVmState -> Word32 -> Either RuException RuVmState --TODO
+ruVmStateJump :: RuVmInfo -> RuVmState -> Word32 -> Either RuException RuVmState
 ruVmStateJump info state offset
     | fromIntegral newOffset > length (code info)    = Left ruExceptionJumpOutOfBound --En dehors du code
     | currentFunSearchResult == Nothing = do
@@ -351,7 +353,8 @@ ruVmStateCreateScope state = newState
         oldVars = variables state
         newVariables = oldVars {
             variableStack = ([[]] ++ (variableStack oldVars)),
-            argumentVariables = ([[]] ++ (argumentVariables oldVars))
+            argumentVariables = ([[]] ++ (argumentVariables oldVars)),
+            callOffsets = [workerCodeOffset state] ++ callOffsets oldVars
         }
         newState = state {
             variables = newVariables,
@@ -365,9 +368,11 @@ ruVmStateExitScope state = do
     state {
         variables = oldVars {
             variableStack = newStack,
-            argumentVariables = newArg
+            argumentVariables = newArg,
+            callOffsets = drop 1 (callOffsets oldVars)
         },
-        scopeDeep = (scopeDeep state) - 1
+        scopeDeep = (scopeDeep state) - 1,
+        workerCodeOffset = if length (callOffsets oldVars) > 0 then (callOffsets oldVars) !! 0 else workerCodeOffset state
     }
     where
         oldVars = variables state
