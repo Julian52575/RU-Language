@@ -26,10 +26,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Build binary
-        #second command installs stack
+        #second and third command installs stack
         run: |
           sudo apt-get update -y
           sudo apt-get install -y make build-essential curl libffi-dev libffi8 libgmp-dev libgmp10 libncurses-dev libncurses5 libtinfo5 --fix-missing
+          curl -sSL https://get.haskellstack.org/ | sudo sh
           curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sudo sh
           make re
           if [ -x ${{ env.BINARY_NAME }} ]; then echo "Binary was built succesfully."; else echo "${{ env.BINARY_NAME }} was not found..." && exit 84 ; fi
