@@ -16,7 +16,7 @@ intToWord32 :: Int -> Word32
 intToWord32 = fromIntegral
 
 intToWord32List :: Int -> [Word8]
-intToWord32List a = [fromIntegral a, fromIntegral $ shiftR a 8, fromIntegral $ shiftR a 16, fromIntegral $ shiftR a 24]
+intToWord32List n = [fromIntegral (shiftR n 24), fromIntegral (shiftR n 16), fromIntegral (shiftR n 8), fromIntegral n]
 
 codingByteToByte :: CodingByte -> [Word8]
 codingByteToByte (CbConst a b c) = [fromIntegral a] ++ intToWord32List b ++ intToWord32List c
