@@ -70,21 +70,43 @@ spec = do
                     resultState `shouldBe` baseState
 
     describe "Print" $ do
-        it "Print" $ do
-            case ruInstructionFunctionPrint baseInfo baseState of
+        it "Print int" $ do
+            let state = baseState {workerCode = [0xa0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x2a]}
+            case ruInstructionFunctionPrint baseInfo state of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
                     False `shouldBe` True --Fail
                 Right resultState -> do
-                    resultState `shouldBe` baseState { toPrint = "0" }
+                    resultState `shouldBe` state { toPrint = "42" }
+        it "Print str" $ do
+            let var = RuVariable { ruVariableValue = Str "test", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var]]}
+            let state = baseState {variables = vmVar, workerCode = [0xb0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00]}
+            case ruInstructionFunctionPrint baseInfo state of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    resultState `shouldBe` state { toPrint = "test" }
 
-        it "PrintLn" $ do
-            case ruInstructionFunctionPrintLn baseInfo baseState of
+        it "PrintLn int" $ do
+            let state = baseState {workerCode = [0xa0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x2a]}
+            case ruInstructionFunctionPrintLn baseInfo state of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
                     False `shouldBe` True --Fail
                 Right resultState -> do
-                    resultState `shouldBe` baseState { toPrint = "0\n" }
+                    resultState `shouldBe` state { toPrint = "42\n" }
+        it "PrintLn str" $ do
+            let var = RuVariable { ruVariableValue = Str "test", ruVariableType = ruVariableTypeStr, ruVariableId = 0x00, ruMutable = True }
+            let vmVar = defaultRuVmVariables { variableStack = [[var]]}
+            let state = baseState {variables = vmVar, workerCode = [0xb0, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00]}
+            case ruInstructionFunctionPrintLn baseInfo state of
+                Left err -> do
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right resultState -> do
+                    resultState `shouldBe` state { toPrint = "test\n" }
     describe "Vars" $ do
         it "CreateVar with int" $ do
             let state = baseState { workerCode = [0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x2a] }
