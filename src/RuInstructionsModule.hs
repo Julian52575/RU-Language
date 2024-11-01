@@ -339,7 +339,7 @@ ruInstructionDeleteVar = RuInstruction {
     ruInstructionPrefix = 0x01,
     ruInstructionInfix = 0x07,
     ruInstructionName = "DELETEVAR",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionDeleteVar,
     fixedSize = 0
 }
 
@@ -361,7 +361,7 @@ ruInstructionReturn = RuInstruction {
     ruInstructionPrefix = 0x02,
     ruInstructionInfix = 0x00,
     ruInstructionName = "RETURN",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionReturn,
     fixedSize = 2
 }
 
