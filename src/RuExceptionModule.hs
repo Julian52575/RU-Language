@@ -63,3 +63,6 @@ ruExceptionAccessArgumentInFirstScope = RuException ("Trying to access argument 
 
 ruExceptionUnsetArgumentInIncompatibleType :: RuException
 ruExceptionUnsetArgumentInIncompatibleType = RuException "Trying to unset argument in variable of incompatible type."
+
+ruExceptionUnknowFunction :: Word32 -> RuException
+ruExceptionUnknowFunction i = RuException ("Unknow function " ++ printf "0x%08x" i ++ ".")

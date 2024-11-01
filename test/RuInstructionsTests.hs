@@ -4,6 +4,7 @@ import Test.Hspec
 import qualified Data.ByteString as B
 import Data.Either
 
+import RuFormatModule
 import RuVmModule
 import RuInstructionsModule
 import RuInstructionsHelperModule
@@ -614,3 +615,72 @@ spec = do
                 workerCode = ccode
             }
             ruInstructionFunctionUnsetArg info state `shouldBe` Left (ruExceptionUnsetArgumentInIncompatibleType)--}
+    describe "Control flow" $ do
+        let noop = [0x00, 0x00]
+        let ccode = noop ++ noop ++ noop
+        let fun0 = RuFunctionTable {
+            nameIndex = 0, --osef
+            codeSectionOffset = 0x00,
+            size = 0x02
+        }
+        let fun1 = fun0 {
+            codeSectionOffset = (fromIntegral (length noop))
+        }
+        let fun2 = fun1 {
+            codeSectionOffset = (fromIntegral (length noop)) * 2
+        }
+        let info = RuVmInfo { --osef
+            stringTable = [ "\0" ],
+            functionTable = [fun0, fun1, fun2],
+            code = [],
+            codeSize = 0x00,
+            dumpMode = False
+        }
+        let state = RuVmState {
+            variables = defaultRuVmVariables {
+                variableStack = [ [], [] ],
+                argumentVariables = [ [], [] ],
+                callOffsets = [0x10]
+            },
+            workerCodeOffset = 0x00, -- similar to PC
+            workerCode = ccode,
+            conditionalMode = False,
+            toPrint = [],
+            scopeDeep = 1
+        }
+        it "Returns from a function" $ do
+            let expected = state {
+                variables = defaultRuVmVariables {
+                    variableStack = [ [] ],
+                    argumentVariables = [ [] ],
+                    callOffsets = []
+                },
+                workerCodeOffset = (callOffsets (variables state)) !! 0,
+                workerCode = ccode,
+                scopeDeep = 0
+            }
+            case ruInstructionFunctionReturn info state of
+                Left err -> do 
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right result -> result `shouldBe` expected
+        it "Call a function" $ do
+            let ccode2 = [0x00, 0x00, 0x00, 0x00]
+            let state2 = state {
+                workerCode = ccode2
+            }
+            let expected = state2 {
+                variables = defaultRuVmVariables {
+                    variableStack = [ [], [], [] ],
+                    argumentVariables = [ [], [], [] ],
+                    callOffsets = [ (workerCodeOffset state), 0x10]
+                },
+                workerCodeOffset = codeSectionOffset fun0,
+                workerCode = ccode2,
+                scopeDeep = (scopeDeep state2) + 1
+            }
+            case ruInstructionFunctionCall info state2 of
+                Left err -> do 
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right result -> result `shouldBe` expected

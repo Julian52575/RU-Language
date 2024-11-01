@@ -155,7 +155,7 @@ ruInstructionGetRuVariableFromBytes operand1 operand2 codingOperand info state
     -- | RuOperand !! 1 == 0b11 = var
     | otherwise = var
         where
-            var = ruVmVariablesGetVariableInCurrentScope (variables state) (getWord32FromOperand operand2)
+            var = ruVmVariablesGetVariable (variables state) (getWord32FromOperand operand2)
 
 ruInstructionSetTmpVar :: RuInstruction
 ruInstructionSetTmpVar = RuInstruction {
@@ -169,7 +169,6 @@ ruInstructionSetTmpVar = RuInstruction {
 ruInstructionFunctionSetTmpVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionSetTmpVar vminfo state = do
     let ccode = workerCode state
-    let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
     if ccodeSize < 9 then Left ruExceptionIncompleteInstruction
     else do
@@ -178,7 +177,7 @@ ruInstructionFunctionSetTmpVar vminfo state = do
         let operand1 = take 4 (drop 1 ccode)
         let operand2 = take 4 (drop 5 ccode)
         let var = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) vminfo state
-        if var == Nothing then Left $ ruExceptionIncompleteInstruction
+        if var == Nothing then Left $ ruExceptionUnknowVariable (word8ArrayToWord32Pure operand1)
         else do
             let newVariables = (variables state) { tmpVariable = fromJust var }
             let newState = state { variables = newVariables }
@@ -376,6 +375,20 @@ ruInstructionCall = RuInstruction {
     ruInstructionFunction = ruInstructionFunctionNoop,
     fixedSize = 6
 }
+
+ruInstructionFunctionCall :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionCall info state
+    | length ccode < 4                                  = Left ruExceptionIncompleteInstruction
+    | op1 > fromIntegral (length (functionTable info)) = Left (ruExceptionUnknowFunction op1)
+    | otherwise                                        = Right scopeState {
+        workerCodeOffset = codeSectionOffset fun
+    }
+    where
+        ccode = workerCode state
+        op1 = word8ArrayToWord32Pure ccode
+        fun = (functionTable info) !! (fromIntegral op1)
+        scopeState = ruVmStateCreateScope state
+
 
 ruInstructionJump :: RuInstruction
 ruInstructionJump = RuInstruction {

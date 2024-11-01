@@ -45,7 +45,7 @@ defaultRuVmVariables = RuVmVariables {
     variableStack = [ [] ], --only global stack array is created
     tmpVariable = defaultRuVariable,
     returnVariable = defaultRuVariable,
-    argumentVariables = [],
+    argumentVariables = [ [] ],
     carry = False,
     callOffsets = []
 }

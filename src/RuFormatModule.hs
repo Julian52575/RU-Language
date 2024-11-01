@@ -31,6 +31,13 @@ word8ArrayToWord32 :: [Word8] -> Maybe Word32
 word8ArrayToWord32 (a:b:c:d:_) = Just (word84ToWord32 a b c d)
 word8ArrayToWord32 _ = Nothing
 
+word8ArrayToWord32Pure :: [Word8] -> Word32
+word8ArrayToWord32Pure (a:b:c:d:_) = (word84ToWord32 a b c d)
+word8ArrayToWord32Pure (a:b:c:_) = (word84ToWord32 a b c 0)
+word8ArrayToWord32Pure (a:b:_) = (word84ToWord32 a b 0 0)
+word8ArrayToWord32Pure (a:_) = (word84ToWord32 a 0 0 0)
+word8ArrayToWord32Pure _ = 0
+
 data RuHeader = RuHeader {
     fileSize :: Word32,
     fileVersion :: Word8,
