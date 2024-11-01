@@ -7,7 +7,7 @@ on:
 env:
   ACTION_FILE: .github/workflows/interpretor-mirroring.yml
   MIRROR_URL: git@github.com:EpitechPromo2027/B-FUN-500-NCY-5-1-glados-julian.bottiglione.git
-  TARGET_BRANCH: Virtual-Machine
+  TARGET_BRANCH: Virtual-Machine-Release
   CURRENT_BRANCH: Virtual-Machine
   COMMIT_MSG: ${{ github.event.head_commit.message }}
 
