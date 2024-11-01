@@ -70,7 +70,7 @@ execInstruction ins info state
             Left err -> Left err
             Right newState ->
                 case workerCodeOffset newState of --si le pc est le même, on déplace à l'instruction suivante
-                    ogPc -> setNewWorkerCodePc info state newPc
+                    ogPc -> setNewWorkerCodePc info newState newPc
                     _ -> Right newState
     where
         ogPc = workerCodeOffset state
