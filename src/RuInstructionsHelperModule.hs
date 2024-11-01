@@ -9,10 +9,21 @@ import RuInstructionsModule
 
 {-- List
  --}
+-- Builtin
 ruInstructionListPrefix0x00 :: [ RuInstruction ]
 ruInstructionListPrefix0x00 = [ ruInstructionNoop, ruInstructionPrint, ruInstructionPrintLn ]
 
-ruInstructionListPrefix0x01 = [ ruInstructionCreateVar ]
+--Variable management
+ruInstructionListPrefix0x01 :: [ RuInstruction ]
+ruInstructionListPrefix0x01 = [ ruInstructionCreateVar, ruInstructionSetVar, ruInstructionSetTmpVar, ruInstructionUnsetArg ]
+
+--Control flow
+ruInstructionListPrefix0x02 :: [ RuInstruction ]
+ruInstructionListPrefix0x02 = [ ]
+
+--Arithmetic
+ruInstructionListPrefix0x03 :: [ RuInstruction ]
+ruInstructionListPrefix0x03 = [ ]
 
 ruInstructionList :: [ [RuInstruction] ]
 ruInstructionList = [ ruInstructionListPrefix0x00, ruInstructionListPrefix0x01 ]

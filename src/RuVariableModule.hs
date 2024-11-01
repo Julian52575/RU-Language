@@ -31,12 +31,13 @@ defaultRuVariable = RuVariable {
     ruMutable = True
 }
 
+getRuVariableValueAsString :: RuVariableValue -> String
+getRuVariableValueAsString (Int32 i) = show i
+getRuVariableValueAsString (Str s) = s
+getRuVariableValueAsString _ = "Empty"
+
 printRuVariable :: RuVariable -> IO ()
-printRuVariable variable
-    | typ == ruVariableTypeInt = putStrLn (show (ruVariableValue variable)) 
-    | typ == ruVariableTypeStr = putStrLn (show (ruVariableValue variable)) 
-    where
-        typ = ruVariableType variable
+printRuVariable var = putStrLn (getRuVariableValueAsString (ruVariableValue var) )
 printRuVariable _ = putStrLn "Empty RuVariable"
 
 {-- Helper function for defining variable type

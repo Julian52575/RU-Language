@@ -33,7 +33,7 @@ setNewWorkerCodePc :: RuVmInfo -> RuVmState -> Word32 -> Either RuException RuVm
 setNewWorkerCodePc info state newPc
     | newPc > codeSize info     = Left ruExceptionJumpOutOfBound
     | otherwise                 = Right state {
-        workerCodeOffset = fromIntegral newPc,
+        workerCodeOffset = newPc,
         workerCode = drop (fromIntegral newPc) (code info)
     }
 
@@ -62,7 +62,23 @@ printInstruction ins info state =
 
 -- Execute la fonction liée à l'instruction
 execInstruction :: RuInstruction -> RuVmInfo -> RuVmState -> Either RuException RuVmState
-execInstruction ins info state = Left (RuException "Todo")
+execInstruction ins info state
+    | length (workerCode state) < 2 = Left ruExceptionIncompleteInstruction
+    | isLeft movedResult            = movedResult
+    | otherwise =
+        case function info movedState of --résultat de function
+            Left err -> Left err
+            Right newState ->
+                case workerCodeOffset newState of --si le pc est le même, on déplace à l'instruction suivante
+                    ogPc -> setNewWorkerCodePc info state newPc
+                    _ -> Right newState
+    where
+        ogPc = workerCodeOffset state
+        movedResult = setNewWorkerCodePc info state 2
+        movedState = fromRight (error "fromRight error") movedResult
+        function = ruInstructionFunction ins
+        operandSize = codingByteToOperandsSize ((workerCode movedState) !! 0)
+        newPc = ogPc + if fixedSize ins == 0 then operandSize + 2 else fixedSize ins
 
 -- Recupère l'instruction et appelle les sous fonctions
 runInstruction :: RuVmInfo -> RuVmState -> Either RuException RuVmState
@@ -82,9 +98,11 @@ runInstruction info state =
         }
         instructionSearch = getRuInstruction prefix iinfix
 
--- print code debug
+{-- Debug Print
+ --}
 printCodeDebug :: Int -> [Word8] -> Int -> Int -> IO () --00 00 00 00 00 00 00 00 (8x) \t 8x \n
 printCodeDebug (-1) _ _ _ = putStrLn []
+printCodeDebug _ [] _ _ = putStrLn "End of code."
 printCodeDebug limit tab 8 1 = do
     putStrLn []
     printCodeDebug limit tab 0 0
@@ -97,8 +115,6 @@ printCodeDebug limit (current:next) count group = do
     printCodeDebug (limit - 1) next (count + 1) group
 printCodeDebug _ _ _ _ = return ()
 
-{-- Error handler
- --}
 printCodeBeforePc :: RuVmInfo -> Word32 -> IO ()
 printCodeBeforePc info pc = do
     printf "0x%08x:\t" (startIndex)
@@ -107,15 +123,58 @@ printCodeBeforePc info pc = do
         startIndex = if pc < 0x10 then 0x00 else pc - 0x10
         len        = if pc < 0x10 then fromIntegral pc else 16
 
-handleException :: RuVmInfo -> RuVmState -> RuException -> IO ()
-handleException info state except = do
+printCodeDebugMain :: RuVmInfo -> RuVmState -> IO ()
+printCodeDebugMain info state = do
     let pc = workerCodeOffset state
-    putStrLn (("\nEncountered error at offset " ++ printf "0x%08x" pc) ++ ": " ++ show except)
-    printCodeBeforePc info pc
+    printCodeBeforePc info (pc - 1)
     printf "0x%08x:\t" pc
     printCodeDebug 16 (take 16 (workerCode state)) 0 0
     printf "0x%08x:\t" (pc + 0x10)
     printCodeDebug 16 (take 16 (drop 16 (workerCode state))) 0 0
+
+printVariableArrayDebug :: [ RuVariable ] -> IO ()
+printVariableArrayDebug (current:next) = do
+    printRuVariable current >> printVariableArrayDebug next
+printVariableArrayDebug [] = return ()
+
+printVariableStack :: [ [RuVariable] ] -> IO ()
+printVariableStack stack
+    | stackNumber == 0          = putStrLn "🏜️ No variable in stack."
+    | stackNumber == 1          = do
+        putStrLn "🥞 Stack variables:\t"
+        if length (stack !! 0) == 0 then putStr "Empty." else printVariableArrayDebug (stack !! 0)
+        putStrLn "\n"
+    | otherwise                 = do
+        let global = (stack !! (stackNumber - 1))
+        putStrLn "🌎 Global variables:\t"
+        if length global == 0 then putStr "Empty." else printVariableArrayDebug (stack !! 0)
+        putStrLn "\n"
+        printVariableStack [stack !! 0]
+    where
+        stackNumber = length stack
+
+printVariablesDebug :: RuVmVariables -> IO ()
+printVariablesDebug vars = do
+    printVariableStack (variableStack vars)
+    putStrLn "📥 Argument variables:\t"
+    if length (argumentVariables vars) < 2 then putStr "Empty." else printVariableArrayDebug ((argumentVariables vars) !! 1)
+    putStrLn "\n"
+
+printStateDebug :: RuVmInfo -> RuVmState -> IO ()
+printStateDebug info state = do
+    let vars = variables state
+    printVariablesDebug (variables state)
+    putStrLn "Code:"
+    printCodeDebugMain info state
+
+{-- Exception handelr
+ --}
+handleException :: RuVmInfo -> RuVmState -> RuException -> IO ()
+handleException info state except = do
+    let pc = workerCodeOffset state
+    putStrLn (("\n😭 Encountered error at offset " ++ printf "0x%08x" pc) ++ ": " ++ show except)
+    printStateDebug info state
+    putStrLn "\n😔 Aborted execution..."
 
 exitRuVm :: RuVmInfo -> RuVmState -> IO ()
 exitRuVm info state = 
