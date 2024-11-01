@@ -22,6 +22,18 @@ codingByteToByte :: CodingByte -> [Word8]
 codingByteToByte (CbConst a b c) = [fromIntegral a] ++ intToWord32List b ++ intToWord32List c
 codingByteToByte (CbVar a b) = intToWord32List a ++ intToWord32List b
 
+addCodingByteToByte :: CodingByte -> CodingByte -> [Word8]
+addCodingByteToByte (CbConst a b c) (CbConst x y z) =
+    case a of
+        0xA0 -> case x of
+            0xA0 -> [fromIntegral 0xAA] ++ intToWord32List b ++ intToWord32List c ++ intToWord32List y ++ intToWord32List z
+            _ -> [fromIntegral 0xAB] ++ intToWord32List b ++ intToWord32List c ++ intToWord32List y ++ intToWord32List z
+        0xB0 -> case x of
+            0xA0 -> [fromIntegral 0xBA] ++ intToWord32List b ++ intToWord32List c ++ intToWord32List y ++ intToWord32List z
+            _ -> [fromIntegral 0xBB] ++ intToWord32List b ++ intToWord32List c ++ intToWord32List y ++ intToWord32List z
+addCodingByteToByte (CbVar a b) (CbVar x y) = intToWord32List a ++ intToWord32List b ++ intToWord32List x ++ intToWord32List y
+
+
 opCodeToByte :: OpCode -> [Word8]
 opCodeToByte OpNoop = [0x00, 0x00]
 opCodeToByte (OpPrint cb) = 0x00 : [0x01] ++ codingByteToByte cb
@@ -75,17 +87,17 @@ opCountByte (OpCall _) = 6
 opCountByte (OpJump _) = 6
 opCountByte (OpJumpCarry _) = 6
 opCountByte (OpJumpNotCarry _) = 6
-opCountByte (OpAdd cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
-opCountByte (OpSub cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
-opCountByte (OpDiv cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
-opCountByte (OpMul cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
-opCountByte (OpEq cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
-opCountByte (OpNeq cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
-opCountByte (OpMod cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
-opCountByte (OpLesser cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
-opCountByte (OpLesserEq cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
-opCountByte (OpGreater cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
-opCountByte (OpGreaterEq cb1 cb2) = 2 + opCountCodingByte cb1 + opCountCodingByte cb2
+opCountByte (OpAdd cb1 cb2) = 18
+opCountByte (OpSub cb1 cb2) = 18
+opCountByte (OpDiv cb1 cb2) = 18
+opCountByte (OpMul cb1 cb2) = 18
+opCountByte (OpEq cb1 cb2) = 18
+opCountByte (OpNeq cb1 cb2) = 18
+opCountByte (OpMod cb1 cb2) = 18
+opCountByte (OpLesser cb1 cb2) = 18
+opCountByte (OpLesserEq cb1 cb2) = 18
+opCountByte (OpGreater cb1 cb2) = 18
+opCountByte (OpGreaterEq cb1 cb2) = 18
 
 opListCountByte :: [OpCode] -> Int
 opListCountByte = sum . map opCountByte

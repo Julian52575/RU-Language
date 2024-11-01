@@ -110,7 +110,7 @@ compileStmt (BlockStmt stmts) scope comp = concatMap (\stmt -> compileStmt stmt 
 
 compileStmt (ReturnStmt (Just expr)) scope comp =
     let exprOpCode = compileExprToTmp expr scope comp
-    in exprOpCode ++ [OpSetReturn 0x01 (CbConst 0xA0 0x01 0xffffffff)] ++ [OpReturn]
+    in exprOpCode ++ [OpSetReturn 0x01 (CbConst 0xB0 0x01 0xffffffff)] ++ [OpReturn]
 
 compileStmt (IfStmt e1 s1 (Just s2)) scope comp =
     let trueStmt = compileStmt s1 scope comp
