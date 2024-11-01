@@ -30,6 +30,7 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y make build-essential curl libffi-dev libffi8 libgmp-dev libgmp10 libncurses-dev libncurses5 libtinfo5 --fix-missing
+          sudo apt-get install -y zlib1g-dev netbase
           curl -sSL https://get.haskellstack.org/ | sudo sh
           curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sudo sh
           make re
