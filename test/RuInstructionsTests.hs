@@ -716,3 +716,45 @@ spec = do
                     putStrLn ("Error encountered: " ++ show err)
                     False `shouldBe` True --Fail
                 Right result -> result `shouldBe` expected
+        it "Jump Carry" $ do
+            let ccode2 = [0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00]
+            let info2 = info {
+                code = ccode2
+            }
+            let state2 = state {
+                variables = (variables state) {
+                    carry = True
+                },
+                workerCode = ccode2,
+                workerCodeOffset = 0x01
+            }
+            let expected = state2 {
+                workerCodeOffset = (workerCodeOffset state2) + 0x04,
+                workerCode = (drop (fromIntegral ((workerCodeOffset state2) + 0x04)) (code info2))
+            }
+            case ruInstructionFunctionJumpCarry info2 state2 of
+                Left err -> do 
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right result -> result `shouldBe` expected
+        it "Jump Not Carry" $ do
+            let ccode2 = [0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00]
+            let info2 = info {
+                code = ccode2
+            }
+            let state2 = state {
+                variables = (variables state) {
+                    carry = False
+                },
+                workerCode = ccode2,
+                workerCodeOffset = 0x01
+            }
+            let expected = state2 {
+                workerCodeOffset = (workerCodeOffset state2) + 0x04,
+                workerCode = (drop (fromIntegral ((workerCodeOffset state2) + 0x04)) (code info2))
+            }
+            case ruInstructionFunctionJump info2 state2 of
+                Left err -> do 
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right result -> result `shouldBe` expected

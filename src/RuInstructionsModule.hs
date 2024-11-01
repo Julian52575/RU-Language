@@ -339,7 +339,7 @@ ruInstructionDeleteVar = RuInstruction {
     ruInstructionInfix = 0x07,
     ruInstructionName = "DELETEVAR",
     ruInstructionFunction = ruInstructionFunctionDeleteVar,
-    fixedSize = 0
+    fixedSize = 6
 }
 
 ruInstructionFunctionDeleteVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
@@ -414,19 +414,30 @@ ruInstructionJumpCarry = RuInstruction {
     ruInstructionPrefix = 0x02,
     ruInstructionInfix = 0x03,
     ruInstructionName = "JUMPCARRY",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionJumpCarry,
     fixedSize = 6
 }
+
+ruInstructionFunctionJumpCarry :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionJumpCarry info state
+    | carry (variables state) == True = ruInstructionFunctionJump info state
+    | otherwise                       = Right state 
 
 ruInstructionJumpNotCarry :: RuInstruction
 ruInstructionJumpNotCarry = RuInstruction {
     ruInstructionPrefix = 0x02,
     ruInstructionInfix = 0x04,
     ruInstructionName = "JUMPNOTCARRY",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionJumpNotCarry,
     fixedSize = 6
 }
 
+ruInstructionFunctionJumpNotCarry :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionJumpNotCarry info state
+    | carry (variables state) == False = ruInstructionFunctionJump info state
+    | otherwise                       = Right state 
+
+--
 ruInstructionDoOperation :: String -> RuVariable -> RuVariable -> Maybe RuVariableValue
 ruInstructionDoOperation "ADD" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
     (Int32 value1, Int32 value2) -> Just (Int32 (value1 + value2))
