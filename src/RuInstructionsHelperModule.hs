@@ -15,7 +15,7 @@ ruInstructionListPrefix0x00 = [ ruInstructionNoop, ruInstructionPrint, ruInstruc
 
 --Variable management
 ruInstructionListPrefix0x01 :: [ RuInstruction ]
-ruInstructionListPrefix0x01 = [ ruInstructionCreateVar, ruInstructionSetVar, ruInstructionSetTmpVar, ruInstructionUnsetArg ]
+ruInstructionListPrefix0x01 = [ ruInstructionCreateVar, ruInstructionSetVar, ruInstructionSetTmpVar, ruInstructionUnsetArg, ruInstructionSetReturn, ruInstructionUnsetReturn, ruInstructionDeleteVar ]
 
 --Control flow
 ruInstructionListPrefix0x02 :: [ RuInstruction ]
@@ -23,10 +23,10 @@ ruInstructionListPrefix0x02 = [ ]
 
 --Arithmetic
 ruInstructionListPrefix0x03 :: [ RuInstruction ]
-ruInstructionListPrefix0x03 = [ ]
+ruInstructionListPrefix0x03 = [ ruInstructionAdd, ruInstructionSub, ruInstructionDiv, ruInstructionMul, ruInstructionEq, ruInstructionNeq, ruInstructionMod, ruInstructionLesser, ruInstructionLesserEq, ruInstructionGreater, ruInstructionGreaterEq ]
 
 ruInstructionList :: [ [RuInstruction] ]
-ruInstructionList = [ ruInstructionListPrefix0x00, ruInstructionListPrefix0x01 ]
+ruInstructionList = [ ruInstructionListPrefix0x00, ruInstructionListPrefix0x01, ruInstructionListPrefix0x02, ruInstructionListPrefix0x03 ]
 
 {--
  --}

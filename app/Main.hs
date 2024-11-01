@@ -219,8 +219,11 @@ printVariablesDebug vars = do
 
 printStateDebug :: RuVmInfo -> RuVmState -> IO ()
 printStateDebug info state = do
-    let vars = variables state
-    printVariablesDebug (variables state)
+    if dumpMode info == False
+    then do
+        let vars = variables state
+        printVariablesDebug (variables state)
+    else putStr []
     putStrLn "🤓 Code:"
     printCodeDebugMain info state
 
