@@ -93,6 +93,7 @@ compileBinComp :: Expr -> Scope -> Compile -> [OpCode]
 compileBinComp (LitBool True) _ _ = [OpEq (CbConst 0xA0 0x01 0x01) (CbConst 0xA0 0x01 0x01)]
 compileBinComp (LitBool False) _ _ = [OpEq (CbConst 0xA0 0x01 0x00) (CbConst 0xA0 0x01 0x01)]
 compileBinComp (BinComp op e1 e2) scope comp = doBinComp op e1 e2 scope comp
+compileBinComp _ _ _ = []
 
 -- get a list of opcode from an stmt
 compileStmt :: Stmt -> Scope -> Compile -> [OpCode]
@@ -109,7 +110,7 @@ compileStmt (BlockStmt stmts) scope comp = concatMap (\stmt -> compileStmt stmt 
 
 compileStmt (ReturnStmt (Just expr)) scope comp =
     let exprOpCode = compileExprToTmp expr scope comp
-    in exprOpCode ++ [OpSetReturn 0x01 (CbConst 0xA0 0x01 0xffffffff)]
+    in exprOpCode ++ [OpSetReturn 0x01 (CbConst 0xA0 0x01 0xffffffff)] ++ [OpReturn]
 
 compileStmt (IfStmt e1 s1 (Just s2)) scope comp =
     let trueStmt = compileStmt s1 scope comp
@@ -133,7 +134,7 @@ compileFunction (FuncDeclStmt name args retType (Just body)) comp =
         opcode = map fst createVars
         unsetVars = unsetFuncVar (length args) (length $ vars $ globalScope comp)
         bodyOpCode = compileStmt body fScope comp
-    in opcode ++ unsetVars ++ bodyOpCode ++ [OpReturn]
+    in opcode ++ unsetVars ++ bodyOpCode ++ if checkIfReturn [body] then [] else [OpReturn]
 compileFunction _ _ = []
 
 -- return 0 if main return type is int otherwise return 1
@@ -143,6 +144,11 @@ getMainReturnType (FuncDeclStmt name _ retType _ : xs) = if name == "main" && re
 getMainReturnType (BlockStmt stmts:_) = getMainReturnType stmts
 getMainReturnType (_:xs) = getMainReturnType xs
 
+checkIfReturn :: [Stmt] -> Bool
+checkIfReturn [] = False
+checkIfReturn (ReturnStmt _:_) = True
+checkIfReturn (_:xs) = checkIfReturn xs
+
 compileGlobal :: Stmt -> Compile -> Bool -> [OpCode]
 compileGlobal stmts comp isMain =
     let createVars = getCreateVar [stmts] (stringTable comp)
@@ -151,7 +157,7 @@ compileGlobal stmts comp isMain =
         opCodeReturn = if getMainReturnType [stmts] == 0
                    then [OpUnsetReturn 0xffffffff, OpSetReturn 0x01 (CbConst 0xB0 0x01 0xffffffff)]
                    else [OpSetReturn 0x01 (CbConst 0xA0 0x01 0x00)]
-    in opcode ++ bodyOpCode ++ (if isMain then [OpCall 0] else []) ++ opCodeReturn ++ [OpReturn]
+    in opcode ++ bodyOpCode ++ (if isMain then [OpCall 0] else []) ++ opCodeReturn ++ if checkIfReturn [stmts] then [] else [OpReturn]
 
 compile :: [Stmt] -> Compile -> [[OpCode]]
 compile [] _ = []
