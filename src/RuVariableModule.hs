@@ -34,7 +34,7 @@ defaultRuVariable = RuVariable {
 getRuVariableValueAsString :: RuVariableValue -> String
 getRuVariableValueAsString (Int32 i) = show i
 getRuVariableValueAsString (Str s) = s
-getRuVariableValueAsString _ = "Empty"
+getRuVariableValueAsString Na = "No type attributed."
 
 printRuVariable :: RuVariable -> IO ()
 printRuVariable var = putStrLn (getRuVariableValueAsString (ruVariableValue var) )

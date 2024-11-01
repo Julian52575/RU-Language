@@ -96,7 +96,7 @@ moveWorkerCodeToNextInstruction :: RuInstruction -> RuVmInfo -> RuVmState -> Eit
 moveWorkerCodeToNextInstruction ins info state
     | fixedSize ins /= 0            = setNewWorkerCodePc info state (currentPc + (fixedSize ins))
     | length (workerCode state) < 3 = Left ruExceptionIncompleteInstruction
-    | otherwise          = setNewWorkerCodePc info state (currentPc + operandsSize)
+    | otherwise          = setNewWorkerCodePc info state (currentPc + 2 + 1 + (operandsSize))
     where
         codingByte = (workerCode state) !! 2
         operandsSize = codingByteToOperandsSize codingByte
@@ -146,7 +146,7 @@ execInstruction ins info state
         movedState = fromRight (error "fromRight error") movedResult
         function = ruInstructionFunction ins
         operandSize = codingByteToOperandsSize ((workerCode movedState) !! 0)
-        newPc = ogPc + if fixedSize ins == 0 then operandSize + 2 else fixedSize ins
+        newPc = ogPc + if fixedSize ins == 0 then 2 + 1 + operandSize else fixedSize ins
 
 -- Recupère l'instruction et appelle les sous fonctions
 runInstruction :: RuVmInfo -> RuVmState -> Either RuException RuVmState
@@ -185,16 +185,19 @@ printCodeDebug _ _ _ _ = return ()
 
 printCodeBeforePc :: RuVmInfo -> Word32 -> IO ()
 printCodeBeforePc info pc = do
-    printf "0x%08x:\t" (startIndex)
-    printCodeDebug len (take 16 (drop (fromIntegral startIndex) (code info))) 0 0
+    printf "0x%08x:\t" (startIndex2)
+    printCodeDebug len (take 16 (drop ((fromIntegral startIndex2)) (code info))) 0 0
+    printf "0x%08x:\t" (startIndex1)
+    printCodeDebug len (take 16 (drop (fromIntegral startIndex1) (code info))) 0 0
     where
-        startIndex = if pc < 0x10 then 0x00 else pc - 0x10
+        startIndex2 = if pc < 0x20 then 0x00 else pc - 0x20
+        startIndex1 = if pc < 0x10 then 0x00 else pc - 0x10
         len        = if pc < 0x10 then fromIntegral pc else 16
 
 printCodeDebugMain :: RuVmInfo -> RuVmState -> IO ()
 printCodeDebugMain info state = do
     let pc = workerCodeOffset state
-    printCodeBeforePc info (pc - 1)
+    printCodeBeforePc info (pc)
     printf "0x%08x:\t" pc
     printCodeDebug 16 (take 16 (workerCode state)) 0 0
     printf "0x%08x:\t" (pc + 0x10)
@@ -213,7 +216,7 @@ printVariableStack stack
     | stackNumber == 1          = do
         let len = length (stack !! 0)
         putStrLn ("🥞 Stack variables (" ++ show len ++ "):")
-        if length (stack !! 0) == 0 then putStr "Empty." else printVariableArrayDebug (stack !! 0)
+        if len == 0 then putStr "Empty." else printVariableArrayDebug (stack !! 0)
         putStrLn []
     | otherwise                 = do
         let global = (stack !! (stackNumber - 1))
