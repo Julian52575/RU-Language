@@ -28,7 +28,7 @@ jobs:
       - name: Build binary
         #second command installs stack
         run: |
-          sudo apt-get install -y make build-essential curl libffi-dev libffi8 libgmp-dev libgmp10 libncurses-dev libncurses5 libtinfo5 pkg-configsh
+          sudo apt-get install -y make build-essential curl libffi-dev libffi8 libgmp-dev libgmp10 libncurses-dev libncurses5 libtinfo5
           curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sudo sh
           make re
           if [ -x ${{ env.BINARY_NAME }} ]; then echo "Binary was built succesfully."; else echo "${{ env.BINARY_NAME }} was not found..." && exit 84 ; fi
