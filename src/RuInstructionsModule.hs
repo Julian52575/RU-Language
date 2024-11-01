@@ -192,33 +192,29 @@ ruInstructionSetVar = RuInstruction {
     fixedSize = 0
 }
 
-ruInstructionGetValueFromBytes :: [Word8] -> RuOperand -> RuVmState -> RuVariableValue
-ruInstructionGetValueFromBytes operand codingOperand state
-    | codingOperand == RuOperandConstant = Int32 (getWord32FromOperand operand)
-    | codingOperand == RuOperandVariableId = case ruVmVariablesGetVariableInCurrentScope (variables state) (getWord32FromOperand operand) of
-        Just var -> ruVariableValue var
-        Nothing -> Na
-    | otherwise = Na
-
 ruInstructionFunctionSetVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
-ruInstructionFunctionSetVar _ state = do
+ruInstructionFunctionSetVar info state = do
     let ccode = workerCode state
     let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
-    if ccodeSize < 9 then Left ruExceptionIncompleteInstruction
+    if ccodeSize < 13 then Left ruExceptionIncompleteInstruction
     else do
         let codingByte = take 1 ccode
         let codingOperand = codingByteToRuOperand (codingByte !! 0)
         let operand1 = take 4 (drop 1 ccode)
         let operand2 = take 4 (drop 5 ccode)
-        let value = ruInstructionGetValueFromBytes operand2 (codingOperand !! 1) state
+        let operand3 = take 4 (drop 9 ccode)
+        let getvar = ruInstructionGetRuVariableFromBytes operand2 operand3 (codingOperand !! 2) info state
+        if getvar == Nothing then Left $ ruExceptionUnknowVariable (word8ArrayToWord32Pure operand2)
+        else do
+            let value = ruVariableValue (fromJust getvar)
 
-        let var = ruVmVariablesUpdateVariable (variables state) (getWord32FromOperand operand1) value
-        case var of
-            Left err -> Left err
-            Right newVariables -> do
-                let newState = state { variables = newVariables }
-                Right newState
+            let var = ruVmVariablesUpdateVariable (variables state) (getWord32FromOperand operand1) value
+            case var of
+                Left err -> Left err
+                Right newVariables -> do
+                    let newState = state { variables = newVariables }
+                    Right newState
 
 ruInstructionSetArg :: RuInstruction
 ruInstructionSetArg = RuInstruction {
@@ -241,13 +237,16 @@ ruInstructionFunctionSetArg info state = do
         let operand1 = take 4 (drop 1 ccode)
         let operand2 = take 4 (drop 5 ccode)
         let operand3 = take 4 (drop 9 ccode)
-        let value = ruInstructionGetValueFromBytes operand3 (codingOperand !! 2) state
-        let var1 = defaultRuVariable { ruVariableType = (operand2 !! 3), ruVariableValue = value }
+        let getvar = ruInstructionGetRuVariableFromBytes operand2 operand3 (codingOperand !! 2) info state
+        if getvar == Nothing then Left $ ruExceptionUnknowVariable (word8ArrayToWord32Pure operand2)
+        else do 
+            let value = ruVariableValue (fromJust getvar)
+            let var1 = defaultRuVariable { ruVariableType = (operand2 !! 3), ruVariableValue = value }
 
-        -- let var = ruVmVariablesUpdateVariable (variables state) (getWord32FromOperand operand1) value
-        let var = ruVmVariablesSetArgument (variables state) (getWord32FromOperand operand1) var1
-        let newState = state { variables = var }
-        Right newState
+            -- let var = ruVmVariablesUpdateVariable (variables state) (getWord32FromOperand operand1) value
+            let var = ruVmVariablesSetArgument (variables state) (getWord32FromOperand operand1) var1
+            let newState = state { variables = var }
+            Right newState
 
 ruInstructionUnsetArg :: RuInstruction
 ruInstructionUnsetArg = RuInstruction {
@@ -299,12 +298,15 @@ ruInstructionFunctionSetReturn info state = do
         let codingOperand = codingByteToRuOperand (codingByte !! 0)
         let operand1 = take 4 (drop 1 ccode)
         let operand2 = take 4 (drop 5 ccode)
-        let value = ruInstructionGetValueFromBytes operand2 (codingOperand !! 1) state
-        let var = defaultRuVariable { ruVariableType = (operand1 !! 3), ruVariableValue = value }
-        let variabless = variables state
-        let newVariables = variabless { returnVariable = var }
-        let newState = state { variables = newVariables }
-        Right newState
+        let getvar = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) info state
+        if getvar == Nothing then Left $ ruExceptionUnknowVariable (word8ArrayToWord32Pure operand1)
+        else do
+            let value = ruVariableValue (fromJust getvar)
+            let var = defaultRuVariable { ruVariableType = (operand1 !! 3), ruVariableValue = value }
+            let variabless = variables state
+            let newVariables = variabless { returnVariable = var }
+            let newState = state { variables = newVariables }
+            Right newState
 
 ruInstructionUnsetReturn :: RuInstruction
 ruInstructionUnsetReturn = RuInstruction {

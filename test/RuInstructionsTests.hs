@@ -180,7 +180,7 @@ spec = do
         it "SetVar" $ do
             let var = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
             let vmVar = defaultRuVmVariables { variableStack = [[var]]}
-            let state = baseState { variables = vmVar, workerCode = [0xa0 ,0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04] }
+            let state = baseState { variables = vmVar, workerCode = [0xa8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04 ] }
             case ruInstructionFunctionSetVar baseInfo (state) of
                 Left err -> do
                     putStrLn ("Error encountered: " ++ show err)
