@@ -131,22 +131,31 @@ printInstruction ins info state =
 -- Execute la fonction liée à l'instruction
 execInstruction :: RuInstruction -> RuVmInfo -> RuVmState -> Either RuException RuVmState
 execInstruction ins info state
-    | length (workerCode state) < 2 = Left ruExceptionIncompleteInstruction
-    | isLeft movedResult            = movedResult
+    | length (workerCode movedState) < 2 = Left ruExceptionIncompleteInstruction
     | otherwise =
         case function info movedState of --résultat de function
             Left err -> Left err
             Right newState ->
                 case workerCodeOffset newState of --si le pc est le même, on déplace à l'instruction suivante
-                    ogPc -> setNewWorkerCodePc info newState newPc
+                    ogPc -> 
+                        case movedResult of
+                            Left err -> Left err
+                            Right movedState -> Right newState {
+                                            workerCode = (workerCode movedState),
+                                            workerCodeOffset = (workerCodeOffset movedState)
+                            }
                     _ -> Right newState
     where
-        ogPc = workerCodeOffset state
-        movedResult = setNewWorkerCodePc info state 2
-        movedState = fromRight (error "fromRight error") movedResult
+        movedState = state {
+            workerCode = drop 2 (workerCode state),
+            workerCodeOffset = (workerCodeOffset state) + 2
+        }
+        movedResult = moveWorkerCodeToNextInstruction ins info state
+        ogPc = workerCodeOffset movedState
         function = ruInstructionFunction ins
-        operandSize = codingByteToOperandsSize ((workerCode movedState) !! 0)
-        newPc = ogPc + if fixedSize ins == 0 then 2 + 1 + operandSize else fixedSize ins
+        operandSize = codingByteToOperandsSize (workerCode state !! 0)
+        nextPc = ogPc + (if fixedSize ins == 0 then 1 + operandSize else (fixedSize ins) )
+                                    --coding byte + taille de l'operand --taille fix sans le mnemonic
 
 -- Recupère l'instruction et appelle les sous fonctions
 runInstruction :: RuVmInfo -> RuVmState -> Either RuException RuVmState
@@ -161,9 +170,6 @@ runInstruction info state =
         codeTab = (workerCode state)
         prefix = codeTab !! 0
         iinfix = codeTab !! 1
-        movedState = state {
-            workerCode = drop 2 (workerCode state)
-        }
         instructionSearch = getRuInstruction prefix iinfix
 
 {-- Debug Print
