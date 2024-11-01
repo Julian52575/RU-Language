@@ -164,7 +164,7 @@ printStateDebug :: RuVmInfo -> RuVmState -> IO ()
 printStateDebug info state = do
     let vars = variables state
     printVariablesDebug (variables state)
-    putStrLn "Code:"
+    putStrLn "🤓 Code:"
     printCodeDebugMain info state
 
 {-- Exception handelr
