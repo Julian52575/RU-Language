@@ -665,21 +665,53 @@ spec = do
                     False `shouldBe` True --Fail
                 Right result -> result `shouldBe` expected
         it "Call a function" $ do
-            let ccode2 = [0x00, 0x00, 0x00, 0x00]
-            let state2 = state {
-                workerCode = ccode2
-            }
-            let expected = state2 {
+            let expected = state {
                 variables = defaultRuVmVariables {
                     variableStack = [ [], [], [] ],
                     argumentVariables = [ [], [], [] ],
                     callOffsets = [ (workerCodeOffset state), 0x10]
                 },
+                workerCode = (drop (fromIntegral (size fun0)) (code info)),
                 workerCodeOffset = codeSectionOffset fun0,
-                workerCode = ccode2,
-                scopeDeep = (scopeDeep state2) + 1
+                scopeDeep = (scopeDeep state) + 1
             }
-            case ruInstructionFunctionCall info state2 of
+            case ruInstructionFunctionCall info state of
+                Left err -> do 
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right result -> result `shouldBe` expected
+        it "Jump" $ do
+            let ccode2 = [0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00]
+            let info2 = info {
+                code = ccode2
+            }
+            let state2 = state {
+                workerCode = ccode2,
+                workerCodeOffset = 0x01
+            }
+            let expected = state2 {
+                workerCodeOffset = (workerCodeOffset state2) + 0x04,
+                workerCode = (drop (fromIntegral ((workerCodeOffset state2) + 0x04)) (code info2))
+            }
+            case ruInstructionFunctionJump info2 state2 of
+                Left err -> do 
+                    putStrLn ("Error encountered: " ++ show err)
+                    False `shouldBe` True --Fail
+                Right result -> result `shouldBe` expected
+        it "Jump backward" $ do
+            let ccode2 = [0xff, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0x04, 0xff, 0xff]
+            let info2 = info {
+                code = ccode2
+            }
+            let state2 = state {
+                workerCode = ccode2,
+                workerCodeOffset = 0x04
+            }
+            let expected = state2 {
+                workerCode = ccode2,
+                workerCodeOffset = (workerCodeOffset state2) - 0x04
+            }
+            case ruInstructionFunctionJump info2 state2 of
                 Left err -> do 
                     putStrLn ("Error encountered: " ++ show err)
                     False `shouldBe` True --Fail

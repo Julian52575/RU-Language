@@ -1249,6 +1249,10 @@ spec = do
             case ruVmStateJump info state 2147483647 of
                 Left err -> err `shouldBe` ruExceptionJumpOutOfBound
                 Right _ -> False `shouldBe` True
+        it "Doesn't jump in negative out of bound" $ do
+            case ruVmStateJump info state 0x8FFFFFFF of
+                Left err -> err `shouldBe` ruExceptionJumpOutOfBound
+                Right _ -> False `shouldBe` True
 
 --ruVmStateCreateNewScope :: RuVmState -> RuVmState
 --ruVmStateExitScope :: RuVmState -> RuVmState

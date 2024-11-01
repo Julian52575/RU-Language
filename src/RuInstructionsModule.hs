@@ -372,7 +372,7 @@ ruInstructionCall = RuInstruction {
     ruInstructionPrefix = 0x02,
     ruInstructionInfix = 0x01,
     ruInstructionName = "CALL",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionCall,
     fixedSize = 6
 }
 
@@ -381,7 +381,8 @@ ruInstructionFunctionCall info state
     | length ccode < 4                                  = Left ruExceptionIncompleteInstruction
     | op1 > fromIntegral (length (functionTable info)) = Left (ruExceptionUnknowFunction op1)
     | otherwise                                        = Right scopeState {
-        workerCodeOffset = codeSectionOffset fun
+        workerCodeOffset = codeSectionOffset fun,
+        workerCode = drop (fromIntegral (codeSectionOffset fun)) (code info)
     }
     where
         ccode = workerCode state
@@ -395,9 +396,18 @@ ruInstructionJump = RuInstruction {
     ruInstructionPrefix = 0x02,
     ruInstructionInfix = 0x02,
     ruInstructionName = "JUMP",
-    ruInstructionFunction = ruInstructionFunctionNoop,
+    ruInstructionFunction = ruInstructionFunctionJump,
     fixedSize = 6
 }
+
+ruInstructionFunctionJump :: RuVmInfo -> RuVmState -> Either RuException RuVmState
+ruInstructionFunctionJump info state
+    | length (workerCode state) < 4     = Left ruExceptionIncompleteInstruction
+    | otherwise                         = jumpedState --Left (RuException (show op1))  --jumpedState
+    where
+        op1 = word8ArrayToWord32Pure (take 4 (workerCode state))
+        jumpedState = ruVmStateJump info state op1
+
 
 ruInstructionJumpCarry :: RuInstruction
 ruInstructionJumpCarry = RuInstruction {
