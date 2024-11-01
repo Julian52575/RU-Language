@@ -19,6 +19,56 @@ import RuExceptionModule
 import RuInstructionsHelperModule
 import RuInstructionsModule
 
+crousAsciiArt :: String
+crousAsciiArt = "                             .################:                             \n" ++
+    "                        ############################                         \n" ++
+    "                    ####################################                     \n" ++
+    "                 ##########################################                  \n" ++
+    "              ################################################               \n" ++
+    "            ####################################################             \n" ++
+    "          ########################################################           \n" ++
+    "         ##########################################################          \n" ++
+    "       ##############################################################        \n" ++
+    "      ################################################################       \n" ++
+    "     ##################################################################      \n" ++
+    "    ####################################################################     \n" ++
+    "   ######################################################################    \n" ++
+    "  ########################################################################   \n" ++
+    "  ########################################################################   \n" ++
+    " ##########################################################################  \n" ++
+    " ##########################################################################  \n" ++
+    "#####################################:.##################################### \n" ++
+    "##################################        ################################## \n" ++
+    "#################################  *#####==###   :##*    .###  +##.  ##      \n" ++
+    "#################################  ##########   ###   ##:  ##  +##.  ##  ### \n" ++
+    "#################################  ##########  ####  ####  ##  +##.  ###    _\n" ++
+    "##################################   ##   ###  ####.  ##   ###  :.  ### ###  \n" ++ 
+    "####################################    #####  ######-   ######   :#####   . \n" ++
+    " ##########################################################################  \n" ++ 
+    " ##########################################################################  \n" ++
+    "  #########################################################################   \n" ++
+    "  ########################################################################   \n" ++
+    "   ######################################################################    \n" ++
+    "    ####################################################################     \n" ++
+    "     ##################################################################      \n" ++
+    "      ################################################################       \n" ++
+    "       ##############################################################        \n" ++
+    "         ##########################################################          \n" ++
+    "          ########################################################           \n" ++
+    "            ####################################################             \n" ++
+    "              ################################################               \n" ++
+    "                 ##########################################                  \n" ++
+    "                    ####################################                     \n" ++
+    "                        ############################                         \n" ++
+    "                             +################+                              "
+
+theColorRed :: String
+theColorRed = "\ESC[31m"
+
+theColorDefault :: String
+theColorDefault = "\ESC[0m"
+
+
 data Argument = Argument {
     dump :: Bool,
     fileName :: Maybe String
@@ -134,21 +184,25 @@ printCodeDebugMain info state = do
 
 printVariableArrayDebug :: [ RuVariable ] -> IO ()
 printVariableArrayDebug (current:next) = do
-    printRuVariable current >> printVariableArrayDebug next
+    putStr ("ID " ++ show (ruVariableId current) ++ ":\t")
+    printRuVariable current
+    printVariableArrayDebug next
 printVariableArrayDebug [] = return ()
 
 printVariableStack :: [ [RuVariable] ] -> IO ()
 printVariableStack stack
     | stackNumber == 0          = putStrLn "🏜️ No variable in stack."
     | stackNumber == 1          = do
-        putStrLn "🥞 Stack variables:\t"
+        let len = length (stack !! 0)
+        putStrLn ("🥞 Stack variables (" ++ show len ++ "):")
         if length (stack !! 0) == 0 then putStr "Empty." else printVariableArrayDebug (stack !! 0)
-        putStrLn "\n"
+        putStrLn []
     | otherwise                 = do
         let global = (stack !! (stackNumber - 1))
-        putStrLn "🌎 Global variables:\t"
+        let len = length global
+        putStrLn ("🌎 Global variables (" ++ show len ++ "):")
         if length global == 0 then putStr "Empty." else printVariableArrayDebug (stack !! 0)
-        putStrLn "\n"
+        putStrLn []
         printVariableStack [stack !! 0]
     where
         stackNumber = length stack
@@ -156,8 +210,11 @@ printVariableStack stack
 printVariablesDebug :: RuVmVariables -> IO ()
 printVariablesDebug vars = do
     printVariableStack (variableStack vars)
-    putStrLn "📥 Argument variables:\t"
+    putStrLn "📥 Argument variables:"
     if length (argumentVariables vars) < 2 then putStr "Empty." else printVariableArrayDebug ((argumentVariables vars) !! 1)
+    putStrLn "\n"
+    putStrLn "📤 Return variable:"
+    if returnVariable vars == defaultRuVariable then putStr "NA" else printRuVariable (returnVariable vars)
     putStrLn "\n"
 
 printStateDebug :: RuVmInfo -> RuVmState -> IO ()
@@ -172,7 +229,9 @@ printStateDebug info state = do
 handleException :: RuVmInfo -> RuVmState -> RuException -> IO ()
 handleException info state except = do
     let pc = workerCodeOffset state
-    putStrLn (("\n😭 Encountered error at offset " ++ printf "0x%08x" pc) ++ ": " ++ show except)
+    putStrLn (("\n😭 Encountered error at offset " ++ printf "0x%08x" pc) ++ ": " ++ theColorRed ++ show except ++ theColorDefault)
+    putStrLn "👁  Here are some debug information:"
+    putStrLn "\n"
     printStateDebug info state
     putStrLn "\n😔 Aborted execution..."
 
@@ -214,7 +273,11 @@ parseArgument _ arg = arg
 
 printRuFormatIfArg :: RuFormat -> Argument -> IO ()
 printRuFormatIfArg format arg
-    | dump arg == True = printRuFormat format
+    | dump arg == True = do
+        putStr theColorRed
+        putStrLn crousAsciiArt
+        putStr theColorDefault
+        printRuFormat format
     | otherwise        = return () 
 
 argumentToRuVmInfo :: [String] -> IO (Either RuException (RuVmInfo, RuVmState))
