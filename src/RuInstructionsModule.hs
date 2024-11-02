@@ -309,10 +309,8 @@ ruInstructionFunctionSetReturn info state = do
         let getvar = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) info state
         if getvar == Nothing then Left $ ruExceptionUnknowVariable (word8ArrayToWord32Pure operand1)
         else do
-            let value = ruVariableValue (fromJust getvar)
-            let var = defaultRuVariable { ruVariableType = (operand1 !! 3), ruVariableValue = value }
             let variabless = variables state
-            let newVariables = variabless { returnVariable = var }
+            let newVariables = variabless { returnVariable = (fromJust getvar) }
             let newState = state { variables = newVariables }
             Right newState
 
