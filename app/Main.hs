@@ -130,25 +130,27 @@ execInstruction ins info state
         case function info movedState of --résultat de function
             Left err -> Left err
             Right newState ->
-                case workerCodeOffset newState of --si le pc est le même, on déplace à l'instruction suivante
-                    ogPc -> 
-                        case movedResult of
-                            Left err -> Left err
-                            Right movedState -> Right newState {
-                                            workerCode = (workerCode movedState),
-                                            workerCodeOffset = (workerCodeOffset movedState)
-                            }
-                    _ -> Right newState
+                if workerCodeOffset newState == ogPc
+                then--si le pc est le même, on déplace à l'instruction suivante
+                    case nextInsResult of
+                        Left err -> Left err
+                        Right nextInsState -> Right newState {
+                                        workerCode = (workerCode nextInsState),
+                                        workerCodeOffset = (workerCodeOffset nextInsState)
+                        }
+                else
+                    Right newState
     where
+        ogPc = workerCodeOffset state
         movedState = state {
-            workerCode = drop 2 (workerCode state)
-            --workerCodeOffset = (workerCodeOffset state) + 2 --offset should stay on ins
+            workerCode = drop 2 (workerCode state),
+            workerCodeOffset = ogPc --offset should stay on ins
         }
-        movedResult = moveWorkerCodeToNextInstruction ins info state
-        ogPc = workerCodeOffset movedState
+        nextInsResult = moveWorkerCodeToNextInstruction ins info state
         function = ruInstructionFunction ins
-        operandSize = codingByteToOperandsSize (workerCode state !! 0)
-        nextPc = ogPc + (if fixedSize ins == 0 then 1 + operandSize else (fixedSize ins) )
+            --Removed calculation for nextPc to leave work to subFUnction
+        --operandSize = codingByteToOperandsSize (workerCode state !! 0)
+        --nextPc = ogPc + (if fixedSize ins == 0 then 1 + operandSize else (fixedSize ins) )
                                     --coding byte + taille de l'operand --taille fix sans le mnemonic
 
 -- Recupère l'instruction et appelle les sous fonctions
