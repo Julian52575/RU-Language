@@ -123,17 +123,6 @@ getWord32FromOperand operand = do
     if var == Nothing then 0
     else fromJust var
 
-ruInstructionGetVariableFromCode :: [Word8] -> RuVmInfo -> RuVariable
-ruInstructionGetVariableFromCode ccode info = do
-    let operand1 = take 4 ccode
-    let operand2 = take 4 (drop 4 ccode)
-    let var = defaultRuVariable { ruVariableType = (operand1 !! 3) }
-    if operand1 !! 3 == ruVariableTypeInt then var { ruVariableValue = Int32 (getWord32FromOperand operand2) }
-    else if operand1 !! 3 == ruVariableTypeStr then var { ruVariableValue = Str (case ruVmInfoGetStringFromStringTable info (getWord32FromOperand operand2) of
-        Nothing -> ""
-        Just str -> str) }
-    else var { ruVariableValue = Na }
-
 ruInstructionFunctionCreateVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionCreateVar vminfo state = do
     let ccode = workerCode state
