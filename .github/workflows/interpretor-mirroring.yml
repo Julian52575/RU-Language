@@ -1,0 +1,66 @@
+name: GladOS actions
+
+on:
+  push: 
+    branches:
+      - Virtual-Machine
+env:
+  ACTION_FILE: .github/workflows/interpretor-mirroring.yml
+  MIRROR_URL: git@github.com:EpitechPromo2027/B-FUN-500-NCY-5-1-glados-julian.bottiglione.git
+  TARGET_BRANCH: Virtual-Machine-Release
+  CURRENT_BRANCH: Virtual-Machine
+  COMMIT_MSG: ${{ github.event.head_commit.message }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  run_tests:
+    runs-on: ubuntu-latest
+    container:
+      image:  haskell:slim-bullseye
+      options: --user="root"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+        timeout-minutes: 5
+      - run:
+          chown -R $(id -un):$(id -gn) ~ #https://github.com/commercialhaskell/stack/issues/2187
+      - name: build
+        run:
+          stack build --allow-different-user
+      - name: unit test
+        run:
+          stack test --allow-different-user
+        
+  mirror:
+    runs-on: ubuntu-latest
+    needs:
+      -  run_tests
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensure full history is fetched
+      - name: Ssh -> Sparse Checkout -> Push
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+            mkdir -p ~/.ssh
+            echo "${{ secrets.SSH_KEY }}" > ~/.ssh/github_actions
+            chmod 600 ~/.ssh/github_actions
+            ssh-agent -a $SSH_AUTH_SOCK > /dev/null	
+            ssh-add ~/.ssh/github_actions
+
+            git remote add origin-destination ${{ env.MIRROR_URL }}
+            git remote add origin-source ${{ github.repositoryUrl }}
+            git checkout -b ${{ env.TARGET_BRANCH }}
+            
+            git rm ${{ env.ACTION_FILE }}
+            git config --global user.name "julian.bottiglione"
+            git config --global user.email "julian.bottiglione@epitech.eu"
+            git commit --amend --reuse-message=HEAD
+            git push --force --set-upstream origin-destination ${{ env.TARGET_BRANCH }}
+            
