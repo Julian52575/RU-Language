@@ -25,9 +25,12 @@ source-repository head
 
 library
   exposed-modules:
+      Compiler.BinArith
+      Compiler.CodingByte
       Compiler.Compile
       Compiler.CreateVar
       Compiler.Function
+      Compiler.Header
       Compiler.String
       Compiler.Type
       Opcode
@@ -81,6 +84,11 @@ test-suite glados-compiler-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Compiler.BinArithComp
+      Compiler.CompilerComp
+      Compiler.CreateVarComp
+      Compiler.FunctionComp
+      Compiler.StringComp
       ExprSpec
       FunctionSpec
       PatternSpec

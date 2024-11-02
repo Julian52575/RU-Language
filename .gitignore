@@ -1,2 +1,4 @@
 .stack-work/
-*~
+*~glados-compiler.cabal
+*.bin
+glados-compiler-exe
