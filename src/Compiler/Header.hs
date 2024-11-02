@@ -22,6 +22,12 @@ codingByteToByte :: CodingByte -> [Word8]
 codingByteToByte (CbConst a b c) = [fromIntegral a] ++ intToWord32List b ++ intToWord32List c
 codingByteToByte (CbVar a b) = intToWord32List a ++ intToWord32List b
 
+codingByteSetVar :: Int -> CodingByte -> [Word8]
+codingByteSetVar n (CbConst a b c) = case a of
+    0xA0 -> fromIntegral 0xA8 : intToWord32List n ++ intToWord32List b ++ intToWord32List c
+    0xB0 -> fromIntegral 0xB8 : intToWord32List n ++ intToWord32List b ++ intToWord32List c
+codingByteSetVar n (CbVar a b) = fromIntegral 0xB8 : intToWord32List n ++ intToWord32List a ++ intToWord32List b
+
 addCodingByteToByte :: CodingByte -> CodingByte -> [Word8]
 addCodingByteToByte (CbConst a b c) (CbConst x y z) =
     case a of
@@ -40,7 +46,7 @@ opCodeToByte (OpPrint cb) = 0x00 : [0x01] ++ codingByteToByte cb
 opCodeToByte (OpPrintLn cb) = 0x00 : [0x02] ++ codingByteToByte cb
 
 opCodeToByte (OpCreateVar a b) = 0x01 : [0x00] ++ intToWord32List a ++ intToWord32List b
-opCodeToByte (OpSetVar a cb) = 0x01 : [0x01] ++ addCodingByteToByte (CbConst 0xA0 0x01 a) cb
+opCodeToByte (OpSetVar a cb) = 0x01 : [0x01] ++ codingByteSetVar a cb
 opCodeToByte (OpSetTmp a cb) = 0x01 : [0x02] ++ codingByteToByte cb
 opCodeToByte (OpSetArg a cb) = 0x01 : [0x03]  ++ addCodingByteToByte (CbConst 0xA0 0x01 a) cb
 opCodeToByte (OpUnsetArg a b) = 0x01 : [0x04] ++ intToWord32List a ++ intToWord32List b
@@ -67,8 +73,8 @@ opCodeToByte (OpGreater cb1 cb2) = 0x03 : [0x09] ++ addCodingByteToByte cb1 cb2
 opCodeToByte (OpGreaterEq cb1 cb2) = 0x03 : [0x10] ++ addCodingByteToByte cb1 cb2
 
 opCountCodingByte :: CodingByte -> Int
-opCountCodingByte (CbConst _ _ _) = 12
-opCountCodingByte (CbVar _ _) = 8
+opCountCodingByte (CbConst _ _ _) = 9
+opCountCodingByte (CbVar _ _) = 9
 
 opCountByte :: OpCode -> Int
 opCountByte OpNoop = 2
@@ -176,4 +182,4 @@ getHeader comp globalOp opcodes =
         functionTable''' = addGlobalOffset globaloffset functionTable''
         hFunctionTable = concatMap functionToByte functionTable'''
 
-    in Header magic checkSum version functionTableCount' stringTableOffset' stringTableSize' codeOffset' firstInstructionOffset unuse stringTableHex hFunctionTable
+    in  Header magic checkSum version functionTableCount' stringTableOffset' stringTableSize' codeOffset' firstInstructionOffset unuse stringTableHex hFunctionTable

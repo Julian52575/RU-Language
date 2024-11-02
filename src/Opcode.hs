@@ -32,6 +32,12 @@ isMain :: [Function] -> Bool
 isMain [] = False
 isMain (x:xs) = if fName x == "main" then True else isMain xs
 
+containMain :: [Stmt] -> Bool
+containMain [] = False
+containMain (x:xs) = case x of
+    FuncDeclStmt "main" _ _ _ -> True
+    _ -> containMain xs
+
 test :: [Stmt] -> IO ()
 test ast = do
     let stringTbl = nub $ getStringTable ast
@@ -41,7 +47,7 @@ test ast = do
     let compileData = Compile stringTbl functionTbl sGlobal
     let compiled = compile ast compileData
     let globalCompiled = compileGlobal (BlockStmt ast) compileData (isMain functionTbl)
-    let swapData = swapMainFunction compileData compiled
+    let swapData = if containMain ast then swapMainFunction compileData compiled else (compileData, compiled)
     let compileData' = fst swapData
     let compiled' = snd swapData
     let header = getHeader compileData' globalCompiled compiled'

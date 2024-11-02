@@ -33,8 +33,8 @@ compileBinArith :: Expr -> Scope -> Compile -> Int -> Int -> [OpCode]
 compileBinArith (BinArith op (BinArith op1 ee1 ee2) (BinArith op2 ex1 ex2)) scope comp start depth =
         [OpCreateVar (if isBinArithString (BinArith op1 ee1 ee2) then 0x02 else 0x01) 0] ++  -- Create Var 1
             [OpCreateVar (if isBinArithString (BinArith op2 ex1 ex2) then 0x02 else 0x01) 0] ++ -- Create Var 2
-            compileBinArith (BinArith op1 ee1 ee2) scope comp start (depth + 2) ++ -- Compile BinArith 1
-            compileBinArith (BinArith op2 ex1 ex2) scope comp start (depth + 3) ++ -- Compile BinArith 2
+            compileBinArith (BinArith op1 ee1 ee2) scope comp start (depth + 1) ++ -- Compile BinArith 1
+            compileBinArith (BinArith op2 ex1 ex2) scope comp start (depth + 2) ++ -- Compile BinArith 2
             doBinArith op (Right (start + depth + 1)) (Right (start + depth + 2)) scope comp ++ -- Do BinArith with var 1 and var 2
             [OpUnsetReturn (start + depth)] ++ -- Unset the return value in the start index
             [OpUnsetVar (start + depth + 1)] ++ -- Unset the var 1
