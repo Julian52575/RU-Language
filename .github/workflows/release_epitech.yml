@@ -7,7 +7,7 @@ on:
 env:
   RELEASE_NAME: RU-VIRTUAL-MACHINE
   BINARY_NAME: glados-virtual-machine-exe
-  BINARY_RELEASE_NAME: rvm
+  BINARY_RELEASE_NAME: ruvm
 
 jobs:
   get_date:
