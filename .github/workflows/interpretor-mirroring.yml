@@ -34,6 +34,9 @@ jobs:
       - name: unit test
         run:
           stack test --allow-different-user
+      - name: functional test
+        run:
+          ./examples/tests_run.sh
         
   mirror:
     runs-on: ubuntu-latest
