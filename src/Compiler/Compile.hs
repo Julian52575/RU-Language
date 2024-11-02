@@ -102,6 +102,11 @@ compileBinComp _ _ _ = []
 
 -- get a list of opcode from an stmt
 compileStmt :: Stmt -> Scope -> Compile -> [OpCode]
+compileStmt (LetStmt name _ (FuncCall name2 args)) scope comp = compileExpr (FuncCall name2 args) scope comp 0 ++
+        [OpCreateVar 0x01 0x00] ++
+        [OpUnsetReturn (length $ vars scope)] ++
+        [OpSetVar (getIndexFromStrTable (vars scope) name) (CbConst 0xB0 0x00 (length $ vars scope))] ++
+        [OpUnsetVar (length $ vars scope)]
 compileStmt (LetStmt name _ expr) scope comp = if isConst expr == False
     then [OpCreateVar 0x01 0x00] ++
         compileExpr expr scope comp 0 ++
@@ -121,13 +126,13 @@ compileStmt (ReturnStmt (Just expr)) scope comp =
 compileStmt (IfStmt e1 s1 (Just s2)) scope comp =
     let trueStmt = compileStmt s1 scope comp
     in compileBinComp e1 scope comp ++
-        [OpJump (opListCountByte trueStmt)] ++
+        [OpJumpNotCarry ((opListCountByte trueStmt) + 6)] ++
         trueStmt ++
         compileStmt s2 scope comp
 compileStmt (IfStmt e1 s1 Nothing) scope comp =
     let trueStmt = compileStmt s1 scope comp
     in compileBinComp e1 scope comp ++
-        [OpJump (opListCountByte trueStmt)] ++
+        [OpJumpNotCarry ((opListCountByte trueStmt) + 6)] ++
         trueStmt
 
 compileStmt _ _ _ = []
