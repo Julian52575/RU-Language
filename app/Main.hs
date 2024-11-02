@@ -221,13 +221,11 @@ printVariableStack stack
         let len = length (stack !! 0)
         putStrLn ("🥞 Stack variables (" ++ show len ++ "):")
         if len == 0 then putStr "Empty." else printVariableArrayDebug (stack !! 0)
-        putStrLn []
     | otherwise                 = do
         let global = (stack !! (stackNumber - 1))
         let len = length global
         putStrLn ("🌎 Global variables (" ++ show len ++ "):")
         if length global == 0 then putStr "Empty." else printVariableArrayDebug (stack !! 0)
-        putStrLn []
         printVariableStack [stack !! 0]
     where
         stackNumber = length stack
@@ -247,11 +245,10 @@ printVariablesDebug vars = do
         putStr "Empty."
     else
         printVariableArrayDebug ((argumentVariables vars) !! 1)
-    putStrLn "\n"
     putStrLn "📤 Return variable:"
     if returnVariable vars == defaultRuVariable
     then
-        putStr "NA"
+        putStrLn "NA"
     else
         printRuVariable (returnVariable vars)
 
