@@ -4,6 +4,7 @@ import Test.Hspec
 import Parser.Stmt (parseStmt, Stmt(..), RangeType(..))
 import Parser.Expr (Expr(..), ArithOp(..), CompOp(..), LogicOp(..))
 import Parser.Type (Type(..))
+import Parser.Pattern (Pattern(..))
 
 spec :: Spec
 spec = do
@@ -13,7 +14,7 @@ spec = do
     it "parses let declaration with type" $ do
       let input = "let x: int = 42;"
       parseStmt input `shouldBe` Right (LetStmt "x" (Just TInt) (LitInt 42))
-
+    
     it "parses let declaration with expression" $ do
       let input = "let y = 10 + 20;"
       parseStmt input `shouldBe` Right (LetStmt "y" Nothing (BinArith Add (LitInt 10) (LitInt 20)))
@@ -181,7 +182,7 @@ spec = do
 
     it "parses return with function call" $ do
       let input = "return foo(42, x + y);"
-      parseStmt input `shouldBe` Right (ReturnStmt (Just (FuncCall "foo" [LitInt 42, BinArith Add (Var "x") (Var "y")])))
+      parseStmt input `shouldBe` Right (ReturnStmt (Just (FuncCall (Var "foo") [LitInt 42, BinArith Add (Var "x") (Var "y")])))
 
     -- Tests supplémentaires pour if statements
     it "parses if statement with logical operations" $ do
@@ -249,6 +250,324 @@ spec = do
       parseStmt input `shouldBe` Right (ExprStmt (Assign (ArrayIndex (Var "arr") (LitInt 0)) (LitInt 42)))
 
 
-    it "parses assignment with tuple access" $ do
-      let input = "tuple._1 = 42;"
-      parseStmt input `shouldBe` Right (ExprStmt (Assign (FuncCall "tuple" [LitString "_1"]) (LitInt 42)))
+        -- Tests pour match statement
+    it "parses match statement with literal patterns" $ do
+      let input = "match x { 1 => return 42, 2 => return 43 }"
+      parseStmt input `shouldBe` Right (MatchStmt (Var "x") 
+                                          [ (PatLitInt 1, ReturnStmt (Just (LitInt 42)))
+                                          , (PatLitInt 2, ReturnStmt (Just (LitInt 43)))
+                                          ])
+
+    it "parses match statement with boolean patterns" $ do
+      let input = "match x { true => return 1, false => return 0 }"
+      parseStmt input `shouldBe` Right (MatchStmt (Var "x") 
+                                          [ (PatLitBool True, ReturnStmt (Just (LitInt 1)))
+                                          , (PatLitBool False, ReturnStmt (Just (LitInt 0)))
+                                          ])
+
+    it "parses match statement with wildcard pattern" $ do
+      let input = "match x { _ => return 100 }"
+      parseStmt input `shouldBe` Right (MatchStmt (Var "x") 
+                                          [ (PatWildcard, ReturnStmt (Just (LitInt 100))) ])
+
+    it "parses match statement with range patterns" $ do
+      let input = "match x { 1..10 => return 42, 11..=20 => return 43 }"
+      parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                          [ (PatRange (PatLitInt 1) (PatLitInt 10), ReturnStmt (Just (LitInt 42)))
+                                          , (PatRangeInclusive (PatLitInt 11) (PatLitInt 20), ReturnStmt (Just (LitInt 43)))
+                                          ])
+
+    it "parses match statement with tuple patterns" $ do
+      let input = "match x { (1, 2) => return 42, (3, 4) => return 43 }"
+      parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                          [ (PatTuple [PatLitInt 1, PatLitInt 2], ReturnStmt (Just (LitInt 42)))
+                                          , (PatTuple [PatLitInt 3, PatLitInt 4], ReturnStmt (Just (LitInt 43)))
+                                          ])
+
+    it "parses match statement with array patterns" $ do
+      let input = "match x { [1, 2, 3] => return 42, [4, 5, 6] => return 43 }"
+      parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                          [ (PatArray [PatLitInt 1, PatLitInt 2, PatLitInt 3], ReturnStmt (Just (LitInt 42)))
+                                          , (PatArray [PatLitInt 4, PatLitInt 5, PatLitInt 6], ReturnStmt (Just (LitInt 43)))
+                                          ])
+
+    it "parses match statement with or patterns" $ do
+      let input = "match x { 1 | 2 | 3 => return 42, 4 | 5 | 6 => return 43 }"
+      parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                          [ (PatOr [PatLitInt 1, PatLitInt 2, PatLitInt 3], ReturnStmt (Just (LitInt 42)))
+                                          , (PatOr [PatLitInt 4, PatLitInt 5, PatLitInt 6], ReturnStmt (Just (LitInt 43)))
+                                          ])
+
+    it "parses match statement with variable patterns" $ do
+      let input = "match x { y => return y + 1 }"
+      parseStmt input `shouldBe` Right (MatchStmt (Var "x") 
+                                          [ (PatVar "y", ReturnStmt (Just (BinArith Add (Var "y") (LitInt 1)))) ])
+
+-- Tests pour match avec des patterns littéraux
+  it "parses match statement with integer literal patterns" $ do
+    let input = "match x { 1 => return 42, 2 => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, ReturnStmt (Just (LitInt 42)))
+                                        , (PatLitInt 2, ReturnStmt (Just (LitInt 43))) ])
+
+  it "parses match statement with string literal patterns" $ do
+    let input = "match x { \"a\" => return 42, \"b\" => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitString "a", ReturnStmt (Just (LitInt 42)))
+                                        , (PatLitString "b", ReturnStmt (Just (LitInt 43))) ])
+
+  it "parses match statement with boolean literal patterns" $ do
+    let input = "match x { true => return 1, false => return 0 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitBool True, ReturnStmt (Just (LitInt 1)))
+                                        , (PatLitBool False, ReturnStmt (Just (LitInt 0))) ])
+
+  -- Tests pour match avec des blocs
+  it "parses match statement with block patterns" $ do
+    let input = "match x { 1 => { let a = 1; return a; }, 2 => { let b = 2; return b; } }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, BlockStmt [LetStmt "a" Nothing (LitInt 1), ReturnStmt (Just (Var "a"))])
+                                        , (PatLitInt 2, BlockStmt [LetStmt "b" Nothing (LitInt 2), ReturnStmt (Just (Var "b"))]) ])
+
+  -- Tests pour match avec des plages exclusives et inclusives
+  it "parses match statement with exclusive range patterns" $ do
+    let input = "match x { 1..10 => return 42, 11..20 => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatRange (PatLitInt 1) (PatLitInt 10), ReturnStmt (Just (LitInt 42)))
+                                        , (PatRange (PatLitInt 11) (PatLitInt 20), ReturnStmt (Just (LitInt 43))) ])
+
+  it "parses match statement with inclusive range patterns" $ do
+    let input = "match x { 1..=10 => return 42, 11..=20 => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatRangeInclusive (PatLitInt 1) (PatLitInt 10), ReturnStmt (Just (LitInt 42)))
+                                        , (PatRangeInclusive (PatLitInt 11) (PatLitInt 20), ReturnStmt (Just (LitInt 43))) ])
+
+  -- Tests pour match avec des motifs or
+  it "parses match statement with or patterns" $ do
+    let input = "match x { 1 | 2 | 3 => return 42, 4 | 5 | 6 => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatOr [PatLitInt 1, PatLitInt 2, PatLitInt 3], ReturnStmt (Just (LitInt 42)))
+                                        , (PatOr [PatLitInt 4, PatLitInt 5, PatLitInt 6], ReturnStmt (Just (LitInt 43))) ])
+
+  -- Tests pour match avec des tuples
+  it "parses match statement with tuple patterns" $ do
+    let input = "match x { (1, 2) => return 42, (3, 4) => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatTuple [PatLitInt 1, PatLitInt 2], ReturnStmt (Just (LitInt 42)))
+                                        , (PatTuple [PatLitInt 3, PatLitInt 4], ReturnStmt (Just (LitInt 43))) ])
+
+  -- Tests pour match avec des tableaux
+  it "parses match statement with array patterns" $ do
+    let input = "match x { [1, 2, 3] => return 42, [4, 5, 6] => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatArray [PatLitInt 1, PatLitInt 2, PatLitInt 3], ReturnStmt (Just (LitInt 42)))
+                                        , (PatArray [PatLitInt 4, PatLitInt 5, PatLitInt 6], ReturnStmt (Just (LitInt 43))) ])
+
+  -- Tests pour match avec des variables
+  it "parses match statement with variable patterns" $ do
+    let input = "match x { y => return y + 1 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatVar "y", ReturnStmt (Just (BinArith Add (Var "y") (LitInt 1)))) ])
+
+  -- Tests pour match avec le wildcard
+  it "parses match statement with wildcard pattern" $ do
+    let input = "match x { _ => return 100 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatWildcard, ReturnStmt (Just (LitInt 100))) ])
+
+  -- Tests pour match avec des combinaisons de motifs
+  it "parses match statement with combined patterns" $ do
+    let input = "match x { (1 | 2, 3..5) => return 42, (3, 4 | 5) => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatTuple [PatOr [PatLitInt 1, PatLitInt 2], PatRange (PatLitInt 3) (PatLitInt 5)], ReturnStmt (Just (LitInt 42)))
+                                        , (PatTuple [PatLitInt 3, PatOr [PatLitInt 4, PatLitInt 5]], ReturnStmt (Just (LitInt 43))) ])
+
+  -- Tests pour match avec des plages et des tuples
+  it "parses match statement with range and tuple patterns" $ do
+    let input = "match x { (1..5, 2..3) => return 42, (6..10, 4..6) => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatTuple [PatRange (PatLitInt 1) (PatLitInt 5), PatRange (PatLitInt 2) (PatLitInt 3)], ReturnStmt (Just (LitInt 42)))
+                                        , (PatTuple [PatRange (PatLitInt 6) (PatLitInt 10), PatRange (PatLitInt 4) (PatLitInt 6)], ReturnStmt (Just (LitInt 43))) ])
+
+  -- Tests pour match avec des combinaisons tableau et or
+  it "parses match statement with array and or patterns" $ do
+    let input = "match x { [1 | 2, 3 | 4] => return 42, [5 | 6, 7 | 8] => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatArray [PatOr [PatLitInt 1, PatLitInt 2], PatOr [PatLitInt 3, PatLitInt 4]], ReturnStmt (Just (LitInt 42)))
+                                        , (PatArray [PatOr [PatLitInt 5, PatLitInt 6], PatOr [PatLitInt 7, PatLitInt 8]], ReturnStmt (Just (LitInt 43))) ])
+
+  -- Tests pour match avec retour complexe
+  it "parses match statement with complex return expressions" $ do
+    let input = "match x { 1 => return (x + y) * z, 2 => return foo(x, y, z) }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, ReturnStmt (Just (BinArith Multiply (BinArith Add (Var "x") (Var "y")) (Var "z"))))
+                                        , (PatLitInt 2, ReturnStmt (Just (FuncCall (Var "foo") [Var "x", Var "y", Var "z"]))) ])
+
+  -- Tests pour match avec des motifs imbriqués
+  it "parses match statement with nested patterns" $ do
+    let input = "match x { (1, (2, 3)) => return 42, (4, (5, 6)) => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatTuple [PatLitInt 1, PatTuple [PatLitInt 2, PatLitInt 3]], ReturnStmt (Just (LitInt 42)))
+                                        , (PatTuple [PatLitInt 4, PatTuple [PatLitInt 5, PatLitInt 6]], ReturnStmt (Just (LitInt 43))) ])
+
+  -- Tests pour match avec les combinaisons de return et expr
+  it "parses match statement with mixed return and expression statements" $ do
+    let input = "match x { 1 => return 42, 2 => x + 1 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, ReturnStmt (Just (LitInt 42)))
+                                        , (PatLitInt 2, ExprStmt (BinArith Add (Var "x") (LitInt 1))) ])
+
+  -- Tests pour match avec un retour dans un bloc
+  it "parses match statement with block containing return statement" $ do
+    let input = "match x { 1 => { let a = 10; return a + 1; }, 2 => { let b = 20; return b + 2; } }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, BlockStmt [LetStmt "a" Nothing (LitInt 10), ReturnStmt (Just (BinArith Add (Var "a") (LitInt 1)))])
+                                        , (PatLitInt 2, BlockStmt [LetStmt "b" Nothing (LitInt 20), ReturnStmt (Just (BinArith Add (Var "b") (LitInt 2)))]) ])
+
+  -- Tests pour match avec tableau de tuples
+  it "parses match statement with array of tuples" $ do
+    let input = "match x { [(1, 2), (3, 4)] => return 42, [(5, 6), (7, 8)] => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatArray [PatTuple [PatLitInt 1, PatLitInt 2], PatTuple [PatLitInt 3, PatLitInt 4]], ReturnStmt (Just (LitInt 42)))
+                                        , (PatArray [PatTuple [PatLitInt 5, PatLitInt 6], PatTuple [PatLitInt 7, PatLitInt 8]], ReturnStmt (Just (LitInt 43))) ])
+
+  -- Tests pour match avec des fonctions dans les motifs
+  it "parses match statement with function call in return" $ do
+    let input = "match x { 1 => return foo(42), 2 => return bar(x, y) }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, ReturnStmt (Just (FuncCall (Var "foo") [LitInt 42])))
+                                        , (PatLitInt 2, ReturnStmt (Just (FuncCall (Var "bar") [Var "x", Var "y"]))) ])
+
+  -- Test avec des match simples sans bloc
+  it "parses match statement with simple return statements" $ do
+    let input = "match x { 1 => return 42, 2 => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, ReturnStmt (Just (LitInt 42)))
+                                        , (PatLitInt 2, ReturnStmt (Just (LitInt 43))) ])
+
+  -- Test avec des match contenant des expressions complexes
+  it "parses match statement with complex expressions in return" $ do
+    let input = "match x { 1 => return x + y, 2 => return x * y }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, ReturnStmt (Just (BinArith Add (Var "x") (Var "y"))))
+                                        , (PatLitInt 2, ReturnStmt (Just (BinArith Multiply (Var "x") (Var "y")))) ])
+
+  -- Test avec des match et des assignations
+  it "parses match statement with variable assignments" $ do
+    let input = "match x { 1 => y = 42, 2 => z = 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, ExprStmt (Assign (Var "y") (LitInt 42)))
+                                        , (PatLitInt 2, ExprStmt (Assign (Var "z") (LitInt 43))) ])
+
+  -- Test avec des match contenant des boucles
+  it "parses match statement with for loops in branches" $ do
+    let input = "match x { 1 => for i in 1..10 { y = i; }, 2 => for i in 1..=10 { z = i; } }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, ForRangeStmt "i" (LitInt 1) (LitInt 10) Exclusive Nothing [ExprStmt (Assign (Var "y") (Var "i"))])
+                                        , (PatLitInt 2, ForRangeStmt "i" (LitInt 1) (LitInt 10) Inclusive Nothing [ExprStmt (Assign (Var "z") (Var "i"))]) ])
+
+  -- Test avec des match contenant des conditions if-else
+  it "parses match statement with if-else branches" $ do
+    let input = "match x { 1 => if (y > 10) { return 42; } else { return 0; }, 2 => if (z == 0) { return 1; } }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, IfStmt (BinComp GreaterThan (Var "y") (LitInt 10))
+                                                              (BlockStmt [ReturnStmt (Just (LitInt 42))])
+                                                              (Just (BlockStmt [ReturnStmt (Just (LitInt 0))])))
+                                        , (PatLitInt 2, IfStmt (BinComp Equal (Var "z") (LitInt 0))
+                                                              (BlockStmt [ReturnStmt (Just (LitInt 1))])
+                                                              Nothing) ])
+
+  -- Test avec des match utilisant des tableaux
+  it "parses match statement with array patterns and returns" $ do
+    let input = "match x { [1, 2] => return 42, [3, 4] => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatArray [PatLitInt 1, PatLitInt 2], ReturnStmt (Just (LitInt 42)))
+                                        , (PatArray [PatLitInt 3, PatLitInt 4], ReturnStmt (Just (LitInt 43))) ])
+
+  -- Test avec des match et des tuples
+  it "parses match statement with tuple patterns" $ do
+    let input = "match x { (1, 2) => return 42, (3, 4) => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatTuple [PatLitInt 1, PatLitInt 2], ReturnStmt (Just (LitInt 42)))
+                                        , (PatTuple [PatLitInt 3, PatLitInt 4], ReturnStmt (Just (LitInt 43))) ])
+
+  -- Test avec des match contenant des plages de valeurs
+  it "parses match statement with range patterns" $ do
+    let input = "match x { 1..5 => return 42, 6..10 => return 43 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatRange (PatLitInt 1) (PatLitInt 5), ReturnStmt (Just (LitInt 42)))
+                                        , (PatRange (PatLitInt 6) (PatLitInt 10), ReturnStmt (Just (LitInt 43))) ])
+
+  -- Test avec des match et des expressions logiques
+  it "parses match statement with logical expressions in return" $ do
+    let input = "match x { true => return y && z, false => return y || z }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitBool True, ReturnStmt (Just (BinLogic And (Var "y") (Var "z"))))
+                                        , (PatLitBool False, ReturnStmt (Just (BinLogic Or (Var "y") (Var "z")))) ])
+
+
+  -- Test avec match et une fonction appelée dans les branches
+  it "parses match statement with function call in return" $ do
+    let input = "match x { 1 => return foo(42), 2 => return bar(43) }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, ReturnStmt (Just (FuncCall (Var "foo") [LitInt 42])))
+                                        , (PatLitInt 2, ReturnStmt (Just (FuncCall (Var "bar") [LitInt 43]))) ])
+
+  -- Test avec des expressions ternaires dans un match
+  it "parses match statement with ternary expressions" $ do
+    let input = "match x { 1 => return y > 10 ? 42 : 0, 2 => return z == 0 ? 1 : -1 }"
+    parseStmt input `shouldBe` Right (MatchStmt (Var "x")
+                                        [ (PatLitInt 1, ReturnStmt (Just (Ternary (BinComp GreaterThan (Var "y") (LitInt 10))
+                                                                                  (LitInt 42) (LitInt 0))))
+                                        , (PatLitInt 2, ReturnStmt (Just (Ternary (BinComp Equal (Var "z") (LitInt 0))
+                                                                                  (LitInt 1) (LitInt (-1))))) ])
+
+    -- Tests pour la déclaration de fonction sans corps
+  it "parses function declaration without a body" $ do
+    let input = "fn add(a: int, b: int) -> int;"
+    parseStmt input `shouldBe` Right (FuncDeclStmt "add" [("a", TInt, Nothing), ("b", TInt, Nothing)] TInt Nothing)
+
+    -- Tests pour la déclaration de fonction avec un corps
+  it "parses function declaration with a body" $ do
+    let input = "fn add(a: int, b: int) -> int { return a + b; }"
+    parseStmt input `shouldBe` Right (FuncDeclStmt "add" [("a", TInt, Nothing), ("b", TInt, Nothing)] TInt (Just (BlockStmt [ReturnStmt (Just (BinArith Add (Var "a") (Var "b")))])))
+
+    -- Tests pour la fonction avec des paramètres ayant des valeurs par défaut
+  it "parses function declaration with default parameter values" $ do
+    let input = "fn add(a: int = 10, b: int = 20) -> int { return a + b; }"
+    parseStmt input `shouldBe` Right (FuncDeclStmt "add" [("a", TInt, Just (LitInt 10)), ("b", TInt, Just (LitInt 20))] TInt (Just (BlockStmt [ReturnStmt (Just (BinArith Add (Var "a") (Var "b")))])))
+
+    -- Tests pour la déclaration de fonction avec des types de retour complexes
+  it "parses function declaration with a complex return type (tuple)" $ do
+    let input = "fn getPair() -> (int, string) { return (42, \"hello\"); }"
+    parseStmt input `shouldBe` Right (FuncDeclStmt "getPair" [] (TTuple [TInt, TString]) (Just (BlockStmt [ReturnStmt (Just (LitTuple [LitInt 42, LitString "hello"]))])))
+
+    -- Tests pour la fonction sans paramètres
+  it "parses function declaration without parameters" $ do
+    let input = "fn foo() -> void { return; }"
+    parseStmt input `shouldBe` Right (FuncDeclStmt "foo" [] TVoid (Just (BlockStmt [ReturnStmt Nothing])))
+
+    -- Tests pour la déclaration de fonction avec un corps vide
+  it "parses function declaration with an empty body" $ do
+    let input = "fn doNothing() -> void {}"
+    parseStmt input `shouldBe` Right (FuncDeclStmt "doNothing" [] TVoid (Just (BlockStmt [])))
+
+    -- Tests pour la déclaration de fonction avec des types tableau
+  it "parses function declaration with array parameters and return type" $ do
+    let input = "fn processArray(arr: int[]) -> int[] { return arr; }"
+    parseStmt input `shouldBe` Right (FuncDeclStmt "processArray" [("arr", TArray TInt, Nothing)] (TArray TInt) (Just (BlockStmt [ReturnStmt (Just (Var "arr"))])))
+
+    -- Tests pour la déclaration de fonction avec des conditions dans le corps
+  it "parses function declaration with if-else in the body" $ do
+    let input = "fn checkValue(x: int) -> int { if (x > 10) { return 1; } else { return 0; } }"
+    parseStmt input `shouldBe` Right (FuncDeclStmt "checkValue" [("x", TInt, Nothing)] TInt (Just (BlockStmt [IfStmt (BinComp GreaterThan (Var "x") (LitInt 10)) (BlockStmt [ReturnStmt (Just (LitInt 1))]) (Just (BlockStmt [ReturnStmt (Just (LitInt 0))]))])))
+
+    -- Tests pour la fonction avec une boucle dans le corps
+  it "parses function declaration with a loop in the body" $ do
+    let input = "fn sumTo(n: int) -> int { let sum = 0; for (let i = 0; i < n; i = i + 1) { sum = sum + i; } return sum; }"
+    parseStmt input `shouldBe` Right (FuncDeclStmt "sumTo" [("n", TInt, Nothing)] TInt (Just (BlockStmt [LetStmt "sum" Nothing (LitInt 0), ForClassicStmt (Just (LetStmt "i" Nothing (LitInt 0))) (BinComp LessThan (Var "i") (Var "n")) (Just (Assign (Var "i") (BinArith Add (Var "i") (LitInt 1)))) [ExprStmt (Assign (Var "sum") (BinArith Add (Var "sum") (Var "i")))], ReturnStmt (Just (Var "sum"))])))
+
+    -- Tests pour la fonction avec une fonction imbriquée dans le corps
+  it "parses function declaration with nested function call" $ do
+    let input = "fn outer(a: int) -> int { return inner(a); }"
+    parseStmt input `shouldBe` Right (FuncDeclStmt "outer" [("a", TInt, Nothing)] TInt (Just (BlockStmt [ReturnStmt (Just (FuncCall (Var "inner") [Var "a"]))])))

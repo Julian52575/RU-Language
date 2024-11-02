@@ -5,36 +5,41 @@ import Text.Megaparsec
 import qualified Text.Megaparsec.Char.Lexer as L
 import Data.Void
 import Control.Monad.Combinators.Expr
-import Parser.Utils (sc, lexeme, sym, identifier)
+import Parser.Utils (Parser, sc, lexeme, sym, identifier)
 import Text.Megaparsec.Char
+import Parser.Type (pType, Type(..))
+import Parser.AST (Expr(..), ArithOp(..), CompOp(..), LogicOp(..), UnaryOp(..))
 
+-- Parses a block of expressions
+blockExpr :: Parser Expr -> Parser Expr
+blockExpr exprParser = do
+    _ <- sym "{"
+    exprs <- exprParser `sepBy` sym ";"
+    _ <- sym "}"
+    return $ BlockExpr exprs
 
-type Parser = Parsec Void String
+-- Parses a function parameter (name: type)
+param :: Parser (String, Type)
+param = do
+    paramName <- identifier
+    _ <- sym ":"
+    paramType <- pType
+    return (paramName, paramType)
 
--- Definition of the Abstract Syntax Tree (AST)
-data Expr
-    = LitInt Int                -- Integer literal
-    | LitString String          -- String literal
-    | LitBool Bool              -- Boolean literal
-    | Var String                -- Variable
-    | FuncCall String [Expr]    -- Function call with a list of arguments
-    | BinArith ArithOp Expr Expr-- Binary arithmetic operation
-    | BinComp CompOp Expr Expr  -- Binary comparison operation
-    | BinLogic LogicOp Expr Expr-- Binary logical operation
-    | UnaryLogic UnaryOp Expr   -- Unary logical operation
-    | Ternary Expr Expr Expr    -- Ternary expression (condition ? expr1 : expr2)
-    | LitArray [Expr]           -- Array literal
-    | LitTuple [Expr]           -- Tuple literal
-    | Assign Expr Expr          -- Assignment (expr = expr)
-    | ArrayIndex Expr Expr      -- Array indexing (expr[expr])
-    deriving (Show, Eq)
+-- Parses a list of parameters for a function
+paramsParser :: Parser [(String, Type)]
+paramsParser = between (sym "(") (sym ")") (param `sepBy` sym ",")
 
-data ArithOp = Add | Subtract | Multiply | Divide | Modulo deriving (Show, Eq)
-data CompOp = Equal | NotEqual | LessThan | LessEqual | GreaterThan | GreaterEqual deriving (Show, Eq)
-data LogicOp = And | Or deriving (Show, Eq)
-data UnaryOp = Not deriving (Show, Eq)
+-- Parses anonymous functions (lambda)
+lambdaExpr :: Parser Expr
+lambdaExpr = do
+    params <- paramsParser
+    _ <- sym "->"
+    returnType <- pType
+    body <- blockExpr expr
+    return $ LambdaExpr params returnType body
 
--- Parses literals: handles integers, strings, booleans, arrays, and tuples
+-- Parses literals: integers, strings, booleans, arrays, and tuples
 litExpr :: Parser Expr
 litExpr = choice
     [ LitInt <$> lexeme (L.signed sc L.decimal)
@@ -55,9 +60,9 @@ parseTupleOrParenExpr = between (sym "(") (sym ")") $ do
 -- Parses function calls
 funcCallExpr :: Parser Expr
 funcCallExpr = do
-    funcName <- identifier
+    func <- try arrayIndexExpr <|> Var <$> identifier  -- Function can be a variable or an array index expression
     args <- parens (expr `sepBy` sym ",")
-    return $ FuncCall funcName args
+    return $ FuncCall func args
 
 -- Parses array indexing expressions
 arrayIndexExpr :: Parser Expr
@@ -85,7 +90,7 @@ binaryLogicOp = choice
 unaryLogicOp :: Parser UnaryOp
 unaryLogicOp = Not <$ (sym "!" <|> sym "not")
 
--- Operator table for arithmetic, comparison, logical operations, and assignment (right-associative)
+-- Defines the operator precedence table for arithmetic, comparison, logic, and assignment
 operatorTable :: [[Operator Parser Expr]]
 operatorTable =
     [ [Prefix (UnaryLogic <$> unaryLogicOp)]
@@ -96,16 +101,17 @@ operatorTable =
     , [InfixR (Assign <$ sym "=")]
     ]
 
--- Basic terms of expressions: function calls, array indexing, literals, or variables
+-- Defines basic terms of expressions: function calls, array indexing, literals, lambdas, or variables
 term :: Parser Expr
 term = choice
     [ try funcCallExpr
     , try arrayIndexExpr
+    , try lambdaExpr
     , litExpr
     , Var <$> identifier
     ]
 
--- Parses expressions with the operator table
+-- Parses expressions with the operator precedence table
 expr :: Parser Expr
 expr = makeExprParser term operatorTable >>= parseTernaryExpr
 

@@ -1,80 +1,51 @@
 module Opcode (
-    OpCode(..),
-    Builtin(..),
-    Instruction(..),
-    buildInstructions,
-    buildBuiltin
+    test
 ) where
 
-import Data.Word (Word8, Word16)
+import qualified Data.ByteString as B
+import Compiler.String (getStringTable)
+import Compiler.Function(getFunctionTable, getFunctionIndex)
+import Parser.AST
+import Data.List (nub)
+import Compiler.CreateVar (getCreateVar)
+import Compiler.Type (OpCode(..), Compile(..), Function(..))
+import Compiler.Compile (getScopeFromList, compile, compileGlobal)
+import Compiler.Header (getHeader, headerToByteString, opCodeToByteString)
 
-data OpCode = OpCode {
-    mnemonic :: Word16,
-    operand1 :: [Word8],
-    operand2 :: [Word8],
-    operand3 :: [Word8],
-    operand4 :: [Word8]
-} deriving (Show, Eq)
+swapElementsAt :: Int -> Int -> [a] -> [a]
+swapElementsAt _ _ [] = []
+swapElementsAt a b list = list1 ++ [list !! b] ++ list2 ++ [list !! a] ++ list3
+    where   list1 = take a list;
+            list2 = drop (succ a) (take b list);
+            list3 = drop (succ b) list
 
-data Builtin = Noop OpCode
-            | Print OpCode
-            | PrintLn OpCode
-            deriving (Show, Eq)
+swapMainFunction :: Compile -> [[OpCode]] -> (Compile, [[OpCode]])
+swapMainFunction comp [] = (comp, [])
+swapMainFunction comp (x:[]) = (comp, [x])
+swapMainFunction comp opcodes =
+    let mainIndex = (getFunctionIndex "main" comp)
+        swapedOpCode = swapElementsAt 0 mainIndex opcodes
+        functionList = swapElementsAt 0 mainIndex (functionTable comp)
+    in ((Compile (stringTable comp) (functionList) (globalScope comp)), swapedOpCode)
 
-data Instruction = CreateVar OpCode
-                | SetVar OpCode
-                | SetTmpVar OpCode
-                | SetArg OpCode
-                | UnsetArg OpCode
-                | SetReturn OpCode
-                | UnsetReturn OpCode
-                | Return OpCode
-                | Call OpCode
-                | Jump OpCode
-                | JumpCarry OpCode
-                | JumpNotCarry OpCode
-                | OpAdd OpCode
-                | OpSub OpCode
-                | OpDiv OpCode
-                | OpMul OpCode
-                | OpEq OpCode
-                | OpNeq OpCode
-                deriving (Show, Eq)
+isMain :: [Function] -> Bool
+isMain [] = False
+isMain (x:xs) = if fName x == "main" then True else isMain xs
 
-buildOpCode :: Word16 -> [Word8] -> [Word8] -> [Word8] -> [Word8] -> OpCode
-buildOpCode m o1 o2 o3 o4 = OpCode {
-    mnemonic = m,
-    operand1 = o1,
-    operand2 = o2,
-    operand3 = o3,
-    operand4 = o4
-}
+test :: [Stmt] -> IO ()
+test ast = do
+    let stringTbl = nub $ getStringTable ast
+    let functionTbl = getFunctionTable ast stringTbl
+    let globalVars = getCreateVar ast stringTbl
+    let sGlobal = getScopeFromList globalVars "global" 0
+    let compileData = Compile stringTbl functionTbl sGlobal
+    let compiled = compile ast compileData
+    let globalCompiled = compileGlobal (BlockStmt ast) compileData (isMain functionTbl)
+    let swapData = swapMainFunction compileData compiled
+    let compileData' = fst swapData
+    let compiled' = snd swapData
+    let header = getHeader compileData' globalCompiled compiled'
+    let headerByteString = headerToByteString header
+    let codeByteString = B.pack $ opCodeToByteString $ globalCompiled ++ (concat compiled')
 
-buildInstructions :: [Instruction]
-buildInstructions = [
-    CreateVar (buildOpCode 0x0100 [1] [1, 2] [0] [0]),
-    SetVar (buildOpCode 0x0101 [2] [1, 2] [0] [0]),
-    SetTmpVar (buildOpCode 0x0102 [1] [1] [0] [0]),
-    SetArg (buildOpCode 0x0103 [1, 2] [1] [0] [0]),
-    UnsetArg (buildOpCode 0x0104 [2] [1] [0] [0]),
-    SetReturn (buildOpCode 0x0105 [1, 2] [0] [0] [0]),
-    UnsetReturn (buildOpCode 0x0106 [2] [0] [0] [0]),
-    Return (buildOpCode 0x0200 [0] [0] [0] [0]),
-    Call (buildOpCode 0x0201 [1] [0] [0] [0]),
-    Jump (buildOpCode 0x0202 [1] [0] [0] [0]),
-    JumpCarry (buildOpCode 0x0203 [1] [0] [0] [0]),
-    JumpNotCarry (buildOpCode 0x0204 [1] [0] [0] [0]),
-    OpAdd (buildOpCode 0x0300 [2] [1, 2] [0] [0]),
-    OpSub (buildOpCode 0x0301 [2] [1, 2] [0] [0]),
-    OpDiv (buildOpCode 0x0302 [2] [1, 2] [0] [0]),
-    OpMul (buildOpCode 0x0303 [2] [1, 2] [0] [0]),
-    OpEq (buildOpCode 0x0304 [2] [1, 2] [0] [0]),
-    OpNeq (buildOpCode 0x0305 [2] [1, 2] [0] [0])
-    ]
-
-buildBuiltin :: [Builtin]
-buildBuiltin = [
-    Noop (buildOpCode 0x0000 [0] [0] [0] [0]),
-    Print (buildOpCode 0x00001 [2] [0] [0] [0]),
-    PrintLn (buildOpCode 0x00002 [2] [0] [0] [0])
-    ]
+    B.writeFile "out.bin" $ B.append headerByteString codeByteString

@@ -25,7 +25,19 @@ source-repository head
 
 library
   exposed-modules:
+      Compiler.Compile
+      Compiler.CreateVar
+      Compiler.Function
+      Compiler.String
+      Compiler.Type
       Opcode
+      Parser.AST
+      Parser.Expr
+      Parser.File
+      Parser.Pattern
+      Parser.Stmt
+      Parser.Type
+      Parser.Utils
   other-modules:
       Paths_glados_compiler
   autogen-modules:
@@ -37,6 +49,11 @@ library
       base >=4.7 && <5
     , binary
     , bytestring
+    , containers
+    , hspec
+    , megaparsec
+    , parser-combinators
+    , text
   default-language: Haskell2010
 
 executable glados-compiler-exe
@@ -52,13 +69,23 @@ executable glados-compiler-exe
       base >=4.7 && <5
     , binary
     , bytestring
+    , containers
     , glados-compiler
+    , hspec
+    , megaparsec
+    , parser-combinators
+    , text
   default-language: Haskell2010
 
 test-suite glados-compiler-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      ExprSpec
+      FunctionSpec
+      PatternSpec
+      StmtSpec
+      TypeSpec
       Paths_glados_compiler
   autogen-modules:
       Paths_glados_compiler
@@ -69,5 +96,10 @@ test-suite glados-compiler-test
       base >=4.7 && <5
     , binary
     , bytestring
+    , containers
     , glados-compiler
+    , hspec
+    , megaparsec
+    , parser-combinators
+    , text
   default-language: Haskell2010

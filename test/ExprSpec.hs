@@ -33,7 +33,7 @@ spec = do
 
     it "parses function call with arguments" $ do
       let input = "f(x, 42)"
-      parseExpr input `shouldBe` Right (FuncCall "f" [Var "x", LitInt 42])
+      parseExpr input `shouldBe` Right (FuncCall (Var "f") [Var "x", LitInt 42])
 
     it "parses logical and" $ do
       let input = "x && y"
@@ -61,7 +61,7 @@ spec = do
 
     it "parses nested function calls" $ do
       let input = "f(g(x), 42)"
-      parseExpr input `shouldBe` Right (FuncCall "f" [FuncCall "g" [Var "x"], LitInt 42])
+      parseExpr input `shouldBe` Right (FuncCall (Var "f") [FuncCall (Var "g") [Var "x"], LitInt 42])
 
     it "parses combined comparison operators" $ do
       let input = "x > 5 && y < 10"
@@ -75,7 +75,7 @@ spec = do
 
     it "parses function call with complex arguments" $ do
       let input = "f(x + 1, y * 2)"
-      parseExpr input `shouldBe` Right (FuncCall "f" [BinArith Add (Var "x") (LitInt 1), BinArith Multiply (Var "y") (LitInt 2)])
+      parseExpr input `shouldBe` Right (FuncCall (Var "f") [BinArith Add (Var "x") (LitInt 1), BinArith Multiply (Var "y") (LitInt 2)])
 
     it "parses tuple with arithmetic operations" $ do
       let input = "(1 + 2, 3 * 4, 5 - 6)"
@@ -97,9 +97,9 @@ spec = do
 
     it "parses tuple with function calls and operations" $ do
       let input = "(f(x), y + 2, z * g(3))"
-      parseExpr input `shouldBe` Right (LitTuple [FuncCall "f" [Var "x"],
+      parseExpr input `shouldBe` Right (LitTuple [FuncCall (Var "f") [Var "x"],
                                                   BinArith Add (Var "y") (LitInt 2),
-                                                  BinArith Multiply (Var "z") (FuncCall "g" [LitInt 3])])
+                                                  BinArith Multiply (Var "z") (FuncCall (Var "g") [LitInt 3])])
 
     it "parses tuple with ternary expressions" $ do
       let input = "(x > 5 ? 1 : 2, y < 3 ? 4 : 5)"
@@ -126,9 +126,9 @@ spec = do
 
     it "parses list with function calls and operations" $ do
       let input = "[f(x), y + 2, z * g(3)]"
-      parseExpr input `shouldBe` Right (LitArray [FuncCall "f" [Var "x"],
+      parseExpr input `shouldBe` Right (LitArray [FuncCall (Var "f") [Var "x"],
                                                   BinArith Add (Var "y") (LitInt 2),
-                                                  BinArith Multiply (Var "z") (FuncCall "g" [LitInt 3])])
+                                                  BinArith Multiply (Var "z") (FuncCall (Var "g") [LitInt 3])])
 
     it "parses list with ternary expressions" $ do
       let input = "[x > 5 ? 1 : 2, y < 3 ? 4 : 5]"
@@ -139,13 +139,13 @@ spec = do
       let input = "[[1, 2], [3 * 4, 5 - 6], [f(x), g(7)]]"
       parseExpr input `shouldBe` Right (LitArray [LitArray [LitInt 1, LitInt 2],
                                                   LitArray [BinArith Multiply (LitInt 3) (LitInt 4), BinArith Subtract (LitInt 5) (LitInt 6)],
-                                                  LitArray [FuncCall "f" [Var "x"], FuncCall "g" [LitInt 7]]])
+                                                  LitArray [FuncCall (Var "f") [Var "x"], FuncCall (Var "g") [LitInt 7]]])
 
     it "parses deeply nested tuples with operations" $ do
       let input = "((1, 2), (3 * 4, 5 - 6), (f(x), g(7)))"
       parseExpr input `shouldBe` Right (LitTuple [LitTuple [LitInt 1, LitInt 2],
                                                   LitTuple [BinArith Multiply (LitInt 3) (LitInt 4), BinArith Subtract (LitInt 5) (LitInt 6)],
-                                                  LitTuple [FuncCall "f" [Var "x"], FuncCall "g" [LitInt 7]]])
+                                                  LitTuple [FuncCall (Var "f") [Var "x"], FuncCall (Var "g") [LitInt 7]]])
     
     it "parses subtraction and multiplication with correct precedence" $ do
       let input = "10 - 2 * 3"
@@ -217,7 +217,7 @@ spec = do
 
     it "parses multiple nested function calls" $ do
       let input = "f(g(h(x, 1)), 2)"
-      parseExpr input `shouldBe` Right (FuncCall "f" [FuncCall "g" [FuncCall "h" [Var "x", LitInt 1]], LitInt 2])
+      parseExpr input `shouldBe` Right (FuncCall (Var "f") [FuncCall (Var "g") [FuncCall (Var "h") [Var "x", LitInt 1]], LitInt 2])
 
     it "parses arithmetic inside ternary expressions" $ do
       let input = "x > 5 ? y + 1 : z - 2"
@@ -238,7 +238,7 @@ spec = do
 
     it "parses nested function calls inside ternary expressions" $ do
       let input = "x > 5 ? f(g(1)) : h(2)"
-      parseExpr input `shouldBe` Right (Ternary (BinComp GreaterThan (Var "x") (LitInt 5)) (FuncCall "f" [FuncCall "g" [LitInt 1]]) (FuncCall "h" [LitInt 2]))
+      parseExpr input `shouldBe` Right (Ternary (BinComp GreaterThan (Var "x") (LitInt 5)) (FuncCall (Var "f") [FuncCall (Var "g") [LitInt 1]]) (FuncCall (Var "h") [LitInt 2]))
 
     it "parses deeply nested ternary expressions" $ do
       let input = "x > 5 ? y > 3 ? z > 1 ? 1 : 2 : 3 : 4"
@@ -250,7 +250,7 @@ spec = do
 
     it "parses addition inside a function call argument" $ do
       let input = "f(x + 1)"
-      parseExpr input `shouldBe` Right (FuncCall "f" [BinArith Add (Var "x") (LitInt 1)])
+      parseExpr input `shouldBe` Right (FuncCall (Var "f") [BinArith Add (Var "x") (LitInt 1)])
 
     it "parses logical operations with arithmetic" $ do
       let input = "x && y + 1"
@@ -262,11 +262,11 @@ spec = do
 
     it "parses arithmetic and comparison inside a function call" $ do
       let input = "f(x + 1 > y)"
-      parseExpr input `shouldBe` Right (FuncCall "f" [BinComp GreaterThan (BinArith Add (Var "x") (LitInt 1)) (Var "y")])
+      parseExpr input `shouldBe` Right (FuncCall (Var "f") [BinComp GreaterThan (BinArith Add (Var "x") (LitInt 1)) (Var "y")])
 
     it "parses complex ternary expression inside a function call" $ do
       let input = "f(x > 5 ? 1 : 0)"
-      parseExpr input `shouldBe` Right (FuncCall "f" [Ternary (BinComp GreaterThan (Var "x") (LitInt 5)) (LitInt 1) (LitInt 0)])
+      parseExpr input `shouldBe` Right (FuncCall (Var "f") [Ternary (BinComp GreaterThan (Var "x") (LitInt 5)) (LitInt 1) (LitInt 0)])
 
     it "parses arithmetic inside nested list literals" $ do
       let input = "[[x + 1, y - 2], [3 * 4, 5 / 6]]"
@@ -275,7 +275,7 @@ spec = do
 
     it "parses nested function calls with arithmetic in arguments" $ do
       let input = "f(g(x + 1), h(y - 2))"
-      parseExpr input `shouldBe` Right (FuncCall "f" [FuncCall "g" [BinArith Add (Var "x") (LitInt 1)], FuncCall "h" [BinArith Subtract (Var "y") (LitInt 2)]])
+      parseExpr input `shouldBe` Right (FuncCall (Var "f") [FuncCall (Var "g") [BinArith Add (Var "x") (LitInt 1)], FuncCall (Var "h") [BinArith Subtract (Var "y") (LitInt 2)]])
 
     it "parses ternary expression inside list literal" $ do
       let input = "[x > 5 ? 1 : 0, y < 3 ? 2 : 3]"
@@ -284,16 +284,16 @@ spec = do
 
     it "parses deeply nested function calls" $ do
       let input = "f(g(h(i(j(1)))))"
-      parseExpr input `shouldBe` Right (FuncCall "f" [FuncCall "g" [FuncCall "h" [FuncCall "i" [FuncCall "j" [LitInt 1]]]]])
+      parseExpr input `shouldBe` Right (FuncCall (Var "f") [FuncCall (Var "g") [FuncCall (Var "h") [FuncCall (Var "i") [FuncCall (Var "j") [LitInt 1]]]]])
 
     it "parses deeply nested lists with function calls" $ do
       let input = "[[f(x), g(y)], [h(z), k(w)]]"
-      parseExpr input `shouldBe` Right (LitArray [LitArray [FuncCall "f" [Var "x"], FuncCall "g" [Var "y"]],
-                                                  LitArray [FuncCall "h" [Var "z"], FuncCall "k" [Var "w"]]])
+      parseExpr input `shouldBe` Right (LitArray [LitArray [FuncCall (Var "f") [Var "x"], FuncCall (Var "g") [Var "y"]],
+                                                  LitArray [FuncCall (Var "h") [Var "z"], FuncCall (Var "k") [Var "w"]]])
 
     it "parses logical operation with comparison inside a function call" $ do
       let input = "f(x > 5 && y < 10)"
-      parseExpr input `shouldBe` Right (FuncCall "f" [BinLogic And (BinComp GreaterThan (Var "x") (LitInt 5)) (BinComp LessThan (Var "y") (LitInt 10))])
+      parseExpr input `shouldBe` Right (FuncCall (Var "f") [BinLogic And (BinComp GreaterThan (Var "x") (LitInt 5)) (BinComp LessThan (Var "y") (LitInt 10))])
 
     it "parses complex arithmetic inside ternary expression" $ do
       let input = "x > 5 ? (y + 1) * 2 : (z - 3) / 4"
@@ -344,11 +344,11 @@ spec = do
 
     it "parses function call inside array index" $ do
       let input = "arr[f(x)]"
-      parseExpr input `shouldBe` Right (ArrayIndex (Var "arr") (FuncCall "f" [Var "x"]))
+      parseExpr input `shouldBe` Right (ArrayIndex (Var "arr") (FuncCall (Var "f") [Var "x"]))
 
     it "parses nested array index with function call" $ do
       let input = "matrix[f(x)][g(y)]"
-      parseExpr input `shouldBe` Right (ArrayIndex (ArrayIndex (Var "matrix") (FuncCall "f" [Var "x"])) (FuncCall "g" [Var "y"]))
+      parseExpr input `shouldBe` Right (ArrayIndex (ArrayIndex (Var "matrix") (FuncCall (Var "f") [Var "x"])) (FuncCall (Var "g") [Var "y"]))
 
     it "parses array index with ternary expression" $ do
       let input = "arr[x > 5 ? 1 : 0]"

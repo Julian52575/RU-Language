@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+
 module Parser.Type (Type(..), parseType, pType) where
 
 import Text.Megaparsec

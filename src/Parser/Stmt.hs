@@ -1,30 +1,13 @@
-module Parser.Stmt (Stmt(..), RangeType(..), parseStmt) where
+module Parser.Stmt (Stmt(..), RangeType(..), parseStmt, blockStmt, stmt) where
 
 import Text.Megaparsec
 import Parser.Utils (Parser, sc, sym, identifier)
-import Parser.Expr (Expr(..), expr)
+import Parser.Expr (expr)
 import Parser.Type (pType, Type(..))
 import Data.Maybe (fromMaybe)
 import Data.Void
-
-
-data RangeType = Exclusive | Inclusive
-    deriving (Show, Eq)
-
--- AST definition for statements
-data Stmt
-    = LetStmt String (Maybe Type) Expr         -- Variable declaration (let)
-    | ReturnStmt (Maybe Expr)                  -- Return statement with an optional expression
-    | BlockStmt [Stmt]                         -- Block of statements
-    | ExprStmt Expr                            -- A simple expression as a statement
-    | IfStmt Expr Stmt (Maybe Stmt)            -- If statement with optional else branch
-    | ForRangeStmt String Expr Expr RangeType (Maybe Expr) [Stmt]  -- For loop with range
-    | ForClassicStmt (Maybe Stmt) Expr (Maybe Expr) [Stmt]         -- Classic for loop
-    | WhileStmt Expr [Stmt]                    -- While loop
-    | DoWhileStmt [Stmt] Expr                  -- Do-while loop
-    | BreakStmt                                -- Break statement
-    | ContinueStmt                             -- Continue statement
-    deriving (Show, Eq)
+import Parser.AST (RangeType(..), Stmt(..), Expr(..))
+import Parser.Pattern (Pattern, patternExpr)
 
 -- Utility function for parsing braces { }
 inBraces :: Parser a -> Parser a
@@ -68,7 +51,11 @@ blockStmt = BlockStmt <$> inBraces (many stmt)
 
 -- Parses a single expression as a statement
 exprStmt :: Parser Stmt
-exprStmt = ExprStmt <$> expr <* optional (sym ";")
+exprStmt = ExprStmt <$> expr <* sym ";"
+
+-- Parses a single expression without requiring a semicolon (used for match branches)
+exprStmtWithoutSemi :: Parser Stmt
+exprStmtWithoutSemi = ExprStmt <$> expr
 
 -- Parses an if statement with an optional else branch
 ifStmt :: Parser Stmt
@@ -124,6 +111,46 @@ doWhileStmt = do
     _ <- sym ";"
     return $ DoWhileStmt body cond
 
+-- Parses a match statement
+matchStmt :: Parser Stmt
+matchStmt = do
+    _ <- sym "match"
+    matchExpr <- expr  -- The expression to match
+    _ <- sym "{"       -- Open brace for the match body
+    firstBranch <- matchBranch
+    otherBranches <- many (sym "," *> matchBranch)
+    _ <- sym "}"             -- Close brace for the match body
+    return $ MatchStmt matchExpr (firstBranch : otherBranches)
+
+-- Parses a single match branch (pattern => statement or block)
+matchBranch :: Parser (Pattern, Stmt)
+matchBranch = do
+    pat <- patternExpr
+    _ <- sym "=>"
+    branchStmt <- choice [blockStmt, stmtWithoutSemi]
+    return (pat, branchStmt)
+
+-- Parses a statement without requiring a semicolon (for simple cases like return)
+stmtWithoutSemi :: Parser Stmt
+stmtWithoutSemi = choice
+    [ returnStmtWithoutSemi
+    , ifStmt
+    , try forClassicStmt
+    , forRangeStmt
+    , whileStmt
+    , doWhileStmt
+    , matchStmt
+    , blockStmt
+    , exprStmtWithoutSemi
+    ]
+
+-- Parses a return statement without requiring a semicolon
+returnStmtWithoutSemi :: Parser Stmt
+returnStmtWithoutSemi = do
+    _ <- sym "return"
+    exprVal <- optional expr
+    return $ ReturnStmt exprVal
+
 -- Parses a break statement
 breakStmt :: Parser Stmt
 breakStmt = BreakStmt <$ (sym "break" <* sym ";")
@@ -132,19 +159,45 @@ breakStmt = BreakStmt <$ (sym "break" <* sym ";")
 continueStmt :: Parser Stmt
 continueStmt = ContinueStmt <$ (sym "continue" <* sym ";")
 
+-- Parses a function parameter (name: type = default_value)
+param :: Parser (String, Type, Maybe Expr)
+param = do
+    paramName <- identifier
+    _ <- sym ":"
+    paramType <- pType
+    defaultValue <- optional (sym "=" *> expr)
+    return (paramName, paramType, defaultValue)
+
+-- Parses a list of parameters in a function
+paramsParser :: Parser [(String, Type, Maybe Expr)]
+paramsParser = between (sym "(") (sym ")") (param `sepBy` sym ",")
+
+-- Parses a function declaration as a statement
+funcDeclStmt :: Parser Stmt
+funcDeclStmt = do
+    _ <- sym "fn"                                -- Keyword 'fn'
+    funcName <- identifier                       -- Function name
+    params <- paramsParser                       -- Parameters
+    _ <- sym "->"                                -- Return type
+    returnType <- pType                          -- Return type
+    body <- (Just <$> blockStmt) <|> (sym ";" *> pure Nothing)  -- Optional body or semicolon for functions without body
+    return $ FuncDeclStmt funcName params returnType body
+
 -- Parses a complete statement (includes all possible statements)
 stmt :: Parser Stmt
 stmt = choice
-    [ letDecl
+    [ funcDeclStmt
+    , letDecl
     , returnStmt
     , ifStmt
-    , try forClassicStmt
-    , forRangeStmt
+    , try forRangeStmt
+    , forClassicStmt
     , whileStmt
     , doWhileStmt
     , breakStmt
     , continueStmt
     , blockStmt
+    , matchStmt
     , exprStmt
     ]
 
