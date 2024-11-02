@@ -7,6 +7,7 @@ import Data.Char
 
 import qualified Data.ByteString as BS
 
+import Text.Printf (printf)
 import Control.Monad.Trans.Except
 import Control.Monad.IO.Class (liftIO)
 
@@ -63,7 +64,8 @@ data RuFunctionTable = RuFunctionTable {
     size :: Word32
 } deriving (Eq, Show)
 
-ruFunctionTableGetFunctionFromCodeOffset :: [RuFunctionTable] -> Word32 -> Maybe RuFunctionTable --TODO
+ruFunctionTableGetFunctionFromCodeOffset :: [RuFunctionTable] -> Word32 -> Maybe RuFunctionTable
+
 ruFunctionTableGetFunctionFromCodeOffset (fun:next) offset
     | start <= offset && offset <= end = Just fun
     | otherwise           = ruFunctionTableGetFunctionFromCodeOffset next offset
@@ -81,8 +83,8 @@ printRuFunctionTable str fun = do
         let index = fromIntegral (nameIndex fun)
         let name = str !! index
         putStrLn ("-Function\t'" ++ name ++ "':")
-        putStrLn ("Offset:\t" ++ (show (codeSectionOffset fun)))
-        putStrLn ("Size:\t" ++ (show (size fun)))
+        putStrLn ("Offset:\t" ++ (printf "0x%08x" (codeSectionOffset fun)))
+        putStrLn ("Size:\t" ++ (printf "0x%08x" (size fun)))
 
 printRuFunctionTableArray :: [String] -> [RuFunctionTable] -> IO ()
 printRuFunctionTableArray str (current:next) =
