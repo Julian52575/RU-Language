@@ -137,8 +137,8 @@ execInstruction ins info state
                     _ -> Right newState
     where
         movedState = state {
-            workerCode = drop 2 (workerCode state),
-            workerCodeOffset = (workerCodeOffset state) + 2
+            workerCode = drop 2 (workerCode state)
+            --workerCodeOffset = (workerCodeOffset state) + 2 --offset should stay on ins
         }
         movedResult = moveWorkerCodeToNextInstruction ins info state
         ogPc = workerCodeOffset movedState
@@ -227,14 +227,35 @@ printVariableStack stack
     where
         stackNumber = length stack
 
+printCallOffsetsDebug :: [Word32] -> IO ()
+printCallOffsetsDebug (current:next) = do
+    putStrLn (printf "0x%08x" current)
+    printCallOffsetsDebug next
+printCallOffsetsDebug [] = return ()
+
 printVariablesDebug :: RuVmVariables -> IO ()
 printVariablesDebug vars = do
     printVariableStack (variableStack vars)
     putStrLn "📥 Argument variables:"
-    if length (argumentVariables vars) < 2 then putStr "Empty." else printVariableArrayDebug ((argumentVariables vars) !! 1)
+    if length (argumentVariables vars) < 2
+    then 
+        putStr "Empty."
+    else
+        printVariableArrayDebug ((argumentVariables vars) !! 1)
     putStrLn "\n"
     putStrLn "📤 Return variable:"
-    if returnVariable vars == defaultRuVariable then putStr "NA" else printRuVariable (returnVariable vars)
+    if returnVariable vars == defaultRuVariable
+    then
+        putStr "NA"
+    else
+        printRuVariable (returnVariable vars)
+
+    if length (callOffsets vars) == 0
+    then
+        putStr []
+    else
+        putStrLn "📍 Return offset(s):" >>
+        printCallOffsetsDebug (callOffsets vars)
     putStrLn "\n"
 
 printStateDebug :: RuVmInfo -> RuVmState -> IO ()

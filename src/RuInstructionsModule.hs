@@ -105,6 +105,13 @@ ruInstructionFunctionPrintLn info state = do
                 Str s ->
                     let newState = state { toPrint = s ++ "\n" }
                     in Right newState
+{--
+    case ruInstructionFunctionPrint info state of --Le fix à l'arrache pour n'avoir qu'une boucle d'exec
+        Left err -> Left err
+        Right newState -> do
+            let result = newState { toPrint = (toPrint newState) ++ "\n" }
+            Left (RuException (toPrint result))
+--}
 
 {-- Create var
 --}
@@ -374,17 +381,23 @@ ruInstructionCall = RuInstruction {
 
 ruInstructionFunctionCall :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionCall info state
-    | length ccode < 4                                  = Left ruExceptionIncompleteInstruction
+    | length ccode < 4                                 = Left ruExceptionIncompleteInstruction
     | op1 > fromIntegral (length (functionTable info)) = Left (ruExceptionUnknowFunction op1)
-    | otherwise                                        = Right scopeState {
+    | otherwise                                        = Right 
+                                                    --Left ( RuException ( show (
+                                                    scopeState {
         workerCodeOffset = codeSectionOffset fun,
         workerCode = drop (fromIntegral (codeSectionOffset fun)) (code info)
     }
+    --) ) )
     where
         ccode = workerCode state
         op1 = word8ArrayToWord32Pure ccode
         fun = (functionTable info) !! (fromIntegral op1)
-        scopeState = ruVmStateCreateScope state
+ --callOffsets should be (current offset + 1 ins)
+        scopeState = ruVmStateCreateScope (state {
+                    workerCodeOffset = (workerCodeOffset state) + (fixedSize ruInstructionCall)
+                                        })
 
 
 ruInstructionJump :: RuInstruction

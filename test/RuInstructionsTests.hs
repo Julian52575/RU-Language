@@ -680,7 +680,8 @@ spec = do
                 variables = defaultRuVmVariables {
                     variableStack = [ [], [], [] ],
                     argumentVariables = [ [], [], [] ],
-                    callOffsets = [ (workerCodeOffset state), 0x10]
+                    callOffsets = [ (workerCodeOffset state) + (fixedSize ruInstructionCall),
+                    0x10]
                 },
                 workerCode = (drop (fromIntegral (size fun0)) (code info)),
                 workerCodeOffset = codeSectionOffset fun0,
