@@ -53,8 +53,8 @@ ruInstructionFunctionPrint info state = do
         let operand1 = take 4 (drop 1 ccode)
         let operand2 = take 4 (drop 5 ccode)
         let var = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) info state
-        let id = word84ToWord32 (operand2 !! 0) (operand2 !! 1) (operand2 !! 2) (operand2 !! 3)
-        if var ==  Nothing then Left $ ruExceptionUnknowVariable id
+        let iid = word84ToWord32 (operand2 !! 0) (operand2 !! 1) (operand2 !! 2) (operand2 !! 3)
+        if var ==  Nothing then Left $ ruExceptionUnknowVariable iid
         else do
             let value = ruVariableValue (fromJust var)
             case value of
@@ -91,8 +91,8 @@ ruInstructionFunctionPrintLn info state = do
         let operand1 = take 4 (drop 1 ccode)
         let operand2 = take 4 (drop 5 ccode)
         let var = ruInstructionGetRuVariableFromBytes operand1 operand2 (codingOperand !! 1) info state
-        let id = word84ToWord32 (operand2 !! 0) (operand2 !! 1) (operand2 !! 2) (operand2 !! 3)
-        if var ==  Nothing then Left $ ruExceptionUnknowVariable id
+        let iid = word84ToWord32 (operand2 !! 0) (operand2 !! 1) (operand2 !! 2) (operand2 !! 3)
+        if var ==  Nothing then Left $ ruExceptionUnknowVariable iid
         else do
             let value = ruVariableValue (fromJust var)
             case value of
@@ -133,7 +133,6 @@ getWord32FromOperand operand = do
 ruInstructionFunctionCreateVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionCreateVar vminfo state = do
     let ccode = workerCode state
-    let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
     if ccodeSize < 8 then Left ruExceptionIncompleteInstruction
     else do
@@ -202,7 +201,6 @@ ruInstructionGetValueFromBytes operand codingOperand state
 ruInstructionFunctionSetVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionSetVar info state = do
     let ccode = workerCode state
-    let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
     if ccodeSize < 13 then Left ruExceptionIncompleteInstruction
     else do
@@ -235,7 +233,6 @@ ruInstructionSetArg = RuInstruction {
 ruInstructionFunctionSetArg :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionSetArg info state = do
     let ccode = workerCode state
-    let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
     if ccodeSize < 13 then Left ruExceptionIncompleteInstruction
     else do
@@ -262,7 +259,7 @@ ruInstructionUnsetArg = RuInstruction {
 
 --              var Id -> arg Id -> Update var
 ruInstructionFunctionUnsetArg :: RuVmInfo -> RuVmState -> Either RuException RuVmState
-ruInstructionFunctionUnsetArg info state
+ruInstructionFunctionUnsetArg _ state
     | length (workerCode state) < 8 = Left ruExceptionIncompleteInstruction
     | otherwise =
         case argSearch of
@@ -293,7 +290,6 @@ ruInstructionSetReturn = RuInstruction {
 ruInstructionFunctionSetReturn :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionSetReturn info state = do
     let ccode = workerCode state
-    let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
     if ccodeSize < 9 then Left ruExceptionIncompleteInstruction
     else do
@@ -319,9 +315,8 @@ ruInstructionUnsetReturn = RuInstruction {
 }
 
 ruInstructionFunctionUnsetReturn :: RuVmInfo -> RuVmState -> Either RuException RuVmState
-ruInstructionFunctionUnsetReturn info state = do
+ruInstructionFunctionUnsetReturn _ state = do
     let ccode = workerCode state
-    let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
     if ccodeSize < 4 then Left ruExceptionIncompleteInstruction
     else do
@@ -346,9 +341,8 @@ ruInstructionDeleteVar = RuInstruction {
 }
 
 ruInstructionFunctionDeleteVar :: RuVmInfo -> RuVmState -> Either RuException RuVmState
-ruInstructionFunctionDeleteVar info state = do
+ruInstructionFunctionDeleteVar _ state = do
     let ccode = workerCode state
-    let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
     if ccodeSize < 4 then Left ruExceptionIncompleteInstruction
     else do
@@ -464,11 +458,11 @@ ruInstructionDoOperation "MUL" var1 var2 = case (ruVariableValue var1, ruVariabl
 ruInstructionDoOperation "MOD" var1 var2 = case (ruVariableValue var1, ruVariableValue var2) of
     (Int32 value1, Int32 value2) -> if value2 == 0 then Nothing else Just (Int32 (value1 `mod` value2))
     _ -> Nothing
+ruInstructionDoOperation _ var1 _ = Just (ruVariableValue var1)
 
 ruInstructionOperator :: String -> RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionOperator operation info state = do
     let ccode = workerCode state
-    let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
     if ccodeSize < 17 then Left ruExceptionIncompleteInstruction
     else do
@@ -521,7 +515,6 @@ ruInstructionDoComparaison _ _ _ = Nothing
 ruInstructionComparator :: String -> RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionComparator comparaison info state = do
     let ccode = workerCode state
-    let ccodeOffset = workerCodeOffset state
     let ccodeSize = length ccode
     if ccodeSize < 17 then Left ruExceptionIncompleteInstruction
     else do
@@ -584,7 +577,6 @@ ruInstructionFunctionDiv info state = do
             let ccode = workerCode state
             let operand3 = take 4 (drop 9 ccode)
             let operand4 = take 4 (drop 13 ccode)
-            let codingByte = take 1 ccode
             let ruOp = codingByteToRuOperand (ccode !! 0)
             let var = ruInstructionGetRuVariableFromBytes operand3 operand4 (ruOp !! 3) info state
             if var == Nothing then Left ruExceptionInvalidOperation
@@ -625,7 +617,6 @@ ruInstructionFunctionMod info state = do
             let ccode = workerCode state
             let operand3 = take 4 (drop 9 ccode)
             let operand4 = take 4 (drop 13 ccode)
-            let codingByte = take 1 ccode
             let ruOp = codingByteToRuOperand (ccode !! 0)
             let var = ruInstructionGetRuVariableFromBytes operand3 operand4 (ruOp !! 3) info state
             if var == Nothing then Left ruExceptionInvalidOperation

@@ -38,7 +38,6 @@ getRuVariableValueAsString Na = "No type attributed."
 
 printRuVariable :: RuVariable -> IO ()
 printRuVariable var = putStrLn (getRuVariableValueAsString (ruVariableValue var) )
-printRuVariable _ = putStrLn "Empty RuVariable"
 
 {-- Helper function for defining variable type
  --}

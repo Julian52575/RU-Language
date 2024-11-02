@@ -175,7 +175,7 @@ spec = do
                 ruVariableId = 0x01,
                 ruMutable = True
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [badVar, goodVar, badVar] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -196,7 +196,7 @@ spec = do
                 ruVariableId = 0x01,
                 ruMutable = True
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [goodVar], [badVar], [badVar], [badVar] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -211,7 +211,7 @@ spec = do
                 ruVariableId = 0x02,
                 ruMutable = True
             } 
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [badVar], [badVar] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -235,7 +235,7 @@ spec = do
                 ruVariableId = 0x01,
                 ruMutable = True
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [badVar], [badVar, goodVar, badVar] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -256,7 +256,7 @@ spec = do
                 ruVariableId = 0x01,
                 ruMutable = True
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [badVar], [badVar], [badVar], [goodVar] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -277,7 +277,7 @@ spec = do
                 ruVariableId = 0x01,
                 ruMutable = True
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [goodVar, badVar], [badVar] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -289,7 +289,7 @@ spec = do
 --ruVmVariablesSetVariableInCurrentScope :: RuVmVariables -> RuVariable -> Maybe RuVmVariables
     describe "ruVmVariablesSetVariableInCurrentScope" $ do
         it "Add variable to global scope" $ do
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -311,7 +311,7 @@ spec = do
                 ruVariableId = 0,
                 ruMutable = False
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [oldVar, oldVar, oldVar], [],  [] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -342,7 +342,7 @@ spec = do
             let var2 = var0 {
                 ruVariableId = 0x02
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [var0], [var0, var1, var2], [] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -364,7 +364,7 @@ spec = do
             let var2 = var0 {
                 ruVariableId = 0x02
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [var1], [var1, var2], [var0] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -380,7 +380,7 @@ spec = do
                 ruVariableId = 0,
                 ruMutable = True
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [], [] ],
                 tmpVariable = newVar,
                 returnVariable = newVar,
@@ -488,7 +488,7 @@ spec = do
                 ruVariableId = 0x01,
                 ruMutable = True
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [badVar], [badVar], [goodVar] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -509,7 +509,7 @@ spec = do
                 ruVariableId = 0x01,
                 ruMutable = True
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [goodVar], [badVar], [badVar] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -524,7 +524,7 @@ spec = do
                 ruVariableId = 0x01,
                 ruMutable = True
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [], [badVar], [] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -539,7 +539,7 @@ spec = do
                 ruVariableId = 0x02,
                 ruMutable = True
             }
-            let baseVariables = RuVmVariables {
+            let baseVariables = defaultRuVmVariables {
                 variableStack = [ [badVar], [badVar] ],
                 tmpVariable = defaultRuVariable,
                 returnVariable = defaultRuVariable,
@@ -548,7 +548,7 @@ spec = do
             }
             (ruVmVariablesGetVariable baseVariables 0x01) `shouldBe` Nothing
         it "Get tmp variable with max index" $ do
-            let variabless = RuVmVariables {
+            let variabless = defaultRuVmVariables {
                 variableStack = [ [], [], [] ],
                 tmpVariable = defaultRuVariable {
                     ruVariableValue = Str "TMP",

@@ -134,7 +134,7 @@ spec = do
             case ruInstructionFunctionCreateVar baseInfo (state) of
                 Left err -> do
                     err `shouldBe` ruExceptionIncompleteInstruction
-                Right resultState -> do
+                Right _ -> do
                     False `shouldBe` True --Fail
         it "SetTmpVarInt" $ do
             let state = baseState { workerCode = [0xa0, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x2a] }
@@ -163,7 +163,7 @@ spec = do
             case ruInstructionFunctionSetTmpVar baseInfo (state) of
                 Left err -> do
                     err `shouldBe` ruExceptionIncompleteInstruction
-                Right resultState -> do
+                Right _ -> do
                     False `shouldBe` True --Fail
         
         it "SetTmpVar int with id" $ do
@@ -256,7 +256,7 @@ spec = do
             case ruInstructionFunctionDiv baseInfo (state) of
                 Left err -> do
                     err `shouldBe` ruExceptionDivByZero
-                Right resultState -> do
+                Right _ -> do
                     False `shouldBe` True --Fail
         it "Mul int" $ do
             let var1 = RuVariable { ruVariableValue = Int32 42, ruVariableType = ruVariableTypeInt, ruVariableId = 0x00, ruMutable = True }
@@ -531,11 +531,11 @@ spec = do
             ruVariableType = ruVariableTypeStr,
             ruVariableId = 0x00
         }
-        let arg1 = defaultRuVariable {
+        {--let arg1 = defaultRuVariable {
             ruVariableValue = Str "Lemoncello",
             ruVariableType = ruVariableTypeStr,
             ruVariableId = 0x01
-        }
+        }--}
         let arg2 = defaultRuVariable {
             ruVariableValue = Str "Prostituées",
             ruVariableType = ruVariableTypeStr,

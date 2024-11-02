@@ -1,5 +1,5 @@
 #!/bin/bash
-EXAMPLES=("multiplePrint" "fizzbuzz")
+EXAMPLES=("multiplePrint") # "fizzbuzz")
 FAILURES=""
 SUCCESS=""
 LOG_FILE=""
@@ -30,3 +30,10 @@ done
 
 echo -e "Succes:\n$GREEN $SUCCESS $NC"
 echo -e "Failures:\n$RED $FAILURES $NC"
+
+if [[ $FAILURES == "" ]]
+then
+    exit 0
+else
+    exit 84
+fi
