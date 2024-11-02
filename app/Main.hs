@@ -277,14 +277,14 @@ retVarToExitCode (Int32 i)
 retVarToExitCode _ = ExitSuccess
 
 exitRuVm :: RuVmInfo -> RuVmState -> IO ()
-exitRuVm info state = 
+exitRuVm info state =
     case dumpMode info of
         True -> return ()
-        False -> case ruVariableValue retVar of
-            Int32 i -> do
+        False -> case ruVariableType retVar of
+            0x01 -> do
                 let value = retVarToExitCode (ruVariableValue retVar)
                 exitWith(value)
-            Str s -> putStrLn [] >> printRuVariable (retVar) -- On a finit le travail
+            0x02 -> putStrLn [] >> printRuVariable (retVar) -- On a finit le travail
             _ -> return ()
     where
         retVar = returnVariable (variables state)
