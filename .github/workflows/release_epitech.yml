@@ -6,8 +6,8 @@ on:
 
 env:
   RELEASE_NAME: RU-VIRTUAL-MACHINE
-  BINARY_NAME: glados-virtual-machine-exe
-  BINARY_RELEASE_NAME: ruvm
+  BINARY_NAME: glados-compiler-exe
+  BINARY_RELEASE_NAME: rucompiler
 
 jobs:
   get_date:
@@ -47,7 +47,7 @@ jobs:
           tag_name: ${{ env.VERSION }}
           release_name: ${{ env.RELEASE_NAME }}-${{ env.VERSION }}
           body: |
-            Working release of the RU virtual machine.
+            Working release of the RU compiler.
           draft: false
           prerelease: false
           
