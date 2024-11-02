@@ -124,7 +124,8 @@ printInstruction ins info state =
                 toPrint = (toPrint state) ++ name ++ codePrint
             })
     where
-        name = "\t" ++ ruInstructionName ins ++ ":\t"
+        pcStr = printf "0x%08x" (workerCodeOffset state)
+        name = pcStr ++ ":\t" ++ ruInstructionName ins ++ ":\t"
         movedResult = moveWorkerCodeToNextInstruction ins info state
         startPc = workerCodeOffset state
 
