@@ -54,6 +54,7 @@ compileExpr :: Expr -> Scope -> Compile -> Int -> [OpCode]
 compileExpr (FuncCall (Var "print") args) scope comp _ = compilePrint args scope comp "print"
 compileExpr (FuncCall (Var "printLn") args) scope comp _ = compilePrint args scope comp "printLn"
 compileExpr (FuncCall name args) scope comp _ = compileCall (FuncCall name args) scope comp 0
+
 compileExpr (BinArith op e1 e2) scope comp _ = compileBinArith (BinArith op e1 e2) scope comp (length $ vars scope) 0
 
 compileExpr (Assign (Var x) (LitInt int)) scope _ _ = [OpSetVar (getIndexFromStrTable (vars scope) x) (CbConst 0xA0 0x01 int)]
@@ -66,10 +67,14 @@ compileExprToTmp :: Expr -> Scope -> Compile -> [OpCode]
 compileExprToTmp (LitInt int) _ _ = [OpSetTmp 0x01 (CbConst 0xA0 0x01 int)]
 compileExprToTmp (LitString str) _ comp = [OpSetTmp 0x02 (CbConst 0xA0 0x01 (getIndexFromStrTable (stringTable comp) str))]
 compileExprToTmp (Var x) scope _ = [OpSetTmp 0x00 (CbConst 0xB0 0x00 (getIndexFromStrTable (vars scope) x ))]
+
 compileExprToTmp (BinArith op e1 e2) scope comp =
     [OpCreateVar 0x01 0x00] ++
     compileExpr (BinArith op e1 e2) scope comp 0 ++
     [OpSetTmp 0x01 (CbConst 0xB0 0x01 (length $ vars scope))]
+
+compileExprToTmp (FuncCall name args) scope comp = compileCall (FuncCall name args) scope comp 0 ++ [OpUnsetReturn 0xffffffff]
+
 compileExprToTmp _ _ _ = []
 
 isConst :: Expr -> Bool
@@ -98,8 +103,8 @@ compileBinComp _ _ _ = []
 -- get a list of opcode from an stmt
 compileStmt :: Stmt -> Scope -> Compile -> [OpCode]
 compileStmt (LetStmt name _ expr) scope comp = if isConst expr == False
-    then compileExpr expr scope comp 0 ++
-        [OpCreateVar 0x01 0x00] ++
+    then [OpCreateVar 0x01 0x00] ++
+        compileExpr expr scope comp 0 ++
         [OpUnsetReturn (length $ vars scope)] ++
         [OpSetVar (getIndexFromStrTable (vars scope) name) (CbConst 0xB0 0x00 (length $ vars scope))] ++
         [OpUnsetVar (length $ vars scope)]
