@@ -51,12 +51,12 @@ data RuHeader = RuHeader {
 
 printRuHeader :: RuHeader -> IO ()
 printRuHeader hhead = 
-    putStrLn ("🤓 Using RU VM Version \t" ++ (show (fileVersion hhead)) ++ ".") >>
-    putStrLn ("Function count:\t" ++ (show (functionTableCount hhead))) >>
-    putStrLn ("Strtab offset:\t" ++ (show (strTableOffset hhead))) >>
-    putStrLn ("String count:\t" ++ (show (strTableCount hhead))) >>
-    putStrLn ("Code offset:\t" ++ (show (codeOffset hhead))) >>
-    putStrLn ("Entrypoint offset:\t" ++ (show (entrypointOffset hhead)))
+    putStrLn ("🤓 Using RU VM Version \t" ++ (printf "0x%02x" (fileVersion hhead)) ++ ".") >>
+    putStrLn ("Function count:\t" ++ (printf "0x%08x" (functionTableCount hhead))) >>
+    putStrLn ("Strtab offset:\t" ++ (printf "0x%08x" (strTableOffset hhead))) >>
+    putStrLn ("String count:\t" ++ (printf "0x%08x" (strTableCount hhead))) >>
+    putStrLn ("Code offset:\t" ++ (printf "0x%08x" (codeOffset hhead))) >>
+    putStrLn ("Entrypoint offset:\t" ++ (printf "0x%08x" (entrypointOffset hhead)))
 
 data RuFunctionTable = RuFunctionTable {
     nameIndex :: Word32,
