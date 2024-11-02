@@ -299,7 +299,7 @@ exitRuVm info state =
             0x01 -> do
                 let value = retVarToExitCode (ruVariableValue retVar)
                 exitWith(value)
-            0x02 -> putStrLn [] >> printRuVariable (retVar) -- On a finit le travail
+            0x02 -> printRuVariable (retVar) -- On a finit le travail
             _ -> return ()
     where
         retVar = returnVariable (variables state)

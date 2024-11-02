@@ -438,10 +438,16 @@ data RuVmInfo = RuVmInfo {
 } deriving (Eq, Show)
 
 
+removeNonAsciiFromString :: String -> String
+removeNonAsciiFromString (c:cs)
+    | (ord c) < 32 = removeNonAsciiFromString cs
+    | otherwise             = [c] ++ removeNonAsciiFromString cs
+removeNonAsciiFromString [] = []
+
 ruVmInfoGetStringFromStringTable :: RuVmInfo -> Word32 -> Maybe String
 ruVmInfoGetStringFromStringTable info i
     | iInt >= length tab = Nothing
-    | otherwise       = Just (tab !! iInt)
+    | otherwise       = Just ( removeNonAsciiFromString (tab !! iInt) )
     where
         iInt = fromIntegral i
         tab = stringTable info
