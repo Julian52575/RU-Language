@@ -250,7 +250,7 @@ ruInstructionUnsetArg = RuInstruction {
     ruInstructionInfix = 0x04,
     ruInstructionName = "UNSETARG",
     ruInstructionFunction = ruInstructionFunctionUnsetArg,
-    fixedSize = 8
+    fixedSize = 10
 }
 
 --              var Id -> arg Id -> Update var
