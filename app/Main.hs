@@ -72,17 +72,6 @@ theColorDefault = "\ESC[0m"
 theColorBlue :: String
 theColorBlue = "\ESC[34m"
 
-
-data Argument = Argument {
-    dump :: Bool,
-    fileName :: Maybe String
-} deriving (Eq, Show)
-
-defaultArgument = Argument {
-    dump = False,
-    fileName = Nothing
-}
-
 setNewWorkerCodePc :: RuVmInfo -> RuVmState -> Word32 -> Either RuException RuVmState
 setNewWorkerCodePc info state newPc
     | newPc > codeSize info     = Left ruExceptionJumpOutOfBound
@@ -312,12 +301,39 @@ ruVmLoop info state
         pcSave = workerCodeOffset state
 
 {-- --}
+data Argument = Argument {
+    dump :: Bool,
+    fileName :: Maybe String,
+    usagePrint :: Bool,
+    unknowFlag :: Maybe String
+} deriving (Eq, Show)
+
+defaultArgument = Argument {
+    dump = False,
+    fileName = Nothing,
+    usagePrint = False,
+    unknowFlag = Nothing
+}
+
 usage :: String
-usage = "Usage:\t./ru_vm [--dump] filename"
+usage = "Usage:\t./ruvm [--dump] filename"
 
 parseArgument :: [String] -> Argument -> Argument
-parseArgument ("--dump":next) arg = parseArgument next (arg {dump = True})
-parseArgument (file:next) arg = parseArgument next (arg {fileName = Just file})
+--parseArgument ("--dump":next) arg = parseArgument next (arg {dump = True})
+
+--parseArgument ("--help":_)      arg = arg {usagePrint = True}
+--parseArgument (file:next) arg = parseArgument next (arg {fileName = Just file})
+--parseArgument _ arg = arg
+--parseArgument ("--dump":next)   arg = parseArgument next (arg {dump = True})
+parseArgument (input:next) arg = 
+    case input of
+        ('-':flag) ->
+            case flag of
+                "h"    -> arg {usagePrint = True}
+                "-help" -> arg {usagePrint = True}
+                "-dump" -> parseArgument next (arg {dump = True})
+                _      -> arg {unknowFlag = (Just ("-" ++ flag))}
+        _ ->  parseArgument next (arg {fileName = Just input})
 parseArgument _ arg = arg
 
 printRuFormatIfArg :: RuFormat -> Argument -> IO ()
@@ -329,9 +345,8 @@ printRuFormatIfArg format arg
         printRuFormat format
     | otherwise        = return () 
 
-argumentToRuVmInfo :: [String] -> IO (Either RuException (RuVmInfo, RuVmState))
-argumentToRuVmInfo str = runExceptT $ do
-    let arg = parseArgument str defaultArgument
+argumentToRuVmInfo :: Argument -> IO (Either RuException (RuVmInfo, RuVmState))
+argumentToRuVmInfo arg = runExceptT $ do
     case fileName arg of
         Nothing -> throwE (RuException "No file provided.")
         Just file -> do
@@ -346,10 +361,23 @@ argumentToRuVmInfo str = runExceptT $ do
                         dumpMode = (dump arg)
                     }, state)
 
+checkArgument :: Argument -> IO ()
+checkArgument arg
+    | usagePrint arg == True    = do
+        putStrLn usage
+        exitWith(ExitSuccess)
+    | isNothing (unknowFlag arg) == False = do
+        putStrLn ("🚨 Error: unknow flag:\t" ++ fromJust (unknowFlag arg))
+        putStrLn "Aborting..."
+        exitWith(ExitFailure 84)
+    | otherwise = return ()
+
 runMain :: IO ()
 runMain = do
     args <- getArgs
-    result <- argumentToRuVmInfo args
+    let arg = parseArgument args defaultArgument
+    checkArgument arg
+    result <- argumentToRuVmInfo arg
     case result of
         Left err -> putStrLn ("Encountered exception: " ++ show err)
         Right (info, state) -> ruVmLoop info state
@@ -357,7 +385,8 @@ runMain = do
 
 handler :: IOException -> IO ()
 handler e = do
-    putStrLn ("Caught Exception: " ++ show (e :: IOException))
+    putStrLn ("💀 An error occured: " ++ show (e :: IOException))
+    putStrLn "Aborting..."
     exitWith(ExitFailure 84)
 
 
