@@ -101,6 +101,8 @@ getInstructionCodeAsString (current:next) start count limit
     | otherwise = do
         let color = if count < 2 then theColorBlue else if count == 2 then theColorDefault else []
         color ++ myShowHex current ++ " " ++ getInstructionCodeAsString next (start + 1) (count + 1) limit
+
+getInstructionCodeAsString [] _ _ _ = []
 --
 printInstruction :: RuInstruction -> RuVmInfo -> RuVmState -> Either RuException RuVmState
 printInstruction ins info state =
@@ -119,9 +121,11 @@ printInstruction ins info state =
         startPc = workerCodeOffset state
 
 -- Execute la fonction liée à l'instruction
+
+-- Execute la fonction liée à l'instruction
 execInstruction :: RuInstruction -> RuVmInfo -> RuVmState -> Either RuException RuVmState
 execInstruction ins info state
-    | length (workerCode movedState) < 2 = Left ruExceptionIncompleteInstruction
+    | length (workerCode state) < 2 = Left ruExceptionIncompleteInstruction
     | otherwise =
         case function info movedState of --résultat de function
             Left err -> Left err
@@ -177,7 +181,6 @@ printCodeDebug limit (current:next) count group = do
     printf "%02x" current
     putStr " "
     printCodeDebug (limit - 1) next (count + 1) group
-printCodeDebug _ _ _ _ = return ()
 
 printCodeBeforePc :: RuVmInfo -> Word32 -> IO ()
 printCodeBeforePc info pc = do
@@ -262,7 +265,6 @@ printStateDebug :: RuVmInfo -> RuVmState -> IO ()
 printStateDebug info state = do
     if dumpMode info == False
     then do
-        let vars = variables state
         printVariablesDebug (variables state)
     else putStr []
     putStrLn "🤓 Code:"
@@ -271,9 +273,9 @@ printStateDebug info state = do
 {-- Exception handelr
  --}
 handleException :: RuVmInfo -> RuVmState -> RuException -> IO ()
-handleException info state except = do
+handleException info state err = do
     let pc = workerCodeOffset state
-    putStrLn (("\n😭 Encountered error at offset " ++ printf "0x%08x" pc) ++ ": " ++ theColorRed ++ show except ++ theColorDefault)
+    putStrLn (("\n😭 Encountered error at offset " ++ printf "0x%08x" pc) ++ ": " ++ theColorRed ++ show err ++ theColorDefault)
     putStrLn "👁  Here are some debug information:"
     putStrLn "\n"
     printStateDebug info state
@@ -304,6 +306,7 @@ exitRuVm info state =
  --}
 ruVmLoop :: RuVmInfo -> RuVmState -> IO ()
 ruVmLoop info state
+    | scopeDeep state == (-1)       = exitRuVm info state
     | workerCode state == [] =
         case dumpMode info of
             True -> exitRuVm info state
@@ -311,15 +314,11 @@ ruVmLoop info state
     | toPrint state /= []           = do -- Fait les print et recursif
         putStr (toPrint state)
         ruVmLoop info (state { toPrint = [] })
-    | scopeDeep state == (-1)       = exitRuVm info state
     | length (workerCode state) < 2 = handleException info state ruExceptionIncompleteInstruction
     | otherwise                     =
         case runInstruction info state of
             Left err -> handleException info state err
             Right newState -> ruVmLoop info newState
-    where
-        codeSave = workerCode state
-        pcSave = workerCodeOffset state
 
 {-- --}
 data Argument = Argument {
@@ -329,6 +328,7 @@ data Argument = Argument {
     unknowFlag :: Maybe String
 } deriving (Eq, Show)
 
+defaultArgument :: Argument
 defaultArgument = Argument {
     dump = False,
     fileName = Nothing,
