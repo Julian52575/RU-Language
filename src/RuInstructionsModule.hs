@@ -141,10 +141,14 @@ ruInstructionFunctionCreateVar vminfo state = do
     let ccodeSize = length ccode
     if ccodeSize < 8 then Left ruExceptionIncompleteInstruction
     else do
-        let var = ruInstructionGetVariableFromCode ccode vminfo
-        let newVariables = ruVmVariablesSetVariableInCurrentScope (variables state) var
-        let newState = state { variables = newVariables }
-        Right newState
+        let operand1 = take 4 ccode
+        let operand2 = take 4 (drop 4 ccode)
+        let var = ruInstructionGetRuVariableFromBytes operand1 operand2 RuOperandConstant vminfo state
+        if var == Nothing then Left ruExceptionIncompleteInstruction
+        else do
+            let newVariables = ruVmVariablesSetVariableInCurrentScope (variables state) (fromJust var)
+            let newState = state { variables = newVariables }
+            Right newState
 
 ruInstructionGetRuVariableFromBytes :: [Word8] -> [Word8] -> RuOperand -> RuVmInfo -> RuVmState -> Maybe RuVariable
 ruInstructionGetRuVariableFromBytes operand1 operand2 codingOperand info state
