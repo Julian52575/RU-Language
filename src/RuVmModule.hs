@@ -201,9 +201,9 @@ ruVmVariablesRemoveVariable variabless idd =
 ruVmVariablesSetArgument :: RuVmVariables -> Word32 -> RuVariable -> RuVmVariables
 ruVmVariablesSetArgument variabless numero var
     | length stack == 0 = variabless { argumentVariables = [ [upVar] ] }
-    | otherwise = case iindex of
+    | otherwise = case searchResult of
         Nothing -> variabless {
-                    argumentVariables = ([[upVar]] ++ otherStack)
+                    argumentVariables = ([[upVar] ++ currentStack] ++ otherStack)
                 } --variable doesn't exist
         Just index2 -> do
             let newCurrentStack = replaceTab currentStack index2 upVar
@@ -217,7 +217,7 @@ ruVmVariablesSetArgument variabless numero var
         stack = argumentVariables variabless
         currentStack = head stack
         otherStack = tail stack
-        iindex = findIndex ruVariableHasId currentStack numero
+        searchResult = findIndex ruVariableHasId currentStack numero
 
 
 ruVmVariablesRemoveArgument :: RuVmVariables -> Word32 -> RuVmVariables

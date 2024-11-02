@@ -970,7 +970,8 @@ spec = do
     describe "ruVmVariablesSetArgument" $ do
         let var0 = defaultRuVariable {
             ruVariableValue = Int32 0xFF,
-            ruVariableType = ruVariableTypeInt
+            ruVariableType = ruVariableTypeInt,
+            ruVariableId = 0x00
         }
         let var1 = var0 {
             ruVariableId = 0x01
@@ -990,10 +991,10 @@ spec = do
                 ruVariableType = ruVariableTypeStr
             }
             let variabless = defaultRuVmVariables {
-                argumentVariables = [ [var1] ]
+                argumentVariables = [ [var0, var1] ]
             }
             let expected = variabless {
-                argumentVariables = [ [upVar] ]
+                argumentVariables = [ [var0, upVar] ]
             }
             ruVmVariablesSetArgument variabless 0x01 upVar `shouldBe` expected
         it "Create an argument in current scope" $ do
@@ -1008,6 +1009,16 @@ spec = do
                 argumentVariables = [ [upVar], [var1], [var1], [var1] ]
             }
             ruVmVariablesSetArgument variabless 0x01 upVar `shouldBe` expected           
+        it "Create 2 argument" $ do
+            let variabless = defaultRuVmVariables {
+                argumentVariables = [ ],
+                variableStack = []
+            }
+            let expected = variabless {
+                argumentVariables = [ [var1, var0] ]
+            }
+            let result = ruVmVariablesSetArgument variabless 0x0 var0 
+            ruVmVariablesSetArgument result 0x01 var1 `shouldBe` expected
 
 --ruVmVariablesRemoveArgument :: RuVmVariables -> Word32 -> RuVmVariables
     describe "ruVmVariablesRemoveArgument" $ do
