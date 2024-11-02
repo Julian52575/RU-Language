@@ -267,12 +267,27 @@ handleException info state except = do
     putStrLn "\n"
     printStateDebug info state
     putStrLn "\n😔 Aborted execution..."
+    exitWith(ExitFailure 84)
+
+--
+retVarToExitCode :: RuVariableValue -> ExitCode
+retVarToExitCode (Int32 i)
+    | i == 0    = ExitSuccess
+    | otherwise = ExitFailure (fromIntegral i)
+retVarToExitCode _ = ExitSuccess
 
 exitRuVm :: RuVmInfo -> RuVmState -> IO ()
 exitRuVm info state = 
     case dumpMode info of
         True -> return ()
-        False -> printRuVariable (returnVariable (variables state)) -- On a finit le travail
+        False -> case ruVariableValue retVar of
+            Int32 i -> do
+                let value = retVarToExitCode (ruVariableValue retVar)
+                exitWith(value)
+            Str s -> putStrLn [] >> printRuVariable (retVar) -- On a finit le travail
+            _ -> return ()
+    where
+        retVar = returnVariable (variables state)
 
 {-- Main loop
  --}
