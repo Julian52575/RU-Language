@@ -1019,6 +1019,16 @@ spec = do
             }
             let result = ruVmVariablesSetArgument variabless 0x0 var0 
             ruVmVariablesSetArgument result 0x01 var1 `shouldBe` expected
+        it "Keeps other stack" $ do
+            let variabless = defaultRuVmVariables {
+                argumentVariables = [ [var0], [var0], [var0] ],
+                variableStack = [ [var0], [var1] ]
+            }
+            let expected = variabless {
+                argumentVariables = [ [var0], [var0], [var0] ],
+                variableStack = [ [var0], [var1] ]
+            }
+            ruVmVariablesSetArgument variabless 0x0 var0 `shouldBe` expected
 
 --ruVmVariablesRemoveArgument :: RuVmVariables -> Word32 -> RuVmVariables
     describe "ruVmVariablesRemoveArgument" $ do
