@@ -305,7 +305,7 @@ exitRuVm info state =
  --}
 ruVmLoop :: RuVmInfo -> RuVmState -> IO ()
 ruVmLoop info state
-    | scopeDeep state == (-1)       = exitRuVm info state
+    | scopeDeep state <= (-1)       = exitRuVm info state
     | workerCode state == [] =
         case dumpMode info of
             True -> exitRuVm info state

@@ -385,7 +385,7 @@ ruVmStateExitScope state = do
             argumentVariables = newArg,
             callOffsets = drop 1 (callOffsets oldVars)
         },
-        scopeDeep = (scopeDeep state) - 1,
+        scopeDeep = if length (callOffsets oldVars) > 0 then (scopeDeep state) - 1 else -1,
         workerCodeOffset = if length (callOffsets oldVars) > 0 then (callOffsets oldVars) !! 0 else workerCodeOffset state
     }
     where

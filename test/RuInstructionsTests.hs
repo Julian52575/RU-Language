@@ -660,14 +660,15 @@ spec = do
             scopeDeep = 1
         }
         it "Returns from a function" $ do
+            let expectedPc = (callOffsets (variables state)) !! 0
             let expected = state {
                 variables = defaultRuVmVariables {
                     variableStack = [ [] ],
                     argumentVariables = [ [] ],
                     callOffsets = []
                 },
-                workerCodeOffset = (callOffsets (variables state)) !! 0,
-                workerCode = ccode,
+                workerCodeOffset = expectedPc,
+                workerCode = drop (fromIntegral expectedPc) (code info),
                 scopeDeep = 0
             }
             case ruInstructionFunctionReturn info state of

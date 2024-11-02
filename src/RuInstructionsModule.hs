@@ -362,7 +362,11 @@ ruInstructionReturn = RuInstruction {
 }
 
 ruInstructionFunctionReturn :: RuVmInfo -> RuVmState -> Either RuException RuVmState
-ruInstructionFunctionReturn _ state = Right (ruVmStateExitScope state)
+ruInstructionFunctionReturn info state = Right (newState {
+    workerCode = drop (fromIntegral (workerCodeOffset newState)) (code info)
+})
+    where
+        newState = (ruVmStateExitScope state)
 
 ruInstructionCall :: RuInstruction
 ruInstructionCall = RuInstruction {
