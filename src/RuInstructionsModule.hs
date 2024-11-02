@@ -145,7 +145,6 @@ ruInstructionGetRuVariableFromBytes operand1 operand2 codingOperand info state
     | operand1 !! 3 == ruVariableTypeStr && codingOperand == RuOperandConstant = Just defaultRuVariable { ruVariableType = 0x02, ruVariableValue = Str (case ruVmInfoGetStringFromStringTable info (getWord32FromOperand operand2) of
         Nothing -> ""
         Just str -> str) }
-    -- | RuOperand !! 1 == 0b11 = var
     | otherwise = var
         where
             var = ruVmVariablesGetVariable (variables state) (getWord32FromOperand operand2)
