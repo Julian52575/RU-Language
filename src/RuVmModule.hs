@@ -64,6 +64,13 @@ ruVmVariablesGetBiggestId variabless
  --}
 ruVmVariablesUpdateVariable :: RuVmVariables -> Word32 -> RuVariableValue -> Either RuException RuVmVariables
 ruVmVariablesUpdateVariable variabless idd value
+    | idd == 0xffffffff                                       = Right (variabless {
+            tmpVariable = defaultRuVariable {
+                ruVariableValue = value,
+                ruVariableType = ruVariableValueGetVariableType value,
+                ruMutable = True
+            }
+    })
     | ruVmVariablesGetVariable variabless idd   == Nothing   = Left (ruExceptionUnknowVariable idd)
     | otherwise = do
         let relevantArrayIndex = if globalSearchResult /= Nothing then globalScopeIndex else 0
