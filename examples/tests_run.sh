@@ -1,5 +1,5 @@
 #!/bin/bash
-EXAMPLES=("multiplePrint" "returnString")
+EXAMPLES=("multiplePrint" "returnString" "function")
 FAILURES=""
 SUCCESS=""
 LOG_FILE=""
