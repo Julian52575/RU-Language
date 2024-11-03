@@ -10,11 +10,13 @@ Download the ru_compiler binary from the latest release.
   ./ru_compiler ru code
 ```
 
+## Compilation Process 
+The compilation method we choose is [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).    
+It parse each expresion as a Tree that is then converted to instruction.
+
 ## Syntax
 Find below the syntax for the ru language.
 A BNF representation can be found at the bottom.
-
-# 
 
 ---
 
