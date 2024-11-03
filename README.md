@@ -13,3 +13,14 @@ A simple and yet powerful virtual machine to safely run your programs !
 - No pointers
 - Automatic memory allocation and free
 - Explicit errors for developers
+
+## Installation:
+Download the ru_vm binary from the latest release.
+
+## Usage:
+```
+  ./ru_vm ruExecutable (--dump)
+  options:
+    --dump   =  print everything about the binary.
+
+```
