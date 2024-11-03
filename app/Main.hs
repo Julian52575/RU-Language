@@ -7,7 +7,7 @@ main = do
     case args of
         [filePath] -> do
             putStrLn $ "Parsing file: " ++ filePath
-            parseFromFile filePath "out.ru"
+            parseFromFile filePath "out.izly"
         [filePath1, filePath2] -> do
             putStrLn $ "Parsing file: " ++ filePath1
             parseFromFile filePath1 filePath2
