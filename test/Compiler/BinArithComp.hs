@@ -121,5 +121,5 @@ spec = do
       let expr = BinArith Add (BinArith Multiply (BinArith Add (Var "x") (LitInt 2)) (LitString "hello")) (BinArith Subtract (LitInt 5) (Var "y"))
           scope = Scope ["x", "y"] "" 0
           compile = Compile ["hello"] [] scope
-          expected = [OpCreateVar 2 0,OpCreateVar 1 0,OpCreateVar 1 0,OpAdd (CbConst 176 1 0) (CbConst 160 1 2),OpUnsetReturn 3,OpMul (CbConst 176 1 3) (CbConst 160 1 0),OpUnsetReturn 2,OpUnsetVar 3,OpSub (CbConst 160 1 5) (CbConst 176 1 1),OpUnsetReturn 3,OpAdd (CbConst 176 1 1) (CbConst 176 1 2),OpUnsetReturn 0,OpUnsetVar 1,OpUnsetVar 2]
+          expected = [OpCreateVar 2 0,OpCreateVar 1 0,OpCreateVar 1 0,OpAdd (CbConst 176 1 0) (CbConst 160 1 2),OpUnsetReturn 2,OpMul (CbConst 176 1 2) (CbConst 160 1 0),OpUnsetReturn 1,OpUnsetVar 2,OpSub (CbConst 160 1 5) (CbConst 176 1 1),OpUnsetReturn 2,OpAdd (CbConst 176 1 1) (CbConst 176 1 2),OpUnsetReturn 0,OpUnsetVar 1,OpUnsetVar 2]
       in compileBinArith expr scope compile 0 0 `shouldBe` expected

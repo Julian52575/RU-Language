@@ -22,6 +22,12 @@ codingByteToByte :: CodingByte -> [Word8]
 codingByteToByte (CbConst a b c) = [fromIntegral a] ++ intToWord32List b ++ intToWord32List c
 codingByteToByte (CbVar a b) = intToWord32List a ++ intToWord32List b
 
+codingByteSetVar :: Int -> CodingByte -> [Word8]
+codingByteSetVar n (CbConst a b c) = case a of
+    0xA0 -> fromIntegral 0xA8 : intToWord32List n ++ intToWord32List b ++ intToWord32List c
+    0xB0 -> fromIntegral 0xac : intToWord32List n ++ intToWord32List b ++ intToWord32List c
+codingByteSetVar n (CbVar a b) = fromIntegral 0xB8 : intToWord32List n ++ intToWord32List a ++ intToWord32List b
+
 addCodingByteToByte :: CodingByte -> CodingByte -> [Word8]
 addCodingByteToByte (CbConst a b c) (CbConst x y z) =
     case a of
@@ -40,9 +46,9 @@ opCodeToByte (OpPrint cb) = 0x00 : [0x01] ++ codingByteToByte cb
 opCodeToByte (OpPrintLn cb) = 0x00 : [0x02] ++ codingByteToByte cb
 
 opCodeToByte (OpCreateVar a b) = 0x01 : [0x00] ++ intToWord32List a ++ intToWord32List b
-opCodeToByte (OpSetVar a cb) = 0x01 : [0x01] ++ addCodingByteToByte (CbConst 0xA0 0x01 a) cb
+opCodeToByte (OpSetVar a cb) = 0x01 : [0x01] ++ codingByteSetVar a cb
 opCodeToByte (OpSetTmp a cb) = 0x01 : [0x02] ++ codingByteToByte cb
-opCodeToByte (OpSetArg a cb) = 0x01 : [0x03]  ++ addCodingByteToByte (CbConst 0xA0 0x01 a) cb
+opCodeToByte (OpSetArg a cb) = 0x01 : [0x03]  ++ codingByteSetVar a cb
 opCodeToByte (OpUnsetArg a b) = 0x01 : [0x04] ++ intToWord32List a ++ intToWord32List b
 opCodeToByte (OpSetReturn a cb) = 0x01 : [0x05] ++ codingByteToByte cb
 opCodeToByte (OpUnsetReturn a) = 0x01 : [0x06] ++ intToWord32List a
@@ -67,8 +73,8 @@ opCodeToByte (OpGreater cb1 cb2) = 0x03 : [0x09] ++ addCodingByteToByte cb1 cb2
 opCodeToByte (OpGreaterEq cb1 cb2) = 0x03 : [0x10] ++ addCodingByteToByte cb1 cb2
 
 opCountCodingByte :: CodingByte -> Int
-opCountCodingByte (CbConst _ _ _) = 12
-opCountCodingByte (CbVar _ _) = 8
+opCountCodingByte (CbConst _ _ _) = 9
+opCountCodingByte (CbVar _ _) = 9
 
 opCountByte :: OpCode -> Int
 opCountByte OpNoop = 2
@@ -87,17 +93,17 @@ opCountByte (OpCall _) = 6
 opCountByte (OpJump _) = 6
 opCountByte (OpJumpCarry _) = 6
 opCountByte (OpJumpNotCarry _) = 6
-opCountByte (OpAdd cb1 cb2) = 18
-opCountByte (OpSub cb1 cb2) = 18
-opCountByte (OpDiv cb1 cb2) = 18
-opCountByte (OpMul cb1 cb2) = 18
-opCountByte (OpEq cb1 cb2) = 18
-opCountByte (OpNeq cb1 cb2) = 18
-opCountByte (OpMod cb1 cb2) = 18
-opCountByte (OpLesser cb1 cb2) = 18
-opCountByte (OpLesserEq cb1 cb2) = 18
-opCountByte (OpGreater cb1 cb2) = 18
-opCountByte (OpGreaterEq cb1 cb2) = 18
+opCountByte (OpAdd cb1 cb2) = 19
+opCountByte (OpSub cb1 cb2) = 19
+opCountByte (OpDiv cb1 cb2) = 19
+opCountByte (OpMul cb1 cb2) = 19
+opCountByte (OpEq cb1 cb2) = 19
+opCountByte (OpNeq cb1 cb2) = 19
+opCountByte (OpMod cb1 cb2) = 19
+opCountByte (OpLesser cb1 cb2) = 19
+opCountByte (OpLesserEq cb1 cb2) = 19
+opCountByte (OpGreater cb1 cb2) = 19
+opCountByte (OpGreaterEq cb1 cb2) = 19
 
 opListCountByte :: [OpCode] -> Int
 opListCountByte = sum . map opCountByte
@@ -176,4 +182,4 @@ getHeader comp globalOp opcodes =
         functionTable''' = addGlobalOffset globaloffset functionTable''
         hFunctionTable = concatMap functionToByte functionTable'''
 
-    in Header magic checkSum version functionTableCount' stringTableOffset' stringTableSize' codeOffset' firstInstructionOffset unuse stringTableHex hFunctionTable
+    in  Header magic checkSum version functionTableCount' stringTableOffset' stringTableSize' codeOffset' firstInstructionOffset unuse stringTableHex hFunctionTable

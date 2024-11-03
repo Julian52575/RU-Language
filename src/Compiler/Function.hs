@@ -6,13 +6,14 @@ module Compiler.Function (
 
 import Parser.AST (Stmt(..))
 import Data.Maybe (fromJust)
-import Data.List (elemIndex, find)
-import Compiler.Type (OpCode(..), Function(..), Scope(..), Compile(..))
+import Data.List (elemIndex, findIndex)
+import Compiler.Type (OpCode(..), Function(..), Compile(..))
 
 getFunctionIndex :: String -> Compile -> Int
 getFunctionIndex name compile =
-    let maybeFunction = find (\f -> fName f == name) (functionTable compile)
-    in maybe 0 fIndex maybeFunction
+    case findIndex (\f -> fName f == name) (functionTable compile) of
+        Just index -> index
+        Nothing -> 0
 
 -- unset all the arguments given to a function
 unsetFuncVar :: Int -> Int -> [OpCode]
