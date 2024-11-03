@@ -12,6 +12,7 @@ Download the ru_compiler binary from the latest release.
 
 ## Syntax
 Find below the syntax for the ru language.
+A BNF representation can be found at the bottom.
 
 # 
 
@@ -823,3 +824,84 @@ Find below the syntax for the ru language.
     
 
 ---
+
+## BNF Representation
+```
+<program> ::= <statement>*
+
+<statement> ::= <function_definition>
+              | <function_call>
+              | <variable_declaration>
+              | <if_statement>
+              | <loop_statement>
+              | <pattern_matching>
+              | <expression_statement>
+
+<function_definition> ::= "fn" <identifier> "(" <parameter_list> ")" "->" <type> "{" <statement>* "}"
+<parameter_list> ::= <parameter> ("," <parameter>)*
+<parameter> ::= <identifier> ":" <type> ["=" <expression>]
+
+<function_call> ::= <identifier> "(" <argument_list> ")"
+<argument_list> ::= <expression> ("," <expression>)*
+
+<variable_declaration> ::= "let" <identifier> "=" <expression>
+
+<if_statement> ::= "if" <expression> "{" <statement>* "}"
+                | "if" <expression> "{" <statement>* "}" "else" <if_statement>
+                | "else" "{" <statement>* "}"
+
+<loop_statement> ::= <for_loop> | <while_loop> | <do_while_loop>
+
+<for_loop> ::= "for" <identifier> "in" <range_expression> "{" <statement>* "}"
+             | "for" "(" <expression>; <expression>; <expression> ")" "{" <statement>* "}"
+
+<range_expression> ::= <expression> ".." <expression> ["step" <expression>]
+                     | <expression> "..=" <expression>
+
+<while_loop> ::= "while" <expression> "{" <statement>* "}"
+<do_while_loop> ::= "do" "{" <statement>* "}" "while" <expression>
+
+<pattern_matching> ::= "match" <expression> "{" <pattern_clause>* "}"
+<pattern_clause> ::= <pattern> "=>" <expression> ","
+<pattern> ::= <literal> | <identifier> | "_"
+
+<expression_statement> ::= <expression>
+
+<expression> ::= <literal>
+               | <identifier>
+               | <function_call>
+               | <lambda_expression>
+               | <binary_expression>
+               | <ternary_expression>
+
+<binary_expression> ::= <expression> <binary_operator> <expression>
+<binary_operator> ::= "+" | "-" | "*" | "/" | "&&" | "||" | "==" | "!=" | "<" | ">" | "<=" | ">="
+
+<ternary_expression> ::= "(" <expression> "?" <expression> ":" <expression> ")"
+
+<lambda_expression> ::= "let" <identifier> ":" "(" <type_list> ")" "->" <type> "=" "(" <parameter_list> ")" "=>" <expression>
+
+<type_list> ::= <type> ("," <type>)*
+
+<literal> ::= <integer_literal> | <string_literal> | <boolean_literal>
+<integer_literal> ::= ["-"] [0-9]+
+<string_literal> ::= "\"" [^"\n]* "\""
+<boolean_literal> ::= "true" | "false"
+
+<identifier> ::= [a-zA-Z_][a-zA-Z0-9_]*
+
+<type> ::= "int"
+         | "string"
+         | "void"
+         | "bool"
+         | <unknown_type>
+         | "(" <type_list> ")"
+         | <type> "[]"
+         | "(" <type_list> ")" "->" <type>  // Function type
+
+<type_list> ::= <type> ("," <type>)*
+
+<unknown_type> ::= <identifier>
+
+```
+
