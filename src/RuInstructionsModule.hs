@@ -380,7 +380,7 @@ ruInstructionCall = RuInstruction {
 ruInstructionFunctionCall :: RuVmInfo -> RuVmState -> Either RuException RuVmState
 ruInstructionFunctionCall info state
     | length ccode < 4                                 = Left ruExceptionIncompleteInstruction
-    | op1 > fromIntegral (length (functionTable info)) = Left (ruExceptionUnknowFunction op1)
+    | op1 >= fromIntegral (length (functionTable info)) = Left (ruExceptionUnknowFunction op1)
     | otherwise                                        = 
         if scopeDeep scopeState > 500
         then
@@ -394,6 +394,7 @@ ruInstructionFunctionCall info state
     --) ) )
     where
         ccode = workerCode state
+
         op1 = word8ArrayToWord32Pure ccode
         fun = (functionTable info) !! (fromIntegral op1)
  --callOffsets should be (current offset + 1 ins)
