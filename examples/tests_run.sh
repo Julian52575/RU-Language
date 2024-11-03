@@ -1,5 +1,5 @@
 #!/bin/bash
-EXAMPLES=("multiplePrint" "returnString" "function" "fibonacci")
+EXAMPLES=("multiplePrint" "returnString" "function" "fibonacci" "for")
 FAILURES=""
 SUCCESS=""
 LOG_FILE=""
