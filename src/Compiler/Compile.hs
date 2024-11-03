@@ -41,6 +41,12 @@ compileExpr (BinArith op e1 e2) scope comp _ = compileBinArith (BinArith op e1 e
 
 compileExpr (Assign (Var x) (LitInt int)) scope _ _ = [OpSetVar (getIndexFromStrTable (vars scope) x) (CbConst 0xA0 0x01 int)]
 compileExpr (Assign (Var x) (LitString str)) scope comp _ = [OpSetVar (getIndexFromStrTable (vars scope) x) (CbConst 0xA0 0x01 (getIndexFromStrTable (stringTable comp) str))]
+compileExpr (Assign (Var x) (Var y)) scope _ _ = [OpSetVar (getIndexFromStrTable (vars scope) x) (CbConst 0xB0 0x00 (getIndexFromStrTable (vars scope) y))]
+compileExpr (Assign (Var x) (FuncCall name args)) scope comp _ = compileCall (FuncCall name args) scope comp 0 ++ [OpUnsetReturn (getIndexFromStrTable (vars scope) x)]
+compileExpr (Assign (Var x) (BinArith op e1 e2)) scope comp _ = [OpCreateVar 0x01 0x00] ++
+    compileExpr (BinArith op e1 e2) scope comp 0 ++
+    [OpSetVar (getIndexFromStrTable (vars scope) x) (CbConst 0xB0 0x00 (length $ vars scope))] ++
+    [OpUnsetVar (length $ vars scope)]
 
 compileExpr _ _ _ _ = []
 

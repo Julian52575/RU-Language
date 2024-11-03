@@ -25,7 +25,7 @@ codingByteToByte (CbVar a b) = intToWord32List a ++ intToWord32List b
 codingByteSetVar :: Int -> CodingByte -> [Word8]
 codingByteSetVar n (CbConst a b c) = case a of
     0xA0 -> fromIntegral 0xA8 : intToWord32List n ++ intToWord32List b ++ intToWord32List c
-    0xB0 -> fromIntegral 0xB8 : intToWord32List n ++ intToWord32List b ++ intToWord32List c
+    0xB0 -> fromIntegral 0xac : intToWord32List n ++ intToWord32List b ++ intToWord32List c
 codingByteSetVar n (CbVar a b) = fromIntegral 0xB8 : intToWord32List n ++ intToWord32List a ++ intToWord32List b
 
 addCodingByteToByte :: CodingByte -> CodingByte -> [Word8]

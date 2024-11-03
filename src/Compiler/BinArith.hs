@@ -23,7 +23,7 @@ setFunctionArgs exprs scope strTable comp depth = setFunctionArgs' exprs scope s
             BinArith op e1 e2 -> [OpCreateVar 0x01 0x00] ++
                 compileBinArith (BinArith op e1 e2) scope comp' depth' 0 ++
                 [OpSetArg index (CbConst 0xB0 0x01 depth')] ++
-                [OpUnsetVar depth']
+                [OpUnsetVar depth'] ++ setFunctionArgs' xs scop strTbl (index + 1) depth' comp'
             _ -> let codingByte = getCodingByte x scop strTbl
                      opCode = OpSetArg index codingByte
                  in opCode : setFunctionArgs' xs scop strTbl (index + 1) depth' comp'
