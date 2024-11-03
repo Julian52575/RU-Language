@@ -13,7 +13,7 @@ import Parser.AST (Stmt(..), Expr(..), CompOp(..))
 import Compiler.CreateVar (getCreateVar, getFunctionVar, getIndexFromStrTable)
 import Compiler.Function (unsetFuncVar)
 import Compiler.CodingByte (getCodingByte)
-import Compiler.BinArith (compileBinArith, opCodeFromExpr, compileCall)
+import Compiler.BinArith (compileBinArith, opCodeFromExpr, compileCall, isReturnString, isBinArithString)
 import Compiler.Header (opListCountByte)
 import Data.Either()
 
@@ -43,7 +43,7 @@ compileExpr (Assign (Var x) (LitInt int)) scope _ _ = [OpSetVar (getIndexFromStr
 compileExpr (Assign (Var x) (LitString str)) scope comp _ = [OpSetVar (getIndexFromStrTable (vars scope) x) (CbConst 0xA0 0x01 (getIndexFromStrTable (stringTable comp) str))]
 compileExpr (Assign (Var x) (Var y)) scope _ _ = [OpSetVar (getIndexFromStrTable (vars scope) x) (CbConst 0xB0 0x00 (getIndexFromStrTable (vars scope) y))]
 compileExpr (Assign (Var x) (FuncCall name args)) scope comp _ = compileCall (FuncCall name args) scope comp 0 ++ [OpUnsetReturn (getIndexFromStrTable (vars scope) x)]
-compileExpr (Assign (Var x) (BinArith op e1 e2)) scope comp _ = [OpCreateVar 0x01 0x00] ++
+compileExpr (Assign (Var x) (BinArith op e1 e2)) scope comp _ = [OpCreateVar (if isBinArithString (BinArith op e1 e2) then 0x02 else 0x01) 0x00] ++
     compileExpr (BinArith op e1 e2) scope comp 0 ++
     [OpSetVar (getIndexFromStrTable (vars scope) x) (CbConst 0xB0 0x00 (length $ vars scope))] ++
     [OpUnsetVar (length $ vars scope)]
@@ -53,13 +53,13 @@ compileExpr _ _ _ _ = []
 -- get a list of opcode from an expr and set the result to the tmp register
 compileExprToTmp :: Expr -> Scope -> Compile -> [OpCode]
 compileExprToTmp (LitInt int) _ _ = [OpSetTmp 0x01 (CbConst 0xA0 0x01 int)]
-compileExprToTmp (LitString str) _ comp = [OpSetTmp 0x02 (CbConst 0xA0 0x01 (getIndexFromStrTable (stringTable comp) str))]
+compileExprToTmp (LitString str) _ comp = [OpSetTmp 0x02 (CbConst 0xA0 0x02 (getIndexFromStrTable (stringTable comp) str))]
 compileExprToTmp (Var x) scope _ = [OpSetTmp 0x00 (CbConst 0xB0 0x00 (getIndexFromStrTable (vars scope) x ))]
 
 compileExprToTmp (BinArith op e1 e2) scope comp =
-    [OpCreateVar 0x01 0x00] ++
+    [OpCreateVar (if isBinArithString (BinArith op e1 e2) then 0x02 else 0x01) 0x00] ++
     compileExpr (BinArith op e1 e2) scope comp 0 ++
-    [OpSetTmp 0x01 (CbConst 0xB0 0x01 (length $ vars scope))]
+    [OpSetTmp (if isBinArithString (BinArith op e1 e2) then 0x02 else 0x01) (CbConst 0xB0 0x01 (length $ vars scope))]
 
 compileExprToTmp (FuncCall name args) scope comp = compileCall (FuncCall name args) scope comp 0 ++ [OpUnsetReturn 0xffffffff]
 
@@ -96,7 +96,7 @@ compileStmt (LetStmt name _ (FuncCall name2 args)) scope comp = compileExpr (Fun
         [OpSetVar (getIndexFromStrTable (vars scope) name) (CbConst 0xB0 0x00 (length $ vars scope))] ++
         [OpUnsetVar (length $ vars scope)]
 compileStmt (LetStmt name _ expr) scope comp = if isConst expr == False
-    then [OpCreateVar 0x01 0x00] ++
+    then [OpCreateVar (if isBinArithString expr then 0x02 else 0x01) 0x00] ++
         compileExpr expr scope comp 0 ++
         [OpSetVar (getIndexFromStrTable (vars scope) name) (CbConst 0xB0 0x00 (length $ vars scope))] ++
         [OpUnsetVar (length $ vars scope)]
@@ -108,7 +108,7 @@ compileStmt (BlockStmt stmts) scope comp = concatMap (\stmt -> compileStmt stmt 
 
 compileStmt (ReturnStmt (Just expr)) scope comp =
     let exprOpCode = compileExprToTmp expr scope comp
-    in exprOpCode ++ [OpSetReturn 0x01 (CbConst 0xB0 0x01 0xffffffff)] ++ [OpReturn]
+    in exprOpCode ++ [OpSetReturn (if isBinArithString expr then 0x02 else 0x01) (CbConst 0xB0 (if isBinArithString expr then 0x02 else 0x01) 0xffffffff)] ++ [OpReturn]
 
 compileStmt (IfStmt e1 s1 (Just s2)) scope comp =
     let trueStmt = compileStmt s1 scope comp

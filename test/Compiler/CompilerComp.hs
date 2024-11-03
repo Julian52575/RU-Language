@@ -92,7 +92,7 @@ spec = do
     it "compiles a function with deeply nested mixed expressions" $
       let stmt = FuncDeclStmt "m" [("x", TInt, Nothing), ("y", TInt, Nothing)] TInt (Just (ReturnStmt (Just (BinArith Add (BinArith Multiply (BinArith Add (Var "x") (LitInt 2)) (LitString "hello")) (BinArith Subtract (LitInt 5) (Var "y"))))))
           compile = Compile ["hello"] [] (Scope ["x", "y"] "" 0)
-          expected = [OpCreateVar 1 0, OpCreateVar 1 0, OpUnsetArg 2 0, OpUnsetArg 3 1, OpCreateVar 1 0, OpCreateVar 2 0, OpCreateVar 1 0, OpCreateVar 1 0, OpAdd (CbConst 176 1 0) (CbConst 160 1 2), OpUnsetReturn 6, OpMul (CbConst 176 1 6) (CbConst 160 1 0), OpUnsetReturn 5, OpUnsetVar 6, OpSub (CbConst 160 1 5) (CbConst 176 1 1), OpUnsetReturn 6, OpAdd (CbConst 176 1 5) (CbConst 176 1 6), OpUnsetReturn 4, OpUnsetVar 5, OpUnsetVar 6, OpSetTmp 1 (CbConst 176 1 4), OpSetReturn 1 (CbConst 176 1 4294967295), OpReturn]
+          expected = [OpCreateVar 1 0, OpCreateVar 1 0, OpUnsetArg 2 0, OpUnsetArg 3 1, OpCreateVar 2 0, OpCreateVar 2 0, OpCreateVar 1 0, OpCreateVar 1 0, OpAdd (CbConst 176 1 0) (CbConst 160 1 2), OpUnsetReturn 6, OpMul (CbConst 176 1 6) (CbConst 160 1 0), OpUnsetReturn 5, OpUnsetVar 6, OpSub (CbConst 160 1 5) (CbConst 176 1 1), OpUnsetReturn 6, OpAdd (CbConst 176 1 5) (CbConst 176 1 6), OpUnsetReturn 4, OpUnsetVar 5, OpUnsetVar 6, OpSetTmp 2 (CbConst 176 1 4), OpSetReturn 2 (CbConst 176 2 4294967295), OpReturn]
       in compileFunction stmt compile `shouldBe` expected
 
     it "compiles a function with nested addition and subtraction" $

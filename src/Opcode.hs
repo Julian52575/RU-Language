@@ -26,7 +26,9 @@ swapMainFunction comp opcodes =
     let mainIndex = (getFunctionIndex "main" comp)
         swapedOpCode = swapElementsAt 0 mainIndex opcodes
         functionList = swapElementsAt 0 mainIndex (functionTable comp)
-    in ((Compile (stringTable comp) (functionList) (globalScope comp)), swapedOpCode)
+    in case mainIndex of
+        0 -> (comp, opcodes)
+        _ -> ((Compile (stringTable comp) (functionList) (globalScope comp)), swapedOpCode)
 
 isMain :: [Function] -> Bool
 isMain [] = False
