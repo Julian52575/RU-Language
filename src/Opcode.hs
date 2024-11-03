@@ -47,7 +47,7 @@ moveMainToFront functions = case partition (\f -> fName f == "main") functions o
 
 test :: [Stmt] -> IO ()
 test ast = do
-    let stringTbl = nub $ getStringTable ast
+    let stringTbl = [""] ++ (nub $ getStringTable ast)
     let functionTbl = getFunctionTable ast stringTbl
     let globalVars = getCreateVar ast stringTbl
     let sGlobal = getScopeFromList globalVars "global" 0

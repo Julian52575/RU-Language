@@ -16,6 +16,7 @@ import Compiler.CodingByte (getCodingByte)
 import Compiler.BinArith (compileBinArith, opCodeFromExpr, compileCall, isReturnString, isBinArithString)
 import Compiler.Header (opListCountByte)
 import Data.Either()
+import Data.Maybe (fromMaybe)
 
 -- Create a scope from a list of variable names
 getScopeFromList :: [(OpCode, String)] -> String -> Int -> Scope
@@ -121,6 +122,13 @@ compileStmt (IfStmt e1 s1 Nothing) scope comp =
     in compileBinComp e1 scope comp ++
         [OpJumpNotCarry ((opListCountByte trueStmt) + 6)] ++
         trueStmt
+
+compileStmt (ForClassicStmt stmts1 e1 e2 stmts2) scope comp =
+    let block1 = compileStmt (fromMaybe (BlockStmt []) stmts1) scope comp
+        expr2 = compileExpr (fromMaybe (BlockExpr []) e2) scope comp 0
+        block2 = compileStmt (BlockStmt stmts2) scope comp
+        expr1 = compileBinComp e1 scope comp ++ [OpJumpNotCarry ((opListCountByte (expr2 ++ block2)) + 12)]
+    in block1 ++ expr1 ++ block2 ++ expr2 ++ [OpJump $ -1 * (opListCountByte (expr1 ++ block2 ++ expr2))]
 
 compileStmt _ _ _ = []
 
