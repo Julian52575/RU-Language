@@ -20,6 +20,7 @@ import RuExceptionModule
 import RuInstructionsHelperModule
 import RuInstructionsModule
 
+{--
 crousAsciiArt :: String
 crousAsciiArt = "                             .################:                             \n" ++
     "                        ############################                         \n" ++
@@ -62,7 +63,7 @@ crousAsciiArt = "                             .################:                
     "                    ####################################                     \n" ++
     "                        ############################                         \n" ++
     "                             +################+                              "
-
+--}
 theColorRed :: String
 theColorRed = "\ESC[31m"
 
@@ -383,7 +384,7 @@ printRuFormatIfArg :: RuFormat -> Argument -> IO ()
 printRuFormatIfArg format arg
     | dump arg == True = do
         putStr theColorRed
-        putStrLn crousAsciiArt
+        --putStrLn crousAsciiArt
         putStr theColorDefault
         printRuFormat format
     | otherwise        = return () 
