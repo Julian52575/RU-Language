@@ -12,20 +12,25 @@ import Compiler.Function (getFunctionIndex)
 import Compiler.CodingByte (getCodingByte)
 
 -- get a list of SET_ARG for a function call
-setFunctionArgs :: [Expr] -> Scope -> [String] -> [OpCode]
-setFunctionArgs [] _ _ = []
-setFunctionArgs exprs scope strTable = setFunctionArgs' exprs scope strTable 0
+setFunctionArgs :: [Expr] -> Scope -> [String] -> Compile -> Int -> [OpCode]
+setFunctionArgs [] _ _ _ _ = []
+setFunctionArgs exprs scope strTable comp depth = setFunctionArgs' exprs scope strTable 0 depth comp
   where
-    setFunctionArgs' :: [Expr] -> Scope -> [String] -> Int -> [OpCode]
-    setFunctionArgs' [] _ _ _ = []
-    setFunctionArgs' (x:xs) scop strTbl index =
-        let codingByte = getCodingByte x scop strTbl
-            opCode = OpSetArg index codingByte
-        in opCode : setFunctionArgs' xs scop strTbl (index + 1)
+    setFunctionArgs' :: [Expr] -> Scope -> [String] -> Int -> Int -> Compile -> [OpCode]
+    setFunctionArgs' [] _ _ _ _ _ = []
+    setFunctionArgs' (x:xs) scop strTbl index depth' comp' =
+        case x of
+            BinArith op e1 e2 -> [OpCreateVar 0x01 0x00] ++
+                compileBinArith (BinArith op e1 e2) scope comp' depth' 0 ++
+                [OpSetArg index (CbConst 0xB0 0x01 depth')] ++
+                [OpUnsetVar depth']
+            _ -> let codingByte = getCodingByte x scop strTbl
+                     opCode = OpSetArg index codingByte
+                 in opCode : setFunctionArgs' xs scop strTbl (index + 1) depth' comp'
 
 compileCall :: Expr -> Scope -> Compile -> Int -> [OpCode]
-compileCall (FuncCall (Var name) args) fScope comp _ =
-    let setArgs = setFunctionArgs args fScope (stringTable comp)
+compileCall (FuncCall (Var name) args) fScope comp depth =
+    let setArgs = setFunctionArgs args fScope (stringTable comp) comp depth
         funcIndex = getFunctionIndex name comp
     in setArgs ++ [OpCall funcIndex]
 compileCall _ _ _ _ = []
@@ -65,7 +70,7 @@ compileBinArith (BinArith op (BinArith op1 ee1 ee2) (BinArith op2 ex1 ex2)) scop
 compileBinArith (BinArith op (FuncCall name args) (BinArith op1 e1 e2)) scope comp start depth =
     [OpCreateVar (if isBinArithString (FuncCall name args) then 0x02 else 0x01) 0] ++
         [OpCreateVar (if isBinArithString (BinArith op1 e1 e2) then 0x02 else 0x01) 0] ++
-        compileCall (FuncCall name args) scope comp 0 ++
+        compileCall (FuncCall name args) scope comp (start + depth + 3) ++
         [OpUnsetReturn (start + depth + 1)] ++
         compileBinArith (BinArith op1 e1 e2) scope comp start (depth + 2) ++
         doBinArith op (Right (start + depth + 1)) (Right (start + depth + 2)) scope comp ++
@@ -77,7 +82,7 @@ compileBinArith (BinArith op (BinArith op1 e1 e2) (FuncCall name args)) scope co
     [OpCreateVar (if isBinArithString (BinArith op1 e1 e2) then 0x02 else 0x01) 0] ++
         [OpCreateVar (if isBinArithString (FuncCall name args) then 0x02 else 0x01) 0] ++
         compileBinArith (BinArith op1 e1 e2) scope comp start (depth + 1) ++
-        compileCall (FuncCall name args) scope comp 0 ++
+        compileCall (FuncCall name args) scope comp (start + depth + 3) ++
         [OpUnsetReturn (start + depth + 2)] ++
         doBinArith op (Right (start + depth + 1)) (Right (start + depth + 2)) scope comp ++
         [OpUnsetReturn (start + depth)] ++
@@ -87,9 +92,9 @@ compileBinArith (BinArith op (BinArith op1 e1 e2) (FuncCall name args)) scope co
 compileBinArith (BinArith op (FuncCall name1 args1) (FuncCall name2 args2)) scope comp start depth =
     [OpCreateVar (if isBinArithString (FuncCall name1 args1) then 0x02 else 0x01) 0] ++
         [OpCreateVar (if isBinArithString (FuncCall name2 args2) then 0x02 else 0x01) 0] ++
-        compileCall (FuncCall name1 args1) scope comp 0 ++
+        compileCall (FuncCall name1 args1) scope comp (start + depth + 3) ++
         [OpUnsetReturn (start + depth + 1)] ++
-        compileCall (FuncCall name2 args2) scope comp 0 ++
+        compileCall (FuncCall name2 args2) scope comp (start + depth + 3) ++
         [OpUnsetReturn (start + depth + 2)] ++
         doBinArith op (Right (start + depth + 1)) (Right (start + depth + 2)) scope comp ++
         [OpUnsetReturn (start + depth)] ++
@@ -98,7 +103,7 @@ compileBinArith (BinArith op (FuncCall name1 args1) (FuncCall name2 args2)) scop
 
 compileBinArith (BinArith op (FuncCall name args) e2) scope comp start depth =
     [OpCreateVar (if isBinArithString (FuncCall name args) then 0x02 else 0x01) 0] ++
-        compileCall (FuncCall name args) scope comp 0 ++
+        compileCall (FuncCall name args) scope comp (start + depth + 2) ++
         [OpUnsetReturn (start + depth + 1)] ++
         doBinArith op (Right (start + depth + 1)) (Left e2) scope comp ++
         [OpUnsetReturn (start + depth)] ++
@@ -106,7 +111,7 @@ compileBinArith (BinArith op (FuncCall name args) e2) scope comp start depth =
 
 compileBinArith (BinArith op e1 (FuncCall name args)) scope comp start depth =
     [OpCreateVar (if isBinArithString (FuncCall name args) then 0x02 else 0x01) 0] ++
-        compileCall (FuncCall name args) scope comp 0 ++
+        compileCall (FuncCall name args) scope comp (start + depth + 2) ++
         [OpUnsetReturn (start + depth + 1)] ++
         doBinArith op (Left e1) (Right (start + depth + 1)) scope comp ++
         [OpUnsetReturn (start + depth)] ++
