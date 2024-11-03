@@ -7,5 +7,8 @@ main = do
     case args of
         [filePath] -> do
             putStrLn $ "Parsing file: " ++ filePath
-            parseFromFile filePath
-        _ -> putStrLn "Usage: <program> <file-path>"
+            parseFromFile filePath "out.ru"
+        [filePath1, filePath2] -> do
+            putStrLn $ "Parsing file: " ++ filePath1
+            parseFromFile filePath1 filePath2
+        _ -> putStrLn "Usage: <program> <file-path> <output-path>"

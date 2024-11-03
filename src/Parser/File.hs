@@ -2,15 +2,13 @@
 
 module Parser.File (parseFromFile, parseFromString) where
 
-import System.IO (withFile, IOMode(..))
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import Text.Megaparsec (ParseErrorBundle, runParser, errorBundlePretty)
-import Data.Void (Void)
+import Text.Megaparsec (runParser, errorBundlePretty)
 import Parser.Utils (sc)
 import Parser.Stmt (Stmt, stmt)
 import Text.Megaparsec (many, eof)
-import Opcode (test)
+import Opcode (compileAst)
 
 parseFromString :: String -> Either String [Stmt]
 parseFromString input = 
@@ -19,14 +17,12 @@ parseFromString input =
         Left err -> Left $ errorBundlePretty err
         Right ast -> Right ast
 
-parseFromFile :: FilePath -> IO ()
-parseFromFile path = do
+parseFromFile :: FilePath -> FilePath -> IO ()
+parseFromFile path out = do
     content <- TIO.readFile path
     let result = parseFromString (T.unpack content)
     case result of
         Left err -> putStrLn $ "Parse error:\n" ++ err
         Right ast -> do 
-            -- putStrLn $ "Successfully parsed AST:\n" ++ show ast
-            putStrLn $ "Successfully parsed AST:\n"
-            test ast
-            putStrLn "Output written to out.bin"
+            compileAst ast out
+            putStrLn $ "Output written to " ++ out
