@@ -1,5 +1,5 @@
 #!/bin/bash
-EXAMPLES=("multiplePrint" "returnString" "function")
+EXAMPLES=("multiplePrint" "returnString" "function" "fibonacci")
 FAILURES=""
 SUCCESS=""
 LOG_FILE=""
@@ -8,6 +8,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
+rm examples/log/*.log
 stack build
 for current in ${EXAMPLES[@]}; do
     if ! [ -f "examples/$current.txt" ]
