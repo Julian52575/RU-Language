@@ -51,7 +51,7 @@ data RuHeader = RuHeader {
 
 printRuHeader :: RuHeader -> IO ()
 printRuHeader hhead = 
-    putStrLn ("🤓 Using RU VM Version \t" ++ (printf "0x%02x" (fileVersion hhead)) ++ ".") >>
+    putStrLn ("Using RU VM Version \t" ++ (printf "0x%02x" (fileVersion hhead)) ++ ".") >>
     putStrLn ("Function count:\t" ++ (printf "0x%08x" (functionTableCount hhead))) >>
     putStrLn ("Strtab offset:\t" ++ (printf "0x%08x" (strTableOffset hhead))) >>
     putStrLn ("String count:\t" ++ (printf "0x%08x" (strTableCount hhead))) >>
@@ -63,6 +63,13 @@ data RuFunctionTable = RuFunctionTable {
     codeSectionOffset :: Word32,
     size :: Word32
 } deriving (Eq, Show)
+
+ruFunctionTableGetFunctionFromStartOffset :: [RuFunctionTable] -> Word32 -> Maybe RuFunctionTable
+ruFunctionTableGetFunctionFromStartOffset (current:next) offset
+    | offset == (codeSectionOffset current) = Just current
+    | otherwise                             = ruFunctionTableGetFunctionFromStartOffset next offset
+ruFunctionTableGetFunctionFromStartOffset [] _ = Nothing
+
 
 ruFunctionTableGetFunctionFromCodeOffset :: [RuFunctionTable] -> Word32 -> Maybe RuFunctionTable
 

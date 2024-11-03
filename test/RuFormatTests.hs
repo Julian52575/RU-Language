@@ -146,3 +146,28 @@ spec = do
                 Just fun -> fun `shouldBe` fun3
         it "Doesn't get out of bound" $ do
             ruFunctionTableGetFunctionFromCodeOffset funTab 0xFFFF `shouldBe` Nothing
+
+--ruFunctionTableGetFunctionFromStartOffset :: [RuFunctionTable] -> Word32 -> Maybe RuFunctionTable
+    describe "ruFunctionTableGetFunctionFromStartOffset" $ do
+        let fun1 = RuFunctionTable {
+                nameIndex = 0x00,
+                codeSectionOffset = 00,
+                size = 19
+        }
+        let fun2 = RuFunctionTable {
+                nameIndex = 0x00,
+                codeSectionOffset = 20,
+                size = 9
+        }
+        let fun3 = RuFunctionTable {
+                nameIndex = 0x00,
+                codeSectionOffset = 30,
+                size = 255
+        }
+        let funTab = [ fun1, fun2, fun3 ]
+        it "Get a function" $ do
+            ruFunctionTableGetFunctionFromStartOffset funTab (codeSectionOffset fun2) `shouldBe` Just fun2
+        it "Doesn't get a function when not start" $ do
+            ruFunctionTableGetFunctionFromStartOffset funTab ((codeSectionOffset fun1) + 1) `shouldBe` Nothing
+        it "Doesn't get an unknow function" $ do
+            ruFunctionTableGetFunctionFromStartOffset funTab (0xffff) `shouldBe` Nothing

@@ -1,0 +1,685 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>INSTRUCTION SET</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 3px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+    margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-block;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1.25em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(55, 53, 47, 1);
+}
+.highlight-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.highlight-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.highlight-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.highlight-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.highlight-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.highlight-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.highlight-default_background {
+	color: rgba(55, 53, 47, 1);
+}
+.highlight-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.highlight-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.highlight-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.highlight-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.highlight-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.highlight-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.highlight-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.highlight-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.highlight-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.block-color-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.block-color-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.block-color-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.block-color-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.block-color-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.block-color-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.block-color-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.block-color-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.block-color-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.block-color-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.block-color-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.select-value-color-uiBlue { background-color: rgba(35, 131, 226, .07); }
+.select-value-color-pink { background-color: rgba(245, 224, 233, 1); }
+.select-value-color-purple { background-color: rgba(232, 222, 238, 1); }
+.select-value-color-green { background-color: rgba(219, 237, 219, 1); }
+.select-value-color-gray { background-color: rgba(227, 226, 224, 1); }
+.select-value-color-transparentGray { background-color: rgba(227, 226, 224, 0); }
+.select-value-color-translucentGray { background-color: rgba(0, 0, 0, 0.06); }
+.select-value-color-orange { background-color: rgba(250, 222, 201, 1); }
+.select-value-color-brown { background-color: rgba(238, 224, 218, 1); }
+.select-value-color-red { background-color: rgba(255, 226, 221, 1); }
+.select-value-color-yellow { background-color: rgba(253, 236, 200, 1); }
+.select-value-color-blue { background-color: rgba(211, 229, 239, 1); }
+.select-value-color-pageGlass { background-color: undefined; }
+.select-value-color-washGlass { background-color: undefined; }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="10efdef1-5ca4-805a-9e2f-fb9724ae2931" class="page sans"><header><h1 class="page-title">INSTRUCTION SET</h1><p class="page-description"></p><table class="properties"><tbody><tr class="property-row property-row-person"><th><span class="icon property-icon"><svg role="graphics-symbol" viewBox="0 0 16 16" style="width:14px;height:14px;display:block;fill:rgba(55, 53, 47, 0.45);flex-shrink:0" class="typesPerson"><path d="M10.9536 7.90088C12.217 7.90088 13.2559 6.79468 13.2559 5.38525C13.2559 4.01514 12.2114 2.92017 10.9536 2.92017C9.70142 2.92017 8.65137 4.02637 8.65698 5.39087C8.6626 6.79468 9.69019 7.90088 10.9536 7.90088ZM4.4231 8.03003C5.52368 8.03003 6.42212 7.05859 6.42212 5.83447C6.42212 4.63843 5.51245 3.68945 4.4231 3.68945C3.33374 3.68945 2.41846 4.64966 2.41846 5.84009C2.42407 7.05859 3.32251 8.03003 4.4231 8.03003ZM1.37964 13.168H5.49561C4.87231 12.292 5.43384 10.6074 6.78711 9.51807C6.18628 9.14746 5.37769 8.87231 4.4231 8.87231C1.95239 8.87231 0.262207 10.6917 0.262207 12.1628C0.262207 12.7974 0.548584 13.168 1.37964 13.168ZM7.50024 13.168H14.407C15.4009 13.168 15.7322 12.8423 15.7322 12.2864C15.7322 10.8489 13.8679 8.88354 10.9536 8.88354C8.04492 8.88354 6.17505 10.8489 6.17505 12.2864C6.17505 12.8423 6.50635 13.168 7.50024 13.168Z"></path></svg></span>Responsable</th><td><span class="user"><span class="icon text-icon user-icon"><span class="user-icon-inner">J</span></span>Julian</span></td></tr></tbody></table></header><div class="page-body"><details open=""><summary style="font-weight:600;font-size:1.5em;line-height:1.3;margin:0">0x00 Builtin</summary><div class="indented"><table id="10ffdef1-5ca4-8006-a1f5-f36022835820" class="simple-table"><tbody><tr id="2ba9f784-3907-49fc-a7cf-56be47d525e9"><td id="DDHr" class=""><strong>mnemonic</strong></td><td id="VUUa" class=""><strong>name</strong></td><td id="dEsi" class=""><strong>operand 1</strong></td><td id="^xiM" class=""><strong>operand 2</strong></td><td id="Ayb;" class=""><strong>operand 3</strong></td><td id="utZa" class=""><strong>operand 4</strong></td><td id="I&lt;vO" class=""><strong>description</strong></td><td id="y[&gt;s" class=""><strong>exceptions</strong></td><td id="mb}H" class=""><strong>coding byte</strong></td></tr><tr id="e4e94376-cb25-42ba-897d-0f18b6684d9d"><td id="DDHr" class="">0x0000</td><td id="VUUa" class="">NOOP</td><td id="dEsi" class="">None</td><td id="^xiM" class="">None</td><td id="Ayb;" class="">None</td><td id="utZa" class="">None</td><td id="I&lt;vO" class="">Ne fait rien</td><td id="y[&gt;s" class="">Nope</td><td id="mb}H" class="">Non</td></tr><tr id="ae9539d2-642c-4d36-913b-09fe5710f75c"><td id="DDHr" class="">0x0001</td><td id="VUUa" class="">PRINT</td><td id="dEsi" class="">constante (type de variable)</td><td id="^xiM" class="">constante | variable</td><td id="Ayb;" class="">None</td><td id="utZa" class="">None</td><td id="I&lt;vO" class="">Affiche la variable sur stdout sans \n</td><td id="y[&gt;s" class="">None</td><td id="mb}H" class="">Oui</td></tr><tr id="10ffdef1-5ca4-80b2-b2c5-cca99c59cdd1"><td id="DDHr" class="">0x0002</td><td id="VUUa" class="">PRINTLN</td><td id="dEsi" class="">constante (type de variable)</td><td id="^xiM" class="">constante | variable</td><td id="Ayb;" class="">None</td><td id="utZa" class="">None</td><td id="I&lt;vO" class="">PRINT avec \n</td><td id="y[&gt;s" class="">voir PRINT</td><td id="mb}H" class="">Oui</td></tr></tbody></table></div></details><details open=""><summary style="font-weight:600;font-size:1.5em;line-height:1.3;margin:0">0x01 Variables</summary><div class="indented"><table id="10ffdef1-5ca4-80e4-b40c-eb29495bac53" class="simple-table"><tbody><tr id="42b00486-dfbd-4af6-ad2f-dfa2cafb7cf9"><td id="]qV@" class=""><strong>mnemonic</strong></td><td id="uKpY" class=""><strong>name</strong></td><td id="g@V&lt;" class=""><strong>operand 1</strong></td><td id="xIBa" class=""><strong>operand 2</strong></td><td id="e?Sd" class=""><strong>operand 3</strong></td><td id="Jh;Q" class=""><strong>operand 4</strong></td><td id="^uG|" class=""><strong>description</strong></td><td id="[~I^" class=""><strong>exceptions</strong></td><td id="~}:{" class=""><strong>coding-byte ?</strong></td></tr><tr id="837f5691-7272-4ed5-9fb0-ad176f4cfd7c"><td id="]qV@" class="">0x0100</td><td id="uKpY" class="">CREATE_VAR</td><td id="g@V&lt;" class="">constante (type de variable)</td><td id="xIBa" class="">constante<br/>(interprétée différemment en fonction de operand 1)<br/></td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="">Ajoute une variable à la “stack”.<br/>La valeur correspond à l’operand 2 et depend du type de variable.<br/></td><td id="[~I^" class="">String index out of range.<br/>…<br/></td><td id="~}:{" class="">Non</td></tr><tr id="cb13aa44-50d1-45ff-9a6b-80cc2fff965b"><td id="]qV@" class="">0x0101</td><td id="uKpY" class="">SET_VAR</td><td id="g@V&lt;" class="">id de la variable à modifier</td><td id="xIBa" class="">constante (type de variable)</td><td id="e?Sd" class="">constante | variable id</td><td id="Jh;Q" class=""></td><td id="^uG|" class="">Copie la valeur de operand 2 dans la variable operand 1</td><td id="[~I^" class="">Type incompatible.</td><td id="~}:{" class="">Oui</td></tr><tr id="32c63da5-dc85-4395-87d4-37b0588b5b17"><td id="]qV@" class="">0x0102</td><td id="uKpY" class="">SET_TMPVAR</td><td id="g@V&lt;" class="">constante (type de variable)</td><td id="xIBa" class="">constante | variable id</td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="">Change la variable temporaire au type “operand 1” et à la valeur “operand 2”.<br/>Operand 1 est ignoré si operand 2 est une référence de variable<br/></td><td id="[~I^" class="">voir CREATE_VAR</td><td id="~}:{" class="">Oui</td></tr><tr id="bfec675d-3830-4111-82a9-9c1f1210b295"><td id="]qV@" class="">0x0103</td><td id="uKpY" class="">SET_ARG</td><td id="g@V&lt;" class="">constante (numéro d’argument)</td><td id="xIBa" class="">constante (type de variable)</td><td id="e?Sd" class="">constante | id variable</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="">L’argument numéro operand1 prend le type operand2 et la valeur operand3<br/>(Voir SET_TMPVAR<br/></td><td id="[~I^" class=""></td><td id="~}:{" class="">Oui</td></tr><tr id="47e19bbf-fc84-43c3-8e79-912b8f521e43"><td id="]qV@" class="">0x0104</td><td id="uKpY" class="">UNSET_ARG</td><td id="g@V&lt;" class="">variable id</td><td id="xIBa" class="">numéro argument </td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="">Déplace la variable de l’argument n°operand 2 dans la variable operand 1.<br/>Contrairement à UNSET_RETURN, la valeur de paramètre n’est pas reset après cet instruction.<br/></td><td id="[~I^" class=""></td><td id="~}:{" class="">Non</td></tr><tr id="847ffa4d-1284-437b-9425-62db18414bd2"><td id="]qV@" class="">0x0105</td><td id="uKpY" class="">SET_RETURN</td><td id="g@V&lt;" class="">constante (type de variable)</td><td id="xIBa" class="">constante | id variable</td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="">Copie operand 2 dans le registre de retour.</td><td id="[~I^" class=""></td><td id="~}:{" class="">Oui</td></tr><tr id="a7244c71-1950-400c-a3eb-667f69d34229"><td id="]qV@" class="">0x0106</td><td id="uKpY" class="">UNSET_RETURN</td><td id="g@V&lt;" class="">variable id</td><td id="xIBa" class="">None</td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="">Déplace la valeur du registre de retour dans la variable n°operand 1.<br/>La valeur de return est reset après cet instruction.<br/></td><td id="[~I^" class="">Aucune valeur de retour définie.</td><td id="~}:{" class="">Non</td></tr><tr id="110fdef1-5ca4-806e-900f-ef8f58caf587"><td id="]qV@" class="">0x0107</td><td id="uKpY" class="">DELETE_VAR</td><td id="g@V&lt;" class="">variable id</td><td id="xIBa" class="">None</td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="">Supprime la variable id</td><td id="[~I^" class="">Variable inconnu</td><td id="~}:{" class="">Non</td></tr><tr id="12dfdef1-5ca4-8068-9112-c78ccbb58d7e"><td id="]qV@" class=""></td><td id="uKpY" class=""></td><td id="g@V&lt;" class=""></td><td id="xIBa" class=""></td><td id="e?Sd" class=""></td><td id="Jh;Q" class=""></td><td id="^uG|" class=""></td><td id="[~I^" class=""></td><td id="~}:{" class=""></td></tr></tbody></table></div></details><details open=""><summary style="font-weight:600;font-size:1.5em;line-height:1.3;margin:0">0x02 Control Flow</summary><div class="indented"><table id="10ffdef1-5ca4-800a-99c1-f1e83cce1a5d" class="simple-table"><tbody><tr id="cea1e1f8-367b-4e47-96a7-56df4023e165"><td id="]qV@" class=""><strong>mnemonic</strong></td><td id="uKpY" class=""><strong>name</strong></td><td id="g@V&lt;" class=""><strong>operand 1</strong></td><td id="xIBa" class=""><strong>operand 2</strong></td><td id="e?Sd" class=""><strong>operand 3</strong></td><td id="Jh;Q" class=""><strong>operand 4</strong></td><td id="^uG|" class="" style="width:422.8666687011719px"><strong>description</strong></td><td id="[~I^" class=""><strong>exceptions</strong></td><td id="Rjja" class=""><strong>coding-byte ?</strong></td></tr><tr id="7c382357-ee37-4e6a-8a6d-1956ca1bc8d2"><td id="]qV@" class="">0x0200</td><td id="uKpY" class="">RETURN</td><td id="g@V&lt;" class="">None</td><td id="xIBa" class="">None</td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="" style="width:422.8666687011719px">Quitte une fonction ou le programme si la scope est globale. </td><td id="[~I^" class="">None</td><td id="Rjja" class="">Non</td></tr><tr id="9720dd69-4d8e-462d-9ad3-b5d339dee177"><td id="]qV@" class="">0x0201</td><td id="uKpY" class="">CALL</td><td id="g@V&lt;" class="">constante (index de la fonction dans functionTable)</td><td id="xIBa" class="">None</td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="" style="width:422.8666687011719px">Appelle la fonction à l’index “operand 1” de la table des fonctions </td><td id="[~I^" class=""></td><td id="Rjja" class="">Non</td></tr><tr id="3bfdc6fb-6e03-42e2-b8c8-f9a5062b8977"><td id="]qV@" class="">0x0202</td><td id="uKpY" class="">JUMP</td><td id="g@V&lt;" class="">constante</td><td id="xIBa" class="">None</td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="" style="width:422.8666687011719px">Déplace le program counter de “operand 1” byte.</td><td id="[~I^" class="">Saute en dehors du programme ou de la fonction.</td><td id="Rjja" class="">Non</td></tr><tr id="351d7a03-2207-40a3-be20-7c0f572c3722"><td id="]qV@" class="">0x0203</td><td id="uKpY" class="">JUMP<br/>CARRY<br/></td><td id="g@V&lt;" class="">constante</td><td id="xIBa" class="">None</td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="" style="width:422.8666687011719px">Jump si le dernier comparatif est vrai.</td><td id="[~I^" class="">Voir JUMP</td><td id="Rjja" class="">Non</td></tr><tr id="f3af713d-45c2-4ed3-a0a8-6e4a6d62d885"><td id="]qV@" class="">0x0204</td><td id="uKpY" class="">JUMP NOT<br/>CARRY<br/></td><td id="g@V&lt;" class="">constante</td><td id="xIBa" class=""></td><td id="e?Sd" class=""></td><td id="Jh;Q" class=""></td><td id="^uG|" class="" style="width:422.8666687011719px">L’inverse de JUMP_CARRY</td><td id="[~I^" class="">Voir JUMP</td><td id="Rjja" class="">Non</td></tr><tr id="128fdef1-5ca4-80fe-852c-d441b0776faa"><td id="]qV@" class=""></td><td id="uKpY" class=""></td><td id="g@V&lt;" class=""></td><td id="xIBa" class=""></td><td id="e?Sd" class=""></td><td id="Jh;Q" class=""></td><td id="^uG|" class="" style="width:422.8666687011719px"></td><td id="[~I^" class=""></td><td id="Rjja" class=""></td></tr></tbody></table></div></details><details open=""><summary style="font-weight:600;font-size:1.5em;line-height:1.3;margin:0">0x03 Arithmetic</summary><div class="indented"><table id="10efdef1-5ca4-808f-8d9e-fbd2ae7d8f40" class="simple-table"><tbody><tr id="f0803e5e-03e8-469b-b55f-11e5fdb1627e"><td id="]qV@" class=""><strong>mnemonic</strong></td><td id="uKpY" class=""><strong>name</strong></td><td id="g@V&lt;" class=""><strong>operand 1</strong></td><td id="xIBa" class=""><strong>operand 2</strong></td><td id="e?Sd" class=""><strong>operand 3</strong></td><td id="Jh;Q" class=""><strong>operand 4</strong></td><td id="^uG|" class=""><strong>description</strong></td><td id="[~I^" class=""><strong>exceptions</strong></td><td id="kWKZ" class=""><strong>coding-byte ?</strong></td><td id="Z|S:" class=""></td></tr><tr id="033fe816-d4d3-4170-96d7-0632e8f88eb7"><td id="]qV@" class="">0x0300</td><td id="uKpY" class="">ADD</td><td id="g@V&lt;" class="">constante (type de variable)</td><td id="xIBa" class="">constante | variable id</td><td id="e?Sd" class="">constante (type de variable)</td><td id="Jh;Q" class="">constante | variable id</td><td id="^uG|" class="">Ajoute 2 variables et enregistre le résultat dans la variable de retour.</td><td id="[~I^" class="">Opération entre 2 types incompatibles.</td><td id="kWKZ" class="">Oui</td><td id="Z|S:" class=""></td></tr><tr id="a6d05e49-e37f-4431-8eec-ab2ebde3876b"><td id="]qV@" class="">0x0301</td><td id="uKpY" class="">SUB</td><td id="g@V&lt;" class="">////</td><td id="xIBa" class="">/////</td><td id="e?Sd" class="">////</td><td id="Jh;Q" class="">////</td><td id="^uG|" class="">Soustrait 2 variables <br/>(similaire à ADD)<br/></td><td id="[~I^" class="">Opération entre 2 types incompatibles.</td><td id="kWKZ" class="">Oui</td><td id="Z|S:" class=""></td></tr><tr id="10efdef1-5ca4-80d1-9684-ff8a73a4344e"><td id="]qV@" class="">0x0302</td><td id="uKpY" class="">DIV</td><td id="g@V&lt;" class="">////</td><td id="xIBa" class="">/////</td><td id="e?Sd" class="">////</td><td id="Jh;Q" class="">////</td><td id="^uG|" class="">Divise 2 variables . (similaire à ADD)</td><td id="[~I^" class="">- Opération entre 2 types incompatibles.<br/>- Division par 0 ou None.<br/></td><td id="kWKZ" class="">Oui</td><td id="Z|S:" class=""></td></tr><tr id="10efdef1-5ca4-8071-91fb-c2ea44c45320"><td id="]qV@" class="">0x0303</td><td id="uKpY" class="">MUL</td><td id="g@V&lt;" class="">////</td><td id="xIBa" class="">////</td><td id="e?Sd" class="">////</td><td id="Jh;Q" class="">////</td><td id="^uG|" class="">Multiple 2 variables. (similaire à ADD).</td><td id="[~I^" class="">- Opération entre 2 types incompatibles.</td><td id="kWKZ" class="">Oui</td><td id="Z|S:" class=""></td></tr><tr id="10ffdef1-5ca4-80a8-b2ba-face75ca4396"><td id="]qV@" class="">0x0304</td><td id="uKpY" class="">EQ?</td><td id="g@V&lt;" class="">constante (type de variable)</td><td id="xIBa" class="">constante | variable id</td><td id="e?Sd" class="">constante (type de variable)</td><td id="Jh;Q" class="">constante | variable id</td><td id="^uG|" class="">Compare 2 valeurs et met à jour le carry.</td><td id="[~I^" class="">- Opération entre 2 types incompatibles.</td><td id="kWKZ" class="">Oui</td><td id="Z|S:" class=""></td></tr><tr id="10ffdef1-5ca4-8092-8532-c7a6d45669ec"><td id="]qV@" class="">0x0305</td><td id="uKpY" class="">NEQ</td><td id="g@V&lt;" class="">////</td><td id="xIBa" class="">////</td><td id="e?Sd" class="">////</td><td id="Jh;Q" class="">////</td><td id="^uG|" class="">Compare 2 valeurs et met à jour le carry.</td><td id="[~I^" class="">- Opération entre 2 types incompatibles.</td><td id="kWKZ" class="">Oui</td><td id="Z|S:" class=""></td></tr><tr id="10ffdef1-5ca4-8025-ac76-c5da4287389d"><td id="]qV@" class="">0x0306</td><td id="uKpY" class="">MOD</td><td id="g@V&lt;" class="">constante (type de variable)</td><td id="xIBa" class="">constante | variable id</td><td id="e?Sd" class="">constante (type de variable)</td><td id="Jh;Q" class="">constante | variable id</td><td id="^uG|" class="">Modulo operand 1 &amp; 2. (similaire à ADD).</td><td id="[~I^" class="">Opération entre 2 types incompatibles</td><td id="kWKZ" class="">Oui</td><td id="Z|S:" class=""></td></tr><tr id="128fdef1-5ca4-8066-aa81-ee3d313bba7b"><td id="]qV@" class="">0x0307</td><td id="uKpY" class="">LESSER?</td><td id="g@V&lt;" class="">constante | variable id</td><td id="xIBa" class="">constante | variable id</td><td id="e?Sd" class="">None</td><td id="Jh;Q" class="">None</td><td id="^uG|" class="">Voir EQ?</td><td id="[~I^" class="">Voir EQ?</td><td id="kWKZ" class="">Oui</td><td id="Z|S:" class=""></td></tr><tr id="12ffdef1-5ca4-801e-b5cf-d77462ee54a8"><td id="]qV@" class="">0x0308</td><td id="uKpY" class="">LESSER_EQ?</td><td id="g@V&lt;" class="">////</td><td id="xIBa" class="">////</td><td id="e?Sd" class="">////</td><td id="Jh;Q" class="">////</td><td id="^uG|" class="">Voir EQ?</td><td id="[~I^" class="">Voir EQ?</td><td id="kWKZ" class="">////</td><td id="Z|S:" class=""></td></tr><tr id="12ffdef1-5ca4-800d-bf75-eb499aa43b0a"><td id="]qV@" class="">0x0309</td><td id="uKpY" class="">GREATER?</td><td id="g@V&lt;" class="">////</td><td id="xIBa" class="">///</td><td id="e?Sd" class="">///</td><td id="Jh;Q" class="">///</td><td id="^uG|" class="">Voir EQ?</td><td id="[~I^" class="">Voir EQ?</td><td id="kWKZ" class="">///</td><td id="Z|S:" class=""></td></tr><tr id="12ffdef1-5ca4-806c-b658-c833a34c1216"><td id="]qV@" class="">0x0310</td><td id="uKpY" class="">GREATER_EQ?</td><td id="g@V&lt;" class="">////</td><td id="xIBa" class="">///</td><td id="e?Sd" class="">///</td><td id="Jh;Q" class="">///</td><td id="^uG|" class="">Voir EQ?</td><td id="[~I^" class="">Voir EQ?</td><td id="kWKZ" class="">///</td><td id="Z|S:" class=""></td></tr></tbody></table></div></details><hr id="10efdef1-5ca4-8014-b759-fa9f6093ee9c"/><details open=""><summary style="font-weight:600;font-size:1.5em;line-height:1.3;margin:0">Coding-byte</summary><div class="indented"><p id="10efdef1-5ca4-80e5-9f56-d15d47075f48" class="">1 byte / 8 bits.</p><p id="10ffdef1-5ca4-80e0-9563-e4e2a3f3ce8e" class="">Les instructions n’ayant que des opérandes d’un seul type possible n’ont pas d’opcode. Exemple: UNSET_RETURN</p><table id="10efdef1-5ca4-80e0-998a-df55d7a4ee00" class="simple-table"><tbody><tr id="e29dfb9a-e3ec-4ffc-ac4b-eb0314c66569"><td id="QqSI" class=""><strong>value</strong></td><td id="edVm" class=""><strong>meaning</strong></td></tr><tr id="1955559d-d125-4234-a477-bd4105be0931"><td id="QqSI" class="">0b00</td><td id="edVm" class="">Non existant</td></tr><tr id="c5080610-7a35-4877-a24c-fe3056b8a7d6"><td id="QqSI" class="">0b01</td><td id="edVm" class="">Inutilisé</td></tr><tr id="10efdef1-5ca4-8098-9796-d3f4174854c9"><td id="QqSI" class="">0b10</td><td id="edVm" class="">Constante</td></tr><tr id="10efdef1-5ca4-80f9-900b-d5bdffb92cf5"><td id="QqSI" class="">0b11</td><td id="edVm" class="">ID variable</td></tr></tbody></table><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">Example:</summary><div class="indented"><p id="10efdef1-5ca4-8050-8dfd-d93e23062c6f" class="">0x1B ou 0b 00 01 10 11.</p><p id="10efdef1-5ca4-8046-b7ee-fb23f62497c7" class="">Operand 4 : 11 donc variable id.</p><p id="10efdef1-5ca4-80d8-8194-ecfb84fa5e9d" class="">Operand 3 : 10 donc constant.</p><p id="10efdef1-5ca4-8093-a4c3-df5f32eff2a4" class="">Operand 2 : 01 unused.</p><p id="10efdef1-5ca4-8018-a8ac-e90424082c27" class="">Operand 1 : 00 donc inexistant. <div class="indented"><p id="10efdef1-5ca4-80bb-bc02-fb2b3ffa249f" class="">   </p></div></p></div></details></div></details><details open=""><summary style="font-weight:600;font-size:1.5em;line-height:1.3;margin:0">Operands</summary><div class="indented"><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">Constante</summary><div class="indented"><p id="10efdef1-5ca4-8054-b6c6-e283e277b39d" class="">Valeur constante.</p></div></details><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">Identifiant de variable</summary><div class="indented"><p id="10efdef1-5ca4-8015-b1f0-fcf966494560" class="">Chaque variable a un identifiant unique, la <strong>N</strong>ème variable créée à l’identifiant <strong>n.</strong></p><p id="10ffdef1-5ca4-808d-bbf2-cad2c144c24c" class="">Lorsque l’on sort du scope d’une fonction, toutes les variables présente dans cette scope sont effacées et l’identifiant diminue.</p><p id="10ffdef1-5ca4-80f6-be99-ff49a16da932" class="">Revoit une exception si la variable n’a pas été définie.</p></div></details><details open=""><summary style="font-weight:600;font-size:1.25em;line-height:1.3;margin:0">Type de variable</summary><div class="indented"><table id="10ffdef1-5ca4-808d-b119-c2a7c31894d9" class="simple-table"><tbody><tr id="ed50f15a-433b-49da-bff5-a78d9ce64277"><td id="vaEA" class="" style="width:34.56666564941406px"><strong>id</strong></td><td id="BJ^p" class=""><strong>type</strong></td></tr><tr id="eb3169f0-8db0-4e0a-8baa-cc23b13fdd6a"><td id="vaEA" class="" style="width:34.56666564941406px">01</td><td id="BJ^p" class="">int</td></tr><tr id="0ae958f6-429b-4be2-ae3c-867909b194bd"><td id="vaEA" class="" style="width:34.56666564941406px">02</td><td id="BJ^p" class="">string</td></tr></tbody></table></div></details></div></details><p id="118fdef1-5ca4-80bb-a702-fd8f2b931857" class="">
+</p></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>

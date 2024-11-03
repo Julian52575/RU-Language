@@ -933,6 +933,24 @@ spec = do
                 Right variablessResult -> do
                     variableStack variablessResult `shouldBe` [ [newVar1], [], [var0] ]
 
+        it "Update tmp variable" $ do
+            let variabless = defaultRuVmVariables {
+                variableStack = [ [var1], [], [var0] ],
+                tmpVariable = defaultRuVariable
+            }
+            let expected = variabless {
+                tmpVariable = (tmpVariable variabless) {
+                    ruVariableValue = newValue,
+                    ruVariableType = ruVariableTypeStr,
+                    ruMutable = True
+                }
+            }
+            case ruVmVariablesUpdateVariable variabless 0xffffffff newValue of
+                Left err -> do
+                    putStrLn ("Encountered exception: " ++ (show err))
+                    False `shouldBe` True
+                Right variablessResult -> variablessResult `shouldBe` expected
+
         it "Doesn't update other var" $ do
             let variabless = defaultRuVmVariables {
                 variableStack = [ [var1, var2], [], [var0] ]
