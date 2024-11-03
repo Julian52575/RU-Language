@@ -1,6 +1,5 @@
 # Ru Virtual-Machine
-
-A simple and yet powerful virtual machine to safely run your programs !
+A simple and yet powerful virtual machine to safely run your ru executable.
 
 ## Supports:
 -  Integers
@@ -24,3 +23,5 @@ Download the ru_vm binary from the latest release.
     --dump   =  print everything about the binary.
 
 ```
+## For developers:
+Find more details about the ru format in the developer_doc folder.
