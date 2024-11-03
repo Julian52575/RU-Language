@@ -66,3 +66,6 @@ ruExceptionUnsetArgumentInIncompatibleType = RuException "Trying to unset argume
 
 ruExceptionUnknowFunction :: Word32 -> RuException
 ruExceptionUnknowFunction i = RuException ("Unknow function " ++ printf "0x%08x" i ++ ".")
+
+ruExceptionMaximumRecursionDepth :: RuException
+ruExceptionMaximumRecursionDepth = RuException ("Maximum recursion depth exceeded.")

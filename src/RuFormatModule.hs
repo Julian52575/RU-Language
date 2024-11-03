@@ -64,6 +64,13 @@ data RuFunctionTable = RuFunctionTable {
     size :: Word32
 } deriving (Eq, Show)
 
+ruFunctionTableGetFunctionFromStartOffset :: [RuFunctionTable] -> Word32 -> Maybe RuFunctionTable
+ruFunctionTableGetFunctionFromStartOffset (current:next) offset
+    | offset == (codeSectionOffset current) = Just current
+    | otherwise                             = ruFunctionTableGetFunctionFromStartOffset next offset
+ruFunctionTableGetFunctionFromStartOffset [] _ = Nothing
+
+
 ruFunctionTableGetFunctionFromCodeOffset :: [RuFunctionTable] -> Word32 -> Maybe RuFunctionTable
 
 ruFunctionTableGetFunctionFromCodeOffset (fun:next) offset

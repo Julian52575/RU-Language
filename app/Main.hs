@@ -72,6 +72,9 @@ theColorDefault = "\ESC[0m"
 theColorBlue :: String
 theColorBlue = "\ESC[34m"
 
+theColorYellow :: String
+theColorYellow = "\ESC[33m"
+
 setNewWorkerCodePc :: RuVmInfo -> RuVmState -> Word32 -> Either RuException RuVmState
 setNewWorkerCodePc info state newPc
     | newPc > codeSize info     = Left ruExceptionJumpOutOfBound
@@ -104,21 +107,33 @@ getInstructionCodeAsString (current:next) start count limit
 
 getInstructionCodeAsString [] _ _ _ = []
 --
+getFunctionNameToPrint :: RuVmInfo -> RuVmState -> Maybe String
+getFunctionNameToPrint info state = case funSearchResult of
+    Nothing -> Nothing
+    Just fun -> case ruVmInfoGetStringFromStringTable info (nameIndex fun) of
+        Nothing -> Just "??? (name index does not match any starting offset of function table):"
+        Just name -> Just name
+    where
+        funSearchResult = ruFunctionTableGetFunctionFromStartOffset (functionTable info) (workerCodeOffset state)
+--
 printInstruction :: RuInstruction -> RuVmInfo -> RuVmState -> Either RuException RuVmState
 printInstruction ins info state =
     case movedResult of
         Left err -> Left err
         Right movedState -> do
             let newPc = workerCodeOffset movedState
+            let functionPrint = case getFunctionNameToPrint info state of 
+                    Nothing -> []
+                    Just funName -> "\n" ++ pcStr ++ " <" ++ theColorYellow ++ funName ++ theColorDefault ++ ">:\n"
             let codePrint = getInstructionCodeAsString (workerCode state) startPc 0 newPc
             Right (movedState {
-                toPrint = (toPrint state) ++ name ++ codePrint
+                toPrint = (toPrint state) ++ functionPrint ++ name ++ codePrint
             })
     where
-        pcStr = printf "0x%08x" (workerCodeOffset state)
+        startPc = workerCodeOffset state
+        pcStr = printf "0x%08x" startPc
         name = pcStr ++ ":\t" ++ ruInstructionName ins ++ ":\t"
         movedResult = moveWorkerCodeToNextInstruction ins info state
-        startPc = workerCodeOffset state
 
 -- Execute la fonction liée à l'instruction
 
@@ -225,7 +240,7 @@ printVariableStack stack
         let global = (stack !! (stackNumber - 1))
         let len = length global
         putStrLn ("🌎 Global variables (" ++ show len ++ "):")
-        if length global == 0 then putStr "Empty." else printVariableArrayDebug (stack !! 0)
+        if length global == 0 then putStrLn "Empty." else printVariableArrayDebug (stack !! 0)
         printVariableStack [stack !! 0]
     where
         stackNumber = length stack
@@ -256,7 +271,7 @@ printVariablesDebug vars = do
     then
         putStr []
     else
-        putStrLn "📍 Return offset(s):" >>
+        putStrLn ("📍 Call offset (" ++ (show (length (callOffsets vars))) ++ "):") >>
         printCallOffsetsDebug (callOffsets vars)
     putStrLn "\n"
 

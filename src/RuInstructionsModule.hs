@@ -381,9 +381,13 @@ ruInstructionFunctionCall :: RuVmInfo -> RuVmState -> Either RuException RuVmSta
 ruInstructionFunctionCall info state
     | length ccode < 4                                 = Left ruExceptionIncompleteInstruction
     | op1 > fromIntegral (length (functionTable info)) = Left (ruExceptionUnknowFunction op1)
-    | otherwise                                        = Right 
-                                                    --Left ( RuException ( show (
-                                                    scopeState {
+    | otherwise                                        = 
+        if scopeDeep scopeState > 500
+        then
+            Left ruExceptionMaximumRecursionDepth
+        else
+        Right --Left ( RuException ( show (
+            scopeState {
         workerCodeOffset = codeSectionOffset fun,
         workerCode = drop (fromIntegral (codeSectionOffset fun)) (code info)
     }
