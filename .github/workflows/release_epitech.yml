@@ -2,10 +2,10 @@ name: "Create Release"
 on:
   push:
     branches:
-      - Virtual-Machine-Release
+      - Compiler-Release
 
 env:
-  RELEASE_NAME: RU-VIRTUAL-MACHINE
+  RELEASE_NAME: RU-COMPILER
   BINARY_NAME: glados-compiler-exe
   BINARY_RELEASE_NAME: rucompiler
 
