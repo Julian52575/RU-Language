@@ -258,7 +258,7 @@ printVariablesDebug vars = do
     putStrLn "📥 Argument variables:"
     if length (argumentVariables vars) < 2
     then 
-        putStr "Empty."
+        putStrLn "Empty."
     else
         printVariableArrayDebug ((argumentVariables vars) !! 1)
     putStrLn "📤 Return variable:"
