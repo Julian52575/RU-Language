@@ -7,7 +7,7 @@ on:
 env:
   RELEASE_NAME: RU-VIRTUAL-MACHINE
   BINARY_NAME: glados-virtual-machine-exe
-  BINARY_RELEASE_NAME: rvm
+  BINARY_RELEASE_NAME: ruvm
 
 jobs:
   get_date:
@@ -51,8 +51,8 @@ jobs:
           draft: false
           prerelease: false
           
-      - name: Upload Release Asset
-        id: upload-release-asset 
+      - name: Upload Release Asset (Binary)
+        id: upload-release-asset-bin
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -62,8 +62,27 @@ jobs:
           asset_name: ${{ env.BINARY_RELEASE_NAME }}
           asset_content_type: application/exe
 
+      - name: Upload Release Asset (Ru Format Doc)
+        id: upload-release-asset-doc1
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: "./developer_doc/RU format.html"
+          asset_name: "RU_Format_Documentation.html"
+          asset_content_type: application/html
 
-
+      - name: Upload Release Asset (Instruction Set)
+        id: upload-release-asset-doc2
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: "./developer_doc/INSTRUCTION SET.html"
+          asset_name: "RU_Instruction_Set_Documentation.html"
+          asset_content_type: application/html
 
   #create_release:
   #  runs-on: ubuntu-latest

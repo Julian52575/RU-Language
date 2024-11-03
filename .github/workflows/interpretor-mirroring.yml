@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-        timeout-minutes: 5
+        timeout-minutes: 15
       - run:
           chown -R $(id -un):$(id -gn) ~ #https://github.com/commercialhaskell/stack/issues/2187
       - name: build
@@ -34,6 +34,9 @@ jobs:
       - name: unit test
         run:
           stack test --allow-different-user
+      - name: functional test
+        run:
+          ./examples/tests_run.sh
         
   mirror:
     runs-on: ubuntu-latest
