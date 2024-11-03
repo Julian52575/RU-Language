@@ -290,6 +290,14 @@ handleException :: RuVmInfo -> RuVmState -> RuException -> IO ()
 handleException info state err = do
     let pc = workerCodeOffset state
     putStrLn (("\n😭 Encountered error at offset " ++ printf "0x%08x" pc) ++ ": " ++ theColorRed ++ show err ++ theColorDefault)
+
+    -- Print function name if inside function
+    case ruFunctionTableGetFunctionFromCodeOffset (functionTable info) pc of
+        Nothing -> putStr []
+        Just fun -> case ruVmInfoGetStringFromStringTable info (nameIndex fun) of
+            Nothing -> putStr []
+            Just funName -> putStrLn ("👉 In function " ++ funName ++ ":")
+
     putStrLn "👁  Here are some debug information:"
     putStrLn "\n"
     printStateDebug info state
