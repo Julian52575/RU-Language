@@ -6,7 +6,7 @@ import qualified Data.ByteString as B
 import Compiler.String (getStringTable)
 import Compiler.Function(getFunctionTable, getFunctionIndex)
 import Parser.AST
-import Data.List (nub)
+import Data.List (nub, partition)
 import Compiler.CreateVar (getCreateVar)
 import Compiler.Type (OpCode(..), Compile(..), Function(..))
 import Compiler.Compile (getScopeFromList, compile, compileGlobal)
@@ -38,6 +38,11 @@ containMain (x:xs) = case x of
     FuncDeclStmt "main" _ _ _ -> True
     _ -> containMain xs
 
+moveMainToFront :: [Function] -> [Function]
+moveMainToFront functions = case partition (\f -> fName f == "main") functions of
+    ([], rest) -> rest
+    (mainFunc, rest) -> mainFunc ++ rest
+
 test :: [Stmt] -> IO ()
 test ast = do
     let stringTbl = nub $ getStringTable ast
@@ -45,7 +50,7 @@ test ast = do
     let globalVars = getCreateVar ast stringTbl
     let sGlobal = getScopeFromList globalVars "global" 0
     let compileData = Compile stringTbl functionTbl sGlobal
-    let compiled = compile ast compileData
+    let compiled = compile ast (compileData { functionTable = (moveMainToFront functionTbl)})
     let globalCompiled = compileGlobal (BlockStmt ast) compileData (isMain functionTbl)
     let swapData = if containMain ast then swapMainFunction compileData compiled else (compileData, compiled)
     let compileData' = fst swapData

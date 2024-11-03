@@ -3,16 +3,17 @@ module Compiler.Compile (
     getScopeFromList,
     compileStmt,
     compileGlobal,
-    compileFunction
+    compileFunction,
+    compileExpr
 ) where
 
 import Compiler.Type (Scope(..), OpCode(..), Compile(..), CodingByte(..))
 import Parser.Type (Type(..))
 import Parser.AST (Stmt(..), Expr(..), CompOp(..))
 import Compiler.CreateVar (getCreateVar, getFunctionVar, getIndexFromStrTable)
-import Compiler.Function (unsetFuncVar, getFunctionIndex)
+import Compiler.Function (unsetFuncVar)
 import Compiler.CodingByte (getCodingByte)
-import Compiler.BinArith (compileBinArith, opCodeFromExpr)
+import Compiler.BinArith (compileBinArith, opCodeFromExpr, compileCall)
 import Compiler.Header (opListCountByte)
 import Data.Either()
 
@@ -24,25 +25,6 @@ getScopeFromList var name start = Scope (map snd var) name start
 -- add scope vars to another scope
 addScope :: Scope -> Scope -> Scope
 addScope (Scope vrs _ _) (Scope gVars name _) = Scope (vrs ++ gVars) name (length vrs)
-
--- get a list of SET_ARG for a function call
-setFunctionArgs :: [Expr] -> Scope -> [String] -> [OpCode]
-setFunctionArgs [] _ _ = []
-setFunctionArgs exprs scope strTable = setFunctionArgs' exprs scope strTable 0
-  where
-    setFunctionArgs' :: [Expr] -> Scope -> [String] -> Int -> [OpCode]
-    setFunctionArgs' [] _ _ _ = []
-    setFunctionArgs' (x:xs) scop strTbl index =
-        let codingByte = getCodingByte x scop strTbl
-            opCode = OpSetArg index codingByte
-        in opCode : setFunctionArgs' xs scop strTbl (index + 1)
-
-compileCall :: Expr -> Scope -> Compile -> Int -> [OpCode]
-compileCall (FuncCall (Var name) args) fScope comp _ =
-    let setArgs = setFunctionArgs args fScope (stringTable comp)
-        funcIndex = getFunctionIndex name comp
-    in setArgs ++ [OpCall funcIndex]
-compileCall _ _ _ _ = []
 
 compilePrint :: [Expr] -> Scope -> Compile -> String -> [OpCode]
 compilePrint args scope comp prt =
@@ -110,7 +92,6 @@ compileStmt (LetStmt name _ (FuncCall name2 args)) scope comp = compileExpr (Fun
 compileStmt (LetStmt name _ expr) scope comp = if isConst expr == False
     then [OpCreateVar 0x01 0x00] ++
         compileExpr expr scope comp 0 ++
-        [OpUnsetReturn (length $ vars scope)] ++
         [OpSetVar (getIndexFromStrTable (vars scope) name) (CbConst 0xB0 0x00 (length $ vars scope))] ++
         [OpUnsetVar (length $ vars scope)]
     else []
