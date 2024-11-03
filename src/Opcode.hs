@@ -1,5 +1,5 @@
 module Opcode (
-    test
+    compileAst
 ) where
 
 import qualified Data.ByteString as B
@@ -26,7 +26,9 @@ swapMainFunction comp opcodes =
     let mainIndex = (getFunctionIndex "main" comp)
         swapedOpCode = swapElementsAt 0 mainIndex opcodes
         functionList = swapElementsAt 0 mainIndex (functionTable comp)
-    in ((Compile (stringTable comp) (functionList) (globalScope comp)), swapedOpCode)
+    in case mainIndex of
+        0 -> (comp, opcodes)
+        _ -> ((Compile (stringTable comp) (functionList) (globalScope comp)), swapedOpCode)
 
 isMain :: [Function] -> Bool
 isMain [] = False
@@ -43,20 +45,20 @@ moveMainToFront functions = case partition (\f -> fName f == "main") functions o
     ([], rest) -> rest
     (mainFunc, rest) -> mainFunc ++ rest
 
-test :: [Stmt] -> IO ()
-test ast = do
-    let stringTbl = nub $ getStringTable ast
-    let functionTbl = getFunctionTable ast stringTbl
-    let globalVars = getCreateVar ast stringTbl
-    let sGlobal = getScopeFromList globalVars "global" 0
-    let compileData = Compile stringTbl functionTbl sGlobal
-    let compiled = compile ast (compileData { functionTable = (moveMainToFront functionTbl)})
-    let globalCompiled = compileGlobal (BlockStmt ast) compileData (isMain functionTbl)
-    let swapData = if containMain ast then swapMainFunction compileData compiled else (compileData, compiled)
-    let compileData' = fst swapData
-    let compiled' = snd swapData
-    let header = getHeader compileData' globalCompiled compiled'
-    let headerByteString = headerToByteString header
-    let codeByteString = B.pack $ opCodeToByteString $ globalCompiled ++ (concat compiled')
+compileAst :: [Stmt] -> String -> IO ()
+compileAst ast filename =
+    let stringTbl = [""] ++ (nub $ getStringTable ast)
+        functionTbl = getFunctionTable ast stringTbl
+        globalVars = getCreateVar ast stringTbl
+        sGlobal = getScopeFromList globalVars "global" 0
+        compileData = Compile stringTbl functionTbl sGlobal
+        compiled = compile ast (compileData { functionTable = (moveMainToFront functionTbl)})
+        globalCompiled = compileGlobal (BlockStmt ast) compileData (isMain functionTbl)
+        swapData = if containMain ast then swapMainFunction compileData compiled else (compileData, compiled)
+        compileData' = fst swapData
+        compiled' = snd swapData
+        header = getHeader compileData' globalCompiled compiled'
+        headerByteString = headerToByteString header
+        codeByteString = B.pack $ opCodeToByteString $ globalCompiled ++ (concat compiled')
 
-    B.writeFile "out.bin" $ B.append headerByteString codeByteString
+    in B.writeFile filename $ B.append headerByteString codeByteString

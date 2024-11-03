@@ -1,11 +1,14 @@
 module Compiler.BinArith (
     compileBinArith,
     opCodeFromExpr,
-    compileCall
+    compileCall,
+    isReturnString,
+    isBinArithString
 ) where
 
 import Parser.AST
 import Compiler.Type
+import Parser.Type
 import Data.Either()
 import Compiler.CreateVar (getIndexFromStrTable)
 import Compiler.Function (getFunctionIndex)
@@ -55,6 +58,13 @@ isBinArithString :: Expr -> Bool
 isBinArithString (LitString _) = True
 isBinArithString (BinArith _ e1 e2) = isBinArithString e1 || isBinArithString e2
 isBinArithString _ = False
+
+isReturnString :: Stmt -> Bool
+isReturnString (ReturnStmt (Just expr)) = isBinArithString expr
+isReturnString (ReturnStmt Nothing) = False
+isReturnString (LetStmt _ (Just t) _) = t == TString
+isReturnString (LetStmt _ Nothing expr) = isBinArithString expr
+isReturnString _ = False
 
 compileBinArith :: Expr -> Scope -> Compile -> Int -> Int -> [OpCode]
 compileBinArith (BinArith op (BinArith op1 ee1 ee2) (BinArith op2 ex1 ex2)) scope comp start depth =
