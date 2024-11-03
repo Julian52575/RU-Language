@@ -1,13 +1,13 @@
 # Ru-Compiler
 
-Compiles ru code (.ru) into a ru executable.
+Compiles ru code (.ru) into a ru executable (.izly).
 
 ## Installation:
 Download the ru_compiler binary from the latest release.
 
 ## Usage:
 ```
-  ./ru_compiler ru code
+  ./ru_compiler exemple.ru exemple.izly
 ```
 
 ## Compilation Process 
