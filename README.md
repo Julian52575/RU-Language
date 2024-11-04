@@ -31,10 +31,15 @@ The RU executable format aims to be secure, easily expendable and reusable.
 As such, it is easy to add data type and either update the default instructions or provide new ones. See 3 section bellow.
 ### Inspiration
 Taking inspiration from x86_64 assembly, java and lua opcode.    
+Unlike basic assembly, ru fetch variable in the stack thanks to ids instead of an offset.    
+
 ### Security features
 The format allows many security features such as:
 -  Control-flow _thanks to function size_
 -  File integrety _checksum_
+
+Each function has its own unique stack that no other function can access.
+This stack is deleted when the vm exit the function scope.
 ### Expending the Ru Executable Format for your needs
 Here is a step-by-step guide:
 1. Familiarize yourself with the format by reading the documentation in developer_doc.
