@@ -62,6 +62,16 @@ jobs:
           asset_name: ${{ env.BINARY_RELEASE_NAME }}
           asset_content_type: application/exe
 
+      - name: Upload Release Asset (Ru Format Doc)
+        id: upload-release-asset-doc1
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: "./syntax_doc/Example Syntax 103fdef15ca480a9abf5d970e6a78403.html"
+          asset_name: "RU_Syntax_Documentation.html"
+          asset_content_type: application/html
 
 
 
