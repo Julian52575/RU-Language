@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - Virtual-Machine-Release
+      - Virtual-Machine
 
 env:
   RELEASE_NAME: RU-VIRTUAL-MACHINE
