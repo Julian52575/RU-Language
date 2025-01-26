@@ -33,8 +33,8 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y make build-essential curl libffi-dev libffi8 libgmp-dev libgmp10 libncurses-dev  --fix-missing  
           sudo apt-get install -y zlib1g-dev netbase
-          stack version || curl -sSL https://get.haskellstack.org/ | sudo sh
-          stack version || curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sudo sh
+          curl -sSL https://get.haskellstack.org/ | sudo sh -s - -f
+          curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sudo sh 
           make re
           if [ -x ${{ env.BINARY_NAME }} ]; then echo "Binary was built succesfully."; else echo "${{ env.BINARY_NAME }} was not found..." && exit 84 ; fi
     
