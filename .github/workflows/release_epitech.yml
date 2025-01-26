@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - Interpretor-release
+      - Interpretor
 
 env:
   PROJECT_FOLDER: test
