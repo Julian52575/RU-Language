@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - Compiler-Release
+      - Compiler
 
 env:
   RELEASE_NAME: RU-COMPILER
