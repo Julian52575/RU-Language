@@ -1,0 +1,52 @@
+.about-container {
+    font-family: Arial, sans-serif;
+    color: #333;
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .header {
+    background-color: #4CAF50;
+    color: white;
+    padding: 20px;
+  }
+  
+  .contributors-section {
+    margin: 20px 0;
+  }
+  
+  .contributors-section ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .contributors-section li {
+    background-color: #f9f9f9;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  .github-section {
+    margin: 20px 0;
+  }
+  
+  .github-link {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #333;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+  }
+  
+  .github-link:hover {
+    background-color: #555;
+  }
+  
+  .footer {
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #777;
+  }
